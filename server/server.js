@@ -3,15 +3,21 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import registerRoute from "./routes/routeRegister.js";
+import registerOthersRoute from "./routes/routeRegisterOthers.js";
+import deactivateRoutes from "./routes/routeDeactivate.js";
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ["x-new-token"],
+}));
 app.use(express.json());
 
 // Routes
 app.use("/api/auth", registerRoute);
+app.use("/api/users", registerOthersRoute);
+app.use("/api/deactivate", deactivateRoutes);
 
 // Connect to DB then start server
 const connectToDatabase = async () => {
