@@ -1,22 +1,32 @@
-// 1. Configure environment variables (Must be first)
-require('dotenv').config(); 
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import registerRoute from "./routes/routeRegister.js";
 
-// 2. Import dependencies
-const mongoose = require('mongoose');
+const app = express();
 
-// 3. Define and execute connection logic
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use("/api/auth", registerRoute);
+
+// Connect to DB then start server
 const connectToDatabase = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ Connected to MongoDB!");
+    console.log("Connected to MongoDB!");
 
-    // Debug: Safely list collections to verify access
     const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log("📂 Available collections:", collections.map(c => c.name));
+    console.log("Available collections:", collections.map(c => c.name));
+
+    app.listen(5001, () => console.log("Server running on port 5001"));
 
   } catch (err) {
-    console.error("❌ Database connection error:", err);
-    process.exit(1); // Exit the process with failure if DB connection fails
+    console.error("Database connection error:", err);
+    process.exit(1);
   }
 };
 
