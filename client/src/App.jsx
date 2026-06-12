@@ -3,6 +3,7 @@ import Register from "./pages/pageRegister";
 import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
 import Login from "./pages/Login";
+import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/registerOthers" element={<RegisterForOthers />} />
         <Route path="/deactivate" element={<UserDeactivation />} />
+        <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
       </Routes>
     </BrowserRouter>
   );

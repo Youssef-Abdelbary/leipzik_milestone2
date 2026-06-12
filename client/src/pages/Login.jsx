@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
   const [success, setSuccess] = useState("");
 
   async function handleSubmit(event) {
@@ -12,7 +14,7 @@ function Login() {
       setError("Please fill in all fields");
       return;
     }
-    const response = await fetch("http://localhost:5001/api/auth/login", {
+    const response = await fetch("http://localhost:5000/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,6 +31,9 @@ function Login() {
     if (response.ok) {
       setSuccess(data.message);
       setError("");
+      if (data.user.role === "organizer") {
+        navigate("/organizer/venue-layout");
+      }
     } else {
       setError(data.message);
       setSuccess("");
