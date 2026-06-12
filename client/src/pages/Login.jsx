@@ -29,11 +29,13 @@ function Login() {
 
     console.log(data);
     if (response.ok) {
+
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
         navigate("/organizer/venue-layout");
       }
+
     } else {
       setError(data.message);
       setSuccess("");
