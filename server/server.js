@@ -10,6 +10,9 @@ import guestsRoutes from "./routes/routeGuests.js";
 import User from "./models/User.js";
 import venueRoutes from "./routes/routeVenue.js";
 import browseVenueRoutes from "./routes/routeBrowseVenue.js";
+import eventRoutes from "./routes/routeEvent.js";
+import guestRoutes from "./routes/routeGuest.js";
+
 
 const app = express();
 
@@ -31,6 +34,9 @@ app.use("/api/auth", registerRoute);
 app.use("/api/users", registerOthersRoute);
 app.use("/api/deactivate", deactivateRoutes);
 app.use("/api/guests", guestsRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api", guestRoutes);
+
 
 // Login route
 app.post("/api/auth/login", async (req, res) => {
