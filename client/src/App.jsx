@@ -8,6 +8,9 @@ import BrowseVenuesPage from "./pages/pageBrowseVenue";
 import VenueLayoutDesigner from "./pages/organizer/VenueLayoutDesigner";
 import GuestList from "./pages/pageGuestList";
 import StaffSharedLayout from "./pages/StaffSharedLayout";
+import Events from "./pages/pageEvents";
+import EventWorkspace from "./pages/pageEventWorkspace";
+import RsvpPage from "./pages/pageRsvp";
 
 function App() {
   return (
@@ -23,6 +26,9 @@ function App() {
         <Route path="/browseVenues" element={<BrowseVenuesPage />} />
         <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
         <Route path="/staff/shared-layout" element={<StaffSharedLayout />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/:eventId/workspace" element={<EventWorkspace />} />
+        <Route path="/rsvp/:token" element={<RsvpPage />} />
       </Routes>
     </BrowserRouter>
   );
