@@ -6,6 +6,8 @@ import mongoose from "mongoose";
 import registerRoute from "./routes/routeRegister.js";
 import registerOthersRoute from "./routes/routeRegisterOthers.js";
 import deactivateRoutes from "./routes/routeDeactivate.js";
+import guestsRoutes from "./routes/routeGuests.js";
+
 
 import User from "./models/User.js";
 
@@ -28,6 +30,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", registerRoute);
 app.use("/api/users", registerOthersRoute);
 app.use("/api/deactivate", deactivateRoutes);
+app.use("/api/guests", guestsRoutes);
 
 // Login route
 app.post("/api/auth/login", async (req, res) => {
