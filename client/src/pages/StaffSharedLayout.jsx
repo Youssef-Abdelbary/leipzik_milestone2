@@ -5,7 +5,14 @@ function StaffSharedLayout() {
   const [layouts, setLayouts] = useState([]);
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [message, setMessage] = useState("Loading shared layouts...");
-
+  function getItemIcon(type) {
+    if (type === "Table") return "🍽️";
+    if (type === "Chair") return "🪑";
+    if (type === "Stage") return "🎤";
+    if (type === "Booth") return "🏪";
+    if (type === "Entrance") return "🚪";
+    return "📍";
+    }
   useEffect(() => {
     async function loadSharedLayouts() {
       try {
@@ -48,8 +55,8 @@ function StaffSharedLayout() {
     <div className="staff-layout-page">
       <div className="staff-layout-header">
         <div>
-          <h1>Shared Venue Layout</h1>
-          <p>Read-only layout shared by the organizer.</p>
+          <h1>📍 Shared Venue Layout</h1>
+          <p>👀 Read-only layout shared by the organizer.</p>
         </div>
 
         {layouts.length > 1 && (
@@ -84,7 +91,7 @@ function StaffSharedLayout() {
                 top: `${item.y}px`,
               }}
             >
-              {item.label || item.type}
+              {getItemIcon(item.type)} {item.label || item.type}
             </div>
           ))}
         </div>
