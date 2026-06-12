@@ -5,6 +5,8 @@ import mongoose from "mongoose";
 import registerRoute from "./routes/routeRegister.js";
 import registerOthersRoute from "./routes/routeRegisterOthers.js";
 import deactivateRoutes from "./routes/routeDeactivate.js";
+import venueRoutes from "./routes/routeVenue.js";
+import browseVenueRoutes from "./routes/routeBrowseVenue.js";
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(express.json());
 app.use("/api/auth", registerRoute);
 app.use("/api/users", registerOthersRoute);
 app.use("/api/deactivate", deactivateRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/browseVenues", browseVenueRoutes);
 
 // Connect to DB then start server
 const connectToDatabase = async () => {
@@ -26,10 +30,9 @@ const connectToDatabase = async () => {
     console.log("Connected to MongoDB!");
 
     const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log("Available collections:", collections.map(c => c.name));
+    console.log("Available collections:", collections.map((c) => c.name));
 
     app.listen(5001, () => console.log("Server running on port 5001"));
-
   } catch (err) {
     console.error("Database connection error:", err);
     process.exit(1);
