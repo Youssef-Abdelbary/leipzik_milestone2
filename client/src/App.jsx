@@ -4,6 +4,9 @@ import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
 import GuestList from "./pages/pageGuestList";
 import Login from "./pages/Login";
+import VenuesPage from "./pages/pageVenue";
+import BrowseVenuesPage from "./pages/pageBrowseVenue";
+
 
 function App() {
   return (
@@ -11,10 +14,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/guestList" element={<GuestList />} />
         <Route path="/register" element={<Register />} />
         <Route path="/registerOthers" element={<RegisterForOthers />} />
         <Route path="/deactivate" element={<UserDeactivation />} />
-         <Route path="/guestList" element={<GuestList />} />
+        <Route path="/venues" element={<VenuesPage />} />
+        <Route path="/browseVenues" element={<BrowseVenuesPage />} />
+
       </Routes>
     </BrowserRouter>
   );
