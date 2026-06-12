@@ -3,7 +3,7 @@ import { getGuests, updateGuestCheckIn } from "../services/serviceGuestList";
 import { log } from "../utils/logger";
 
 const RSVP_OPTIONS = ["pending", "attending", "tentative", "declined"];
-const CHECKIN_OPTIONS = ["not_arrived", "arrived"];
+const CHECKIN_OPTIONS = ["Hasn't Arrived", "Arrived"];
 
 export default function GuestListPage() {
   const [guests, setGuests] = useState([]);
@@ -14,8 +14,7 @@ export default function GuestListPage() {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    //log("client trying to fetch guests");
-    //log("client trying to fetch guests");
+    
     getGuests()
       .then((data) => {
         setGuests(data.data || []);
@@ -25,12 +24,22 @@ export default function GuestListPage() {
     }, []);
 
   const handleCheckInChange = (guestId, newStatus) => {
-    setGuests((prev) =>
-        prev.map((g) => (g._id === guestId ? { ...g, checkIn: { ...g.checkIn, status: newStatus } } : g))
-    );
-
-    updateGuestCheckIn(guestId, newStatus, "qr").catch(() => {});
-    };
+    updateGuestCheckIn(guestId, newStatus, "qr")
+        .then((res) => {
+            log("My guest:", guests.find(g => g._id === guestId));
+            // 2. Grab the fully updated guest object from your backend response
+            const updatedGuest = res.data; 
+            log("Updated guest from backend:", updatedGuest);
+            // 3. Replace the old guest in your React state with this fresh backend data
+            setGuests((prev) =>
+                prev.map((g) => (g._id === guestId ? updatedGuest : g))
+            );
+        })
+        .catch((error) => {
+            console.error("Failed to update guest check-in:", error);
+            // Handle error UI here if you want to
+    });
+  };
 
   // Build list of unique events for the event filter dropdown
   const eventOptions = [];
@@ -144,7 +153,7 @@ export default function GuestListPage() {
                       <td style={{ padding: "14px 20px", fontSize: 13, color: "#64748B" }}>{guest.rsvp?.status || "pending"}</td>
                       <td style={{ padding: "14px 20px" }} onClick={(e) => e.stopPropagation()}>
                         <select
-                          value={guest.checkIn?.status || "not_arrived"}
+                          value={guest.checkIn?.status || "Hasn't Arrived"}
                           onChange={(e) => handleCheckInChange(guest._id, e.target.value)}
                           style={smallSelectStyle}
                         >

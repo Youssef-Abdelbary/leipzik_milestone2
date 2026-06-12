@@ -61,8 +61,8 @@ const guestSchema = new mongoose.Schema({
     checkIn: {
         status: { 
             type: String, 
-            enum: ['not_arrived', 'arrived'], 
-            default: 'not_arrived' 
+            enum: ['Hasn\'t Arrived', 'Arrived'], 
+            default: 'Hasn\'t Arrived' 
         },
         checkedInAt: { 
             type: Date 
@@ -85,7 +85,7 @@ const guestSchema = new mongoose.Schema({
         type: Date 
     }
 }, 
-    { timestamps: true } // This automatically creates and manages your "createdAt" and "updatedAt" fields
+    { timestamps: true,collection: 'event_guests' } // This automatically creates and manages your "createdAt" and "updatedAt" fields
 );
 
 export default mongoose.models.Guest || mongoose.model('Guest', guestSchema);
