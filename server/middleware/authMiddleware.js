@@ -1,10 +1,9 @@
 import { verifyToken, verifyRefreshToken, generateToken } from "../utils/generateJWT.js";
 import User from "../models/modelUser.js";
-import { log } from "../utils/logger.js";
 
 export async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
-  //log("auth middleware called");
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
       message: "Authorization token required",
