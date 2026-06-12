@@ -54,6 +54,11 @@ app.post("/api/auth/login", async (req, res) => {
         message: "Invalid email or password",
       });
     }
+    if (user.status !== "active") {
+      return res.status(403).json({
+        message: "Your account is inactive. Please contact the organizer.",
+      });
+    }
 
     res.json({
       message: "Login successful",
