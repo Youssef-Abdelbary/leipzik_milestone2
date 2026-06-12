@@ -108,7 +108,14 @@ function VenueLayoutDesigner() {
       setItems(JSON.parse(savedLayout));
     }
   }, []);
-
+  function getItemIcon(type) {
+    if (type === "Table") return "🍽️";
+    if (type === "Chair") return "🪑";
+    if (type === "Stage") return "🎤";
+    if (type === "Booth") return "🏪";
+    if (type === "Entrance") return "🚪";
+    return "📍";
+  }
   function addItem(type) {
     const newItem = {
       id: Date.now(),
@@ -214,27 +221,27 @@ function VenueLayoutDesigner() {
       <aside className="layout-sidebar">
         <h2>Elements</h2>
 
-        <button onClick={() => addItem("Table")}>Table</button>
-        <button onClick={() => addItem("Chair")}>Chair</button>
-        <button onClick={() => addItem("Stage")}>Stage</button>
-        <button onClick={() => addItem("Booth")}>Booth</button>
-        <button onClick={() => addItem("Entrance")}>Entrance</button>
+        <button onClick={() => addItem("Table")}>🍽️ Table</button>
+        <button onClick={() => addItem("Chair")}>🪑 Chair</button>
+        <button onClick={() => addItem("Stage")}>🎤 Stage</button>
+        <button onClick={() => addItem("Booth")}>🏪 Booth</button>
+        <button onClick={() => addItem("Entrance")}>🚪 Entrance</button>
       </aside>
 
       <main className="layout-main">
         <div className="layout-header">
           <div>
-            <h1>Venue Layout Designer</h1>
+            <h1>🏟️ Venue Layout Designer</h1>
             <p>Drag and drop elements to design your venue layout</p>
           </div>
 
           <div className="layout-actions">
-            <button onClick={deleteSelectedItem}>Delete Selected</button>
-            <button onClick={saveLayout}>Save Layout</button>
-            <button onClick={clearLayout}>Clear Layout</button>
-            <button onClick={() => setShowShareBox(!showShareBox)}>Share</button>
-            <button onClick={exportAsImage}>Export Image</button>
-            <button onClick={exportAsPDF}>Export PDF</button>
+            <button onClick={saveLayout}>💾 Save Layout</button>
+            <button onClick={clearLayout}>🧹 Clear Layout</button>
+            <button onClick={() => setShowShareBox(!showShareBox)}>📤 Share</button>
+            <button onClick={exportAsImage}>🖼️ Export Image</button>
+            <button onClick={exportAsPDF}>📄 Export PDF</button>
+            <button onClick={deleteSelectedItem}>🗑️ Delete Selected</button>
           </div>
           {showShareBox && (
       <div className="share-box">
@@ -242,7 +249,7 @@ function VenueLayoutDesigner() {
           value={selectedStaffId}
           onChange={(event) => setSelectedStaffId(event.target.value)}
         >
-          <option value="">Choose staff member</option>
+          <option value="">👥 Choose staff member</option>
 
           {staffMembers.map((staff) => (
             <option key={staff._id} value={staff._id}>
@@ -251,7 +258,7 @@ function VenueLayoutDesigner() {
           ))}
         </select>
 
-        <button onClick={shareLayoutWithStaff}>Confirm Share</button>
+        <button onClick={shareLayoutWithStaff}>✅ Confirm Share</button>
       </div>
     )}
         </div>
@@ -280,7 +287,7 @@ function VenueLayoutDesigner() {
         setSelectedItemId(selectedItemId === item.id ? null : item.id)
     }
   >
-    {item.type}
+    {getItemIcon(item.type)}
   </div>
 ))}
         </div>
