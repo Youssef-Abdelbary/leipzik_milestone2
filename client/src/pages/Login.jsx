@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
   const [success, setSuccess] = useState("");
 
   async function handleSubmit(event) {
@@ -27,8 +29,7 @@ function Login() {
 
     console.log(data);
     if (response.ok) {
-      setSuccess(data.message);
-      setError("");
+      navigate("/register");
     } else {
       setError(data.message);
       setSuccess("");

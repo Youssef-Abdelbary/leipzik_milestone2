@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getGuests, updateGuestCheckIn } from "../services/serviceGuestList";
+import { log } from "../utils/logger";
 
 const RSVP_OPTIONS = ["pending", "attending", "tentative", "declined"];
 const CHECKIN_OPTIONS = ["not_arrived", "arrived"];
@@ -13,12 +14,14 @@ export default function GuestListPage() {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-  getGuests()
-    .then((data) => {
-      setGuests(data.data || []);
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
+    //log("client trying to fetch guests");
+    //log("client trying to fetch guests");
+    getGuests()
+      .then((data) => {
+        setGuests(data.data || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
     }, []);
 
   const handleCheckInChange = (guestId, newStatus) => {

@@ -1,8 +1,12 @@
 const BASE_URL = "http://localhost:5001/api";
+import { log } from "./logger";
 
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
+
+  log("token:", token);
+  log("refreshToken:", refreshToken);
 
   const headers = {
     "Content-Type": "application/json",
@@ -17,6 +21,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers["x-refresh-token"] = refreshToken;
   }
 
+  log(`Making API request to ${endpoint} with options: ${JSON.stringify(options)}`);
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
