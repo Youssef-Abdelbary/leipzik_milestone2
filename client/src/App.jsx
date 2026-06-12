@@ -5,8 +5,9 @@ import UserDeactivation from "./pages/pageDeactivate";
 import Login from "./pages/Login";
 import VenuesPage from "./pages/pageVenue";
 import BrowseVenuesPage from "./pages/pageBrowseVenue";
-import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
+import VenueLayoutDesigner from "./pages/organizer/VenueLayoutDesigner";
 import GuestList from "./pages/pageGuestList";
+import StaffSharedLayout from "./pages/StaffSharedLayout";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/venues" element={<VenuesPage />} />
         <Route path="/browseVenues" element={<BrowseVenuesPage />} />
         <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
+        <Route path="/staff/shared-layout" element={<StaffSharedLayout />} />
       </Routes>
     </BrowserRouter>
   );

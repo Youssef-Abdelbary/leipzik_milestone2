@@ -9,6 +9,98 @@ function VenueLayoutDesigner() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedItemId, setSelectedItemId] = useState(null);
   const floorPlanRef = useRef(null);
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [showShareBox, setShowShareBox] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [currentLayoutId, setCurrentLayoutId] = useState(null);
+  useEffect(() => {
+    async function loadStaffMembers() {
+      try {
+        const response = await fetch("http://localhost:5001/api/layouts/staff");
+        const data = await response.json();
+
+        setStaffMembers(data);
+      } catch (error) {
+        console.error("Failed to load staff members:", error);
+      }
+    }
+
+    loadStaffMembers();
+  }, []);
+
+  async function shareLayoutWithStaff() {
+  if (!selectedStaffId) {
+    alert("Please choose a staff member first.");
+    return;
+  }
+
+  try {
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    const saveResponse = await fetch("http://localhost:5001/api/layouts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        organizerId: loggedInUser?.id,
+        title: "Venue Layout",
+        elements: items.map((item) => ({
+          elementId: String(item.id),
+          type: item.type,
+          label: item.type,
+          x: item.x,
+          y: item.y,
+          width: 100,
+          height: 50,
+          rotation: 0,
+        })),
+        canvasSize: {
+          width: 1000,
+          height: 620,
+        },
+      }),
+    });
+
+    const saveData = await saveResponse.json();
+
+    if (!saveResponse.ok) {
+      alert(saveData.message || "Failed to save layout");
+      return;
+    }
+
+    const layoutId = saveData.layout._id;
+    setCurrentLayoutId(layoutId);
+
+    const shareResponse = await fetch(
+      `http://localhost:5001/api/layouts/${layoutId}/share`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          staffId: selectedStaffId,
+        }),
+      }
+    );
+
+    const shareData = await shareResponse.json();
+
+    if (!shareResponse.ok) {
+      alert(shareData.message || "Failed to share layout");
+      return;
+    }
+
+    alert("Layout shared successfully!");
+    setShowShareBox(false);
+    setSelectedStaffId("");
+  } catch (error) {
+    console.error("Share layout error:", error);
+    alert("Something went wrong while sharing the layout.");
+  }
+}
+
   useEffect(() => {
     const savedLayout = localStorage.getItem("venueLayout");
 
@@ -140,10 +232,28 @@ function VenueLayoutDesigner() {
             <button onClick={deleteSelectedItem}>Delete Selected</button>
             <button onClick={saveLayout}>Save Layout</button>
             <button onClick={clearLayout}>Clear Layout</button>
-            <button>Share</button>
+            <button onClick={() => setShowShareBox(!showShareBox)}>Share</button>
             <button onClick={exportAsImage}>Export Image</button>
             <button onClick={exportAsPDF}>Export PDF</button>
           </div>
+          {showShareBox && (
+      <div className="share-box">
+        <select
+          value={selectedStaffId}
+          onChange={(event) => setSelectedStaffId(event.target.value)}
+        >
+          <option value="">Choose staff member</option>
+
+          {staffMembers.map((staff) => (
+            <option key={staff._id} value={staff._id}>
+              {staff.fullName || staff.email}
+            </option>
+          ))}
+        </select>
+
+        <button onClick={shareLayoutWithStaff}>Confirm Share</button>
+      </div>
+    )}
         </div>
 
         <div

@@ -14,7 +14,7 @@ function Login() {
       setError("Please fill in all fields");
       return;
     }
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const response = await fetch("http://localhost:5001/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,11 +29,14 @@ function Login() {
 
     console.log(data);
     if (response.ok) {
-
+      localStorage.setItem("loggedInUser", JSON.stringify(data.user));
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
         navigate("/organizer/venue-layout");
+      }
+      if (data.user.role === "staff") {
+        navigate("/staff/shared-layout");
       }
 
     } else {
