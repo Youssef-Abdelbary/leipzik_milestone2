@@ -2,15 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "./pages/pageRegister";
 import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
-import GuestList from "./pages/pageGuestList";
 import Login from "./pages/Login";
-<<<<<<< HEAD
-import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
-=======
 import VenuesPage from "./pages/pageVenue";
 import BrowseVenuesPage from "./pages/pageBrowseVenue";
-
->>>>>>> c6a2b807ccbc869ce28ebb95e999d79448b8d04c
+import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
+import GuestList from "./pages/pageGuestList";
 
 function App() {
   return (
@@ -22,13 +18,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/registerOthers" element={<RegisterForOthers />} />
         <Route path="/deactivate" element={<UserDeactivation />} />
-<<<<<<< HEAD
-        <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
-=======
         <Route path="/venues" element={<VenuesPage />} />
         <Route path="/browseVenues" element={<BrowseVenuesPage />} />
-
->>>>>>> c6a2b807ccbc869ce28ebb95e999d79448b8d04c
+        <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
       </Routes>
     </BrowserRouter>
   );
