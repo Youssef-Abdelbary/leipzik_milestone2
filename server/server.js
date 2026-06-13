@@ -14,6 +14,7 @@ import eventRoutes from "./routes/routeEvent.js";
 import guestRoutes from "./routes/routeGuest.js";
 import EventLayout from "./models/EventLayout.js";
 import layoutRoutes from "./routes/layoutRoutes.js";
+import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api", guestRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
+app.use("/api/browseVendors", browseVendorRoutes);
 
 
 app.use("/api/layouts", layoutRoutes);
