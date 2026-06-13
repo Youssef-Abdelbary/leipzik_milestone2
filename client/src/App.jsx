@@ -6,6 +6,7 @@ import GuestList from "./pages/pageGuestList";
 import Login from "./pages/Login";
 import VenuesPage from "./pages/pageVenue";
 import BrowseVenuesPage from "./pages/pageBrowseVenue";
+import BrowseVendorsPage from "./pages/pageBrowseVendor";
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/deactivate" element={<UserDeactivation />} />
         <Route path="/venues" element={<VenuesPage />} />
         <Route path="/browseVenues" element={<BrowseVenuesPage />} />
+        <Route path="/browseVendors" element={<BrowseVendorsPage />} />
 
       </Routes>
     </BrowserRouter>
