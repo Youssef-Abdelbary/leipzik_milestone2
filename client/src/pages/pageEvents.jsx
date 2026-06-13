@@ -90,7 +90,7 @@ export default function Events() {
               return (
                 <div
                   key={ev._id}
-                  onClick={() => navigate(`/events/${ev._id}/workspace`)}
+                  onClick={() => navigate(`/organizer/events/${ev._id}/workspace`)}
                   style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '20px 24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'box-shadow 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(15,23,42,0.08)'}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
