@@ -17,6 +17,7 @@ import layoutRoutes from "./routes/layoutRoutes.js";
 import notificationRoute from "./routes/routeNotification.js";
 import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
+import { setServers } from "node:dns/promises";
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.post("/api/auth/login", async (req, res) => {
 // Connect to DB then start server
 const connectToDatabase = async () => {
   try {
+    setServers(["1.1.1.1", "8.8.8.8"]);
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB!");
 
