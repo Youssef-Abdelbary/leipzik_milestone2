@@ -14,6 +14,7 @@ import RsvpPage from "./pages/pageRsvp";
 import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
+import BudgetManagement from "./pages/pageBudgetManagement";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/notificationsView" element={<NotificationsPage />} />
         <Route path="/browseVendors" element={<BrowseVendorsPage />} />
         <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
+        <Route path="/organizer/budget" element={<BudgetManagement />} />
       </Routes>
     </BrowserRouter>
   );
