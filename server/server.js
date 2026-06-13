@@ -10,8 +10,21 @@ import guestsRoutes from "./routes/routeGuests.js";
 import User from "./models/User.js";
 import venueRoutes from "./routes/routeVenue.js";
 import browseVenueRoutes from "./routes/routeBrowseVenue.js";
+<<<<<<< HEAD
 import routeResponseVenue from './routes/routeResponseVenue.js';
 import routeMangeBookings from './routes/routeManageBookings.js'
+=======
+import eventRoutes from "./routes/routeEvent.js";
+import guestRoutes from "./routes/routeGuest.js";
+import EventLayout from "./models/EventLayout.js";
+import layoutRoutes from "./routes/layoutRoutes.js";
+import notificationRoute from "./routes/routeNotification.js";
+import browseVendorRoutes from "./routes/routeBrowseVendor.js";
+import workflowRoutes from "./routes/routeWorkFlow.js";
+import budgetRoutes from "./routes/routeBudget.js";
+
+import { setServers } from "node:dns/promises";
+>>>>>>> d41a4200732191b51ce1cc4d8949bde3135dfd22
 
 const app = express();
 
@@ -35,9 +48,21 @@ app.use("/api/deactivate", deactivateRoutes);
 app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/guests", guestsRoutes);
+<<<<<<< HEAD
 app.use('/api/venueResponse', routeResponseVenue);
 app.use('/api/bookings', routeMangeBookings);
 
+=======
+app.use("/api/events", eventRoutes);
+app.use("/api", guestRoutes);
+app.use("/api/notifications", notificationRoute);
+app.use("/api/venues", venueRoutes);
+app.use("/api/browseVenues", browseVenueRoutes);
+app.use("/api/browseVendors", browseVendorRoutes);
+app.use("/api/workflow", workflowRoutes);
+app.use("/api/budget", budgetRoutes);
+app.use("/api/layouts", layoutRoutes);
+>>>>>>> d41a4200732191b51ce1cc4d8949bde3135dfd22
 // Login route
 app.post("/api/auth/login", async (req, res) => {
   try {
@@ -88,9 +113,16 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> d41a4200732191b51ce1cc4d8949bde3135dfd22
 // Connect to DB then start server
 const connectToDatabase = async () => {
   try {
+    setServers(["1.1.1.1", "8.8.8.8"]);
     await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to MongoDB!");
 

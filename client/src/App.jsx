@@ -5,11 +5,19 @@ import UserDeactivation from "./pages/pageDeactivate";
 import Login from "./pages/Login";
 import VenuesPage from "./pages/pageVenue";
 import BrowseVenuesPage from "./pages/pageBrowseVenue";
-import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
+import VenueLayoutDesigner from "./pages/organizer/VenueLayoutDesigner";
 import GuestList from "./pages/pageGuestList";
 import PageResponseVenue from "./pages/PageResponseVenue";
 import BookingCalendar from "./pages/pageBookingCalendar";
 import VenueReports from "./pages/pageVenueReports";
+import StaffSharedLayout from "./pages/StaffSharedLayout";
+import Events from "./pages/pageEvents";
+import EventWorkspace from "./pages/pageEventWorkspace";
+import RsvpPage from "./pages/pageRsvp";
+import NotificationsPage from "./pages/pageNotificationsView";
+import BrowseVendorsPage from "./pages/pageBrowseVendor";
+import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
+import BudgetManagement from "./pages/pageBudgetManagement";
 
 function getCurrentUserId() {
   try {
@@ -40,6 +48,14 @@ function App() {
         <Route path="/venueResponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
         <Route path="/venueReports" element={<VenueReports />} />
         <Route path="/bookingCalendar" element={<BookingCalendar />} />
+        <Route path="/staff/shared-layout" element={<StaffSharedLayout />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/:eventId/workspace" element={<EventWorkspace />} />
+        <Route path="/rsvp/:token" element={<RsvpPage />} />
+        <Route path="/notificationsView" element={<NotificationsPage />} />
+        <Route path="/browseVendors" element={<BrowseVendorsPage />} />
+        <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
+        <Route path="/organizer/budget" element={<BudgetManagement />} />
       </Routes>
     </BrowserRouter>
   );
