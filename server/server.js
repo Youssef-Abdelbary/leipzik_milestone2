@@ -15,6 +15,7 @@ import guestRoutes from "./routes/routeGuest.js";
 import EventLayout from "./models/EventLayout.js";
 import layoutRoutes from "./routes/layoutRoutes.js";
 import notificationRoute from "./routes/routeNotification.js";
+import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 
 const app = express();
 
@@ -39,6 +40,9 @@ app.use("/api/guests", guestsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api", guestRoutes);
 app.use("/api/notifications", notificationRoute);
+app.use("/api/venues", venueRoutes);
+app.use("/api/browseVenues", browseVenueRoutes);
+app.use("/api/browseVendors", browseVendorRoutes);
 
 
 app.use("/api/layouts", layoutRoutes);
@@ -92,8 +96,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-app.use("/api/venues", venueRoutes);
-app.use("/api/browseVenues", browseVenueRoutes);
+
 
 
 // Connect to DB then start server
