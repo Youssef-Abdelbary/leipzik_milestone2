@@ -37,22 +37,22 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/guestList" element={<GuestList />} />
+        <Route path="/staff/guestlist" element={<GuestList />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/registerOthers" element={<RegisterForOthers />} />
-        <Route path="/deactivate" element={<UserDeactivation />} />
-        <Route path="/venues" element={<VenuesPage />} />
-        <Route path="/browseVenues" element={<BrowseVenuesPage />} />
-        <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
-        <Route path="/venueResponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
-        <Route path="/venueReports" element={<VenueReports />} />
-        <Route path="/bookingCalendar" element={<BookingCalendar />} />
-        <Route path="/staff/shared-layout" element={<StaffSharedLayout />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/events/:eventId/workspace" element={<EventWorkspace />} />
-        <Route path="/rsvp/:token" element={<RsvpPage />} />
-        <Route path="/notificationsView" element={<NotificationsPage />} />
-        <Route path="/browseVendors" element={<BrowseVendorsPage />} />
+        <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
+        <Route path="/organizer/deactivate" element={<UserDeactivation />} />
+        <Route path="/venueowner/venues" element={<VenuesPage />} />
+        <Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
+        <Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
+        <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
+        <Route path="/venueowner/venuereports" element={<VenueReports />} />
+        <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
+        <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
+        <Route path="/organizer/events" element={<Events />} />
+        <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
+        <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
+        <Route path="/notificationsview" element={<NotificationsPage />} />
+        <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
         <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
         <Route path="/organizer/budget" element={<BudgetManagement />} />
       </Routes>
