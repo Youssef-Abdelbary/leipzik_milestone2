@@ -11,6 +11,7 @@ import User from "./models/User.js";
 import venueRoutes from "./routes/routeVenue.js";
 import browseVenueRoutes from "./routes/routeBrowseVenue.js";
 import routeResponseVenue from './routes/routeResponseVenue.js';
+import routeMangeBookings from './routes/routeManageBookings.js'
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/guests", guestsRoutes);
 app.use('/api/venueResponse', routeResponseVenue);
+app.use('/api/bookings', routeMangeBookings);
 
 // Login route
 app.post("/api/auth/login", async (req, res) => {

@@ -8,6 +8,8 @@ import BrowseVenuesPage from "./pages/pageBrowseVenue";
 import VenueLayoutDesigner from "./pages/VenueLayoutDesigner";
 import GuestList from "./pages/pageGuestList";
 import PageResponseVenue from "./pages/PageResponseVenue";
+import BookingCalendar from "./pages/pageBookingCalendar";
+import VenueReports from "./pages/pageVenueReports";
 
 function getCurrentUserId() {
   try {
@@ -36,6 +38,8 @@ function App() {
         <Route path="/browseVenues" element={<BrowseVenuesPage />} />
         <Route path="/organizer/venue-layout" element={<VenueLayoutDesigner />} />
         <Route path="/venueResponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
+        <Route path="/venueReports" element={<VenueReports />} />
+        <Route path="/bookingCalendar" element={<BookingCalendar />} />
       </Routes>
     </BrowserRouter>
   );
