@@ -31,6 +31,8 @@ app.use("/api/auth", registerRoute);
 app.use("/api/users", registerOthersRoute);
 app.use("/api/deactivate", deactivateRoutes);
 app.use("/api/guests", guestsRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/browseVenues", browseVenueRoutes);
 
 // Login route
 app.post("/api/auth/login", async (req, res) => {
@@ -77,8 +79,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-app.use("/api/venues", venueRoutes);
-app.use("/api/browseVenues", browseVenueRoutes);
+
 
 
 // Connect to DB then start server
