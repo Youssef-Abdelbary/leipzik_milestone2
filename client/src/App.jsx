@@ -11,6 +11,7 @@ import StaffSharedLayout from "./pages/StaffSharedLayout";
 import Events from "./pages/pageEvents";
 import EventWorkspace from "./pages/pageEventWorkspace";
 import RsvpPage from "./pages/pageRsvp";
+import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
 
 
@@ -31,6 +32,7 @@ function App() {
         <Route path="/events" element={<Events />} />
         <Route path="/events/:eventId/workspace" element={<EventWorkspace />} />
         <Route path="/rsvp/:token" element={<RsvpPage />} />
+        <Route path="/notificationsView" element={<NotificationsPage />} />
         <Route path="/browseVendors" element={<BrowseVendorsPage />} />
 
       </Routes>
