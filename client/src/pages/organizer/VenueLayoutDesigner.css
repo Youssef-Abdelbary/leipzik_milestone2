@@ -146,3 +146,56 @@
   outline: 3px solid white;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
 }
+
+.share-box {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.share-box select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #454542;
+  background-color: #1f1f1d;
+  color: white;
+}
+
+.share-box button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: #059669;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.event-selector {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.event-selector label {
+  color: white;
+  font-weight: 700;
+}
+
+.event-selector select {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #454542;
+  background-color: #1f1f1f;
+  color: white;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.event-selector select:focus {
+  border-color: #3b82f6;
+}

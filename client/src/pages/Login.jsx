@@ -14,7 +14,7 @@ function Login() {
       setError("Please fill in all fields");
       return;
     }
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const response = await fetch("http://localhost:5001/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -29,11 +29,14 @@ function Login() {
 
     console.log(data);
     if (response.ok) {
-
+      localStorage.setItem("loggedInUser", JSON.stringify(data.user));
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
-        navigate("/organizer/venue-layout");
+        navigate("/organizer/budget");
+      }
+      if (data.user.role === "staff") {
+        navigate("/staff/shared-layout");
       }
 
     } else {
@@ -46,8 +49,8 @@ function Login() {
   return (
     <div className="login-page">
       <form className="login-form" onSubmit={handleSubmit}>
-        <h1>Welcome Back</h1>
-        <p>Please login to continue</p>
+        <h1>👋 Welcome Back</h1>
+        <p>Login to continue to your dashboard</p>
 
         <div className="form-group">
           <label>Email</label>
@@ -70,7 +73,7 @@ function Login() {
         </div>
         {error && <p className="error-message">{error}</p>}
         {success && <p className="success-message">{success}</p>}
-        <button type="submit">Login</button>
+        <button type="submit">🔐 Login</button>
       </form>
     </div>
   );
