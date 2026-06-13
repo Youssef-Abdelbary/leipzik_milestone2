@@ -8,7 +8,7 @@ const browseVenueSchema = new mongoose.Schema({
 
     eventType: { type: String, required: true, trim: true },
 
-    requestedDate: { type: Date, required: true },
+    requestedDates: { type: [Date], required: true },
 
     expectedAttendees: { type: Number },
 

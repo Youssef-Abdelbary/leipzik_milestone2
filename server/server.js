@@ -10,6 +10,8 @@ import guestsRoutes from "./routes/routeGuests.js";
 import User from "./models/User.js";
 import venueRoutes from "./routes/routeVenue.js";
 import browseVenueRoutes from "./routes/routeBrowseVenue.js";
+import routeResponseVenue from './routes/routeResponseVenue.js';
+import routeMangeBookings from './routes/routeManageBookings.js'
 import eventRoutes from "./routes/routeEvent.js";
 import guestRoutes from "./routes/routeGuest.js";
 import EventLayout from "./models/EventLayout.js";
@@ -40,7 +42,11 @@ app.get("/", (req, res) => {
 app.use("/api/auth", registerRoute);
 app.use("/api/users", registerOthersRoute);
 app.use("/api/deactivate", deactivateRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/guests", guestsRoutes);
+app.use('/api/venueResponse', routeResponseVenue);
+app.use('/api/bookings', routeMangeBookings);
 app.use("/api/events", eventRoutes);
 app.use("/api", guestRoutes);
 app.use("/api/notifications", notificationRoute);
@@ -100,9 +106,6 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-
-
-
 // Connect to DB then start server
 const connectToDatabase = async () => {
   try {
@@ -111,20 +114,13 @@ const connectToDatabase = async () => {
     console.log("Connected to MongoDB!");
 
     const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log(
-      "Available collections:",
-      collections.map((c) => c.name)
-    );
+    console.log("Available collections:", collections.map((c) => c.name));
 
     const PORT = process.env.PORT || 5001;
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-
-    console.log("Available collections:", collections.map((c) => c.name));
-
-    app.listen(5001, () => console.log("Server running on port 5001"));
   } catch (err) {
     console.error("Database connection error:", err);
     process.exit(1);

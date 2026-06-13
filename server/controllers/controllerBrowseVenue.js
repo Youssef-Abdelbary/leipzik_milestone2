@@ -36,12 +36,16 @@ export async function requestBooking(req, res) {
     try {
         const {
             eventType,
-            requestedDate,
+            requestedDates,
             expectedAttendees,
             specialRequirements,
             proposedAmount,
             proposedCurrency,
         } = req.body;
+
+        if (!Array.isArray(requestedDates) || requestedDates.length === 0) {
+            return res.status(400).json({ message: 'At least one date is required' });
+        }
 
         const venue = await Venue.findOne({
             _id:       req.params.id,
@@ -57,7 +61,7 @@ export async function requestBooking(req, res) {
             venueOwnerId: venue.ownerId,
 
             eventType,
-            requestedDate: new Date(requestedDate),
+            requestedDates: requestedDates.map(d => new Date(d + 'T00:00:00.000Z')),
             expectedAttendees,
             specialRequirements,
 
