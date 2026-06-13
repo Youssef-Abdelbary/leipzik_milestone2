@@ -14,6 +14,7 @@ import eventRoutes from "./routes/routeEvent.js";
 import guestRoutes from "./routes/routeGuest.js";
 import EventLayout from "./models/EventLayout.js";
 import layoutRoutes from "./routes/layoutRoutes.js";
+import notificationRoute from "./routes/routeNotification.js";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/deactivate", deactivateRoutes);
 app.use("/api/guests", guestsRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api", guestRoutes);
+app.use("/api/notifications", notificationRoute);
 
 
 app.use("/api/layouts", layoutRoutes);
