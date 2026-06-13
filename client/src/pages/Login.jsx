@@ -33,7 +33,7 @@ function Login() {
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
-        navigate("/organizer/venue-layout");
+        navigate("/organizer/budget");
       }
       if (data.user.role === "staff") {
         navigate("/staff/shared-layout");

@@ -17,6 +17,8 @@ import layoutRoutes from "./routes/layoutRoutes.js";
 import notificationRoute from "./routes/routeNotification.js";
 import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
+import budgetRoutes from "./routes/routeBudget.js";
+
 import { setServers } from "node:dns/promises";
 
 const app = express();
@@ -46,7 +48,7 @@ app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/browseVendors", browseVendorRoutes);
 app.use("/api/workflow", workflowRoutes);
-
+app.use("/api/budget", budgetRoutes);
 app.use("/api/layouts", layoutRoutes);
 // Login route
 app.post("/api/auth/login", async (req, res) => {
