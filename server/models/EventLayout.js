@@ -23,17 +23,17 @@ const layoutElementSchema = new mongoose.Schema(
 
 const eventLayoutSchema = new mongoose.Schema(
   {
-    eventId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Event",
-      default: null,
-    },
+  eventId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Event",
+    required: true,
+  },
 
-    organizerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
+  organizerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
 
     title: {
       type: String,

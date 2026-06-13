@@ -13,7 +13,7 @@ import EventWorkspace from "./pages/pageEventWorkspace";
 import RsvpPage from "./pages/pageRsvp";
 import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
-
+import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 
 function App() {
   return (
@@ -34,7 +34,7 @@ function App() {
         <Route path="/rsvp/:token" element={<RsvpPage />} />
         <Route path="/notificationsView" element={<NotificationsPage />} />
         <Route path="/browseVendors" element={<BrowseVendorsPage />} />
-
+        <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
       </Routes>
     </BrowserRouter>
   );

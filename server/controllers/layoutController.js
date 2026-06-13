@@ -20,18 +20,30 @@ export async function getActiveStaff(req, res) {
 
 export async function saveLayout(req, res) {
   try {
-    const { organizerId, title, elements, canvasSize } = req.body;
+    const { eventId, title, elements, canvasSize } = req.body;
 
-    const layout = await EventLayout.create({
-      organizerId,
-      title,
-      elements,
-      canvasSize,
-      sharedWithStaff: [],
-    });
+    if (!eventId) {
+      return res.status(400).json({
+        message: "Event ID is required to save a layout",
+      });
+    }
 
-    res.status(201).json({
-      message: "Layout saved successfully",
+    const layout = await EventLayout.findOneAndUpdate(
+      { eventId },
+      {
+        eventId,
+        title: title || "Venue Layout",
+        elements,
+        canvasSize,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+
+    res.status(200).json({
+      message: "Layout saved successfully for this event",
       layout,
     });
   } catch (error) {
@@ -97,6 +109,26 @@ export async function getSharedLayoutsForStaff(req, res) {
 
     res.status(500).json({
       message: "Failed to load shared layouts",
+    });
+  }
+}
+
+export async function getLayoutByEvent(req, res) {
+  try {
+    const { eventId } = req.params;
+
+    const layout = await EventLayout.findOne({ eventId });
+
+    if (!layout) {
+      return res.json(null);
+    }
+
+    res.json(layout);
+  } catch (error) {
+    console.error("Load layout by event error:", error);
+
+    res.status(500).json({
+      message: "Failed to load layout for this event",
     });
   }
 }

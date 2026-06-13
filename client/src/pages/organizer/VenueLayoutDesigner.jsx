@@ -13,29 +13,118 @@ function VenueLayoutDesigner() {
   const [showShareBox, setShowShareBox] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [currentLayoutId, setCurrentLayoutId] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState("");
+
+  useEffect(() => {
+    async function loadEvents() {
+      try {
+        const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+        if (!loggedInUser?._id && !loggedInUser?.id) {
+          console.warn("No logged-in user found.");
+          return;
+        }
+
+        const organizerId = loggedInUser._id || loggedInUser.id;
+
+        const response = await fetch(
+          `http://localhost:5001/api/workflow/events/${organizerId}`
+        );
+
+        const data = await response.json();
+
+        setEvents(data);
+
+        if (data.length > 0) {
+          setSelectedEventId(data[0]._id);
+        }
+      } catch (error) {
+        console.error("Failed to load events:", error);
+      }
+    }
+
+    loadEvents();
+  }, []);
+
   useEffect(() => {
     async function loadStaffMembers() {
       try {
         const response = await fetch("http://localhost:5001/api/layouts/staff");
+
         const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to load staff members");
+          return;
+        }
 
         setStaffMembers(data);
       } catch (error) {
         console.error("Failed to load staff members:", error);
+        alert("Something went wrong while loading staff members.");
       }
     }
 
     loadStaffMembers();
   }, []);
 
+  useEffect(() => {
+    async function loadLayoutForSelectedEvent() {
+      if (!selectedEventId) {
+        setItems([]);
+        setCurrentLayoutId(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:5001/api/layouts/event/${selectedEventId}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to load layout for this event");
+          return;
+        }
+
+        if (!data) {
+          setItems([]);
+          setCurrentLayoutId(null);
+          return;
+        }
+
+        const loadedItems = data.elements.map((element) => ({
+          id: Number(element.elementId),
+          type: element.type,
+          x: element.x,
+          y: element.y,
+        }));
+
+        setItems(loadedItems);
+        setCurrentLayoutId(data._id);
+      } catch (error) {
+        console.error("Failed to load layout for selected event:", error);
+        alert("Something went wrong while loading this event layout.");
+      }
+    }
+
+    loadLayoutForSelectedEvent();
+  }, [selectedEventId]);
+
   async function shareLayoutWithStaff() {
   if (!selectedStaffId) {
     alert("Please choose a staff member first.");
     return;
   }
+  if (!selectedEventId) {
+    alert("Please select an event before sharing the layout.");
+    return;
+  }
 
   try {
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  
 
     const saveResponse = await fetch("http://localhost:5001/api/layouts", {
       method: "POST",
@@ -43,7 +132,7 @@ function VenueLayoutDesigner() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        organizerId: loggedInUser?.id,
+        eventId: selectedEventId,
         title: "Venue Layout",
         elements: items.map((item) => ({
           elementId: String(item.id),
@@ -101,13 +190,7 @@ function VenueLayoutDesigner() {
   }
 }
 
-  useEffect(() => {
-    const savedLayout = localStorage.getItem("venueLayout");
 
-    if (savedLayout) {
-      setItems(JSON.parse(savedLayout));
-    }
-  }, []);
   function getItemIcon(type) {
     if (type === "Table") return "🍽️";
     if (type === "Chair") return "🪑";
@@ -130,7 +213,6 @@ function VenueLayoutDesigner() {
   function clearLayout() {
     setItems([]);
     setSelectedItemId(null);
-    localStorage.removeItem("venueLayout");
     }
 
     async function exportAsImage() {
@@ -173,10 +255,52 @@ function VenueLayoutDesigner() {
     setItems(items.filter((item) => item.id !== selectedItemId));
     setSelectedItemId(null);
     }
-    function saveLayout() {
-    localStorage.setItem("venueLayout", JSON.stringify(items));
-    alert("Layout saved successfully!");
+  async function saveLayout() {
+    try {
+      if (!selectedEventId) {
+        alert("Please select an event before saving the layout.");
+        return;
+      }
+
+      const response = await fetch("http://localhost:5001/api/layouts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: selectedEventId,
+          title: "Venue Layout",
+          elements: items.map((item) => ({
+            elementId: String(item.id),
+            type: item.type,
+            label: item.type,
+            x: item.x,
+            y: item.y,
+            width: 100,
+            height: 50,
+            rotation: 0,
+          })),
+          canvasSize: {
+            width: 1000,
+            height: 620,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Failed to save layout");
+        return;
+      }
+
+      setCurrentLayoutId(data.layout._id);
+      alert("Layout saved successfully for this event!");
+    } catch (error) {
+      console.error("Save layout error:", error);
+      alert("Something went wrong while saving the layout.");
     }
+  }
 
   function startDragging(event, item) {
     event.preventDefault();
@@ -234,7 +358,22 @@ function VenueLayoutDesigner() {
             <h1>🏟️ Venue Layout Designer</h1>
             <p>Drag and drop elements to design your venue layout</p>
           </div>
+          <div className="event-selector">
+            <label>Select Event</label>
 
+            <select
+              value={selectedEventId}
+              onChange={(event) => setSelectedEventId(event.target.value)}
+            >
+              <option value="">Choose an event</option>
+
+              {events.map((event) => (
+                <option key={event._id} value={event._id}>
+                  {event.title}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="layout-actions">
             <button onClick={saveLayout}>💾 Save Layout</button>
             <button onClick={clearLayout}>🧹 Clear Layout</button>
