@@ -1,10 +1,21 @@
 import mongoose from 'mongoose';
 
+// Per-recipient delivery + read tracking
 const recipientSchema = new mongoose.Schema({
   guestId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Guest' },
   fullName:   { type: String, default: '' },
   email:      { type: String, default: '' },
   rsvpStatus: { type: String, default: 'pending' },
+
+  // Delivery tracking
+  deliveryMethod: { type: String, enum: ['email', 'in_app', 'none'], default: 'none' },
+  sentAt:         { type: Date, default: null },     // email sent or notification created
+  deliveredAt:    { type: Date, default: null },     // future: email webhook
+  readAt:         { type: Date, default: null },     // guest opened tracking link / pixel
+
+  // Unique token per recipient so they can mark read without logging in
+  // (same pattern as the RSVP token system)
+  readToken:      { type: String, default: null },
 }, { _id: false });
 
 const eventBroadcastSchema = new mongoose.Schema({
@@ -18,7 +29,9 @@ const eventBroadcastSchema = new mongoose.Schema({
     default: 'announcement',
   },
   recipients: [recipientSchema],
-  totalSent:  { type: Number, default: 0 },
+  totalSent:      { type: Number, default: 0 },
+  totalDelivered: { type: Number, default: 0 },  // emails sent + in-app notifications created
+  totalRead:      { type: Number, default: 0 },  // guests who opened/clicked
 },
   { timestamps: true, collection: 'event_broadcasts' }
 );
