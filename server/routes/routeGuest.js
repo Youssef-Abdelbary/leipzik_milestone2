@@ -8,7 +8,7 @@ import {
 const router = express.Router();
 
 // Public — no auth
-router.post('/rsvp/:token', submitRsvp);
+router.post('/guest/rsvp/:token', submitRsvp);
 
 // Protected — organizer only
 router.get('/events/:eventId/guests',                        authenticate, listGuests);

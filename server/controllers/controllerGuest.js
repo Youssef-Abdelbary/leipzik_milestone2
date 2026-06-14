@@ -114,7 +114,7 @@ export const sendInvitation = async (req, res) => {
     if (!guest) return res.status(404).json({ message: 'Guest not found' });
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const rsvpUrl = `${clientUrl}/rsvp/${guest._id}`;
+    const rsvpUrl = `${clientUrl}/guest/rsvp/${guest._id}`;
 
     await Guest.findByIdAndUpdate(guest._id, {
       invitationStatus: 'sent',
