@@ -20,6 +20,7 @@ import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
 import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
 import InvoiceVendorPage from "./pages/pageInvoicesVendor";
+import VendorTrackingPage from "./pages/pageVendorTracking";
 
 function getCurrentUserId() {
   try {
@@ -59,6 +60,7 @@ function App() {
         <Route path="/organizer/budget" element={<BudgetManagement />} />
         <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
         <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
+        <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
       </Routes>
     </BrowserRouter>
   );
