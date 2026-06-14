@@ -1,4 +1,5 @@
 import Invoice from "../models/modelInvoice.js";
+import User from "../models/modelUser.js";
 import { createNotification } from "../utils/notificationUtil.js";
 import { uploadToCloudinary } from "../utils/uploadCloudinary.js";
 import multer from "multer";
@@ -39,12 +40,24 @@ export const createInvoice = async (req, res) => {
   try {
     console.log("createInvoice req.body:", req.body);
 
-    const { organizerId, vendorId, eventId, vendorRequestId, invoiceNumber, items, tax, currency } = req.body;
+    const { organizerEmail, vendorId, eventId, vendorRequestId, invoiceNumber, items, tax, currency } = req.body;
 
-    if (!organizerId || !vendorId || !invoiceNumber || !Array.isArray(items) || items.length === 0) {
-      console.log("createInvoice validation failed", { organizerId, vendorId, invoiceNumber, items });
+    if (!organizerEmail || !vendorId || !invoiceNumber || !Array.isArray(items) || items.length === 0) {
+      console.log("createInvoice validation failed", { organizerEmail, vendorId, invoiceNumber, items });
       return res.status(400).json({ message: "Missing required invoice fields." });
     }
+
+    const organizer = await User.findOne({
+      email: organizerEmail.toLowerCase().trim(),
+      role: "organizer",
+    });
+
+    if (!organizer) {
+      console.log("createInvoice: no organizer found for email", organizerEmail);
+      return res.status(404).json({ message: "No organizer found with that email." });
+    }
+
+    const organizerId = organizer._id;
 
     const itemsWithTotals = items.map((item) => ({
       ...item,

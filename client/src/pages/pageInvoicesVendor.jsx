@@ -170,7 +170,7 @@ function InvoiceCard({ invoice, onUploadDocument }) {
 }
 
 function CreateInvoiceForm({ onCreate }) {
-  const [organizerId, setOrganizerId] = useState("");
+  const [organizerEmail, setOrganizerEmail] = useState("");
   const [eventId, setEventId] = useState("");
   const [vendorRequestId, setVendorRequestId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -186,10 +186,10 @@ function CreateInvoiceForm({ onCreate }) {
   const addItemRow = () => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }]);
 
   const submit = () => {
-    if (!organizerId || !invoiceNumber || items.some((it) => !it.description)) return;
+    if (!organizerEmail || !invoiceNumber || items.some((it) => !it.description)) return;
 
     onCreate({
-      organizerId,
+      organizerEmail,
       vendorId: CURRENT_USER_ID,
       eventId: eventId || null,
       vendorRequestId: vendorRequestId || null,
@@ -197,7 +197,7 @@ function CreateInvoiceForm({ onCreate }) {
       items,
     });
 
-    setOrganizerId("");
+    setOrganizerEmail("");
     setEventId("");
     setVendorRequestId("");
     setInvoiceNumber("");
@@ -228,9 +228,9 @@ function CreateInvoiceForm({ onCreate }) {
           style={{ flex: 1, padding: "9px 12px", borderRadius: 7, border: "1px solid #E2E8F0", fontSize: 13, outline: "none" }}
         />
         <input
-          value={organizerId}
-          onChange={(e) => setOrganizerId(e.target.value)}
-          placeholder="Organizer ID"
+          value={organizerEmail}
+          onChange={(e) => setOrganizerEmail(e.target.value)}
+          placeholder="Organizer email"
           style={{ flex: 1, padding: "9px 12px", borderRadius: 7, border: "1px solid #E2E8F0", fontSize: 13, outline: "none" }}
         />
         <input
