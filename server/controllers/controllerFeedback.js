@@ -94,3 +94,61 @@ export const submitFeedback = async (req, res) => {
     res.status(500).json({ message: 'Failed to submit feedback' });
   }
 };
+
+
+// GET /api/feedback/event/:eventId/summary — organizer only
+export const getEventFeedbackSummary = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const event = await Event.findOne({ _id: eventId, organizerId: req.user.user_id }).lean();
+    if (!event) return res.status(404).json({ message: 'Event not found or access denied' });
+
+    const feedbacks = await Feedback.find({ eventId, submittedAt: { $ne: null } }).lean();
+
+    if (feedbacks.length === 0) {
+      return res.json({ count: 0, averages: null, distribution: null, comments: [], total: 0 });
+    }
+
+    const CATS = ['experience', 'food', 'venue', 'organisation'];
+    const averages = {};
+    CATS.forEach(cat => {
+      const vals = feedbacks.map(f => f[cat]).filter(v => v !== null && v !== undefined);
+      averages[cat] = vals.length
+        ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+        : null;
+    });
+
+    const allVals = Object.values(averages).filter(v => v !== null);
+    averages.overall = allVals.length
+      ? Math.round((allVals.reduce((a, b) => a + b, 0) / allVals.length) * 10) / 10
+      : null;
+
+    // Star distribution for "experience"
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    feedbacks.forEach(f => {
+      if (f.experience >= 1 && f.experience <= 5) distribution[f.experience]++;
+    });
+
+    const comments = feedbacks
+      .filter(f => f.comments?.trim())
+      .map(f => ({ comment: f.comments, submittedAt: f.submittedAt }))
+      .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+      .slice(0, 30);
+
+    // Count attending guests for response rate
+    const Guest = (await import('../models/modelGuest.js')).default;
+    const attendingCount = await Guest.countDocuments({ eventId, 'rsvp.status': 'attending' });
+
+    res.json({
+      count: feedbacks.length,
+      total: attendingCount,
+      averages,
+      distribution,
+      comments,
+    });
+  } catch (err) {
+    console.error('getEventFeedbackSummary error:', err);
+    res.status(500).json({ message: 'Failed to fetch feedback summary' });
+  }
+};
