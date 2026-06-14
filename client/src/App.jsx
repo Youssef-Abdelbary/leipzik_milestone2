@@ -18,6 +18,8 @@ import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
+import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
+import InvoiceVendorPage from "./pages/pageInvoicesVendor";
 
 function getCurrentUserId() {
   try {
@@ -55,6 +57,8 @@ function App() {
         <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
         <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
         <Route path="/organizer/budget" element={<BudgetManagement />} />
+        <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+        <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -24,6 +24,7 @@ import broadcastReadRoute from './routes/routeBroadcastRead.js';
 
 
 import { setServers } from "node:dns/promises";
+import invoiceRoutes from "./routes/routeInvoices.js";
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/browseVendors", browseVendorRoutes);
 app.use("/api/workflow", workflowRoutes);
 app.use("/api/budget", budgetRoutes);
+app.use("/api/invoices", invoiceRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
 
