@@ -31,7 +31,7 @@ function EventModal({ initialForm = EMPTY_FORM, title, submitLabel, onSubmit, on
     heading: { margin: '0 0 24px', fontSize: 20, fontWeight: 700, color: '#0F172A' },
     field:   { marginBottom: 16 },
     label:   { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 },
-    input:   { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' },
+    input:   { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#a9abb3' },
     row:     { display: 'flex', gap: 12 },
     half:    { flex: 1 },
     actions: { display: 'flex', gap: 10, marginTop: 8 },
