@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./pageOrganizerWorkflow.css";
 
 function OrganizerWorkflow() {
@@ -12,6 +13,7 @@ function OrganizerWorkflow() {
   const [showEvents, setShowEvents] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const navigate = useNavigate();
     async function fetchJson(url) {
         const response = await fetch(url);
 
@@ -128,8 +130,19 @@ function OrganizerWorkflow() {
     }
   return (
     <div className="workflow-page">
-      <h1>📋 Organizer Daily Workflow</h1>
-      <p>Overview of today’s events, upcoming events, and feedback.</p>
+        <div className="workflow-header-row">
+        <div>
+            <h1>📋 Organizer Daily Workflow</h1>
+            <p>Overview of today’s events, upcoming events, and feedback.</p>
+        </div>
+
+        <button
+            className="view-events-button"
+            onClick={() => navigate("/organizer/events")}
+        >
+            View Events
+        </button>
+        </div>
 
       <div className="summary-cards">
         <div className="summary-card">
@@ -149,6 +162,7 @@ function OrganizerWorkflow() {
 
         <div className="summary-card">
           <h3>⚠️ Avg Negative Feedback</h3>
+
           <p>{summary ? summary.averageNegativeFeedback.toFixed(2) : "Loading..."}</p>
         </div>
       </div>

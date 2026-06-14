@@ -1,10 +1,9 @@
 .budget-page {
-  min-height: 100vh;
-  background-color: #111111;
-  color: white;
-  padding: 32px;
+  background-color: transparent;
+  color: #0f172a;
+  padding: 24px;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .budget-header {
@@ -12,18 +11,18 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .budget-header h1 {
-  margin: 0 0 8px;
-  font-size: 36px;
-  color: white;
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: #0f172a;
 }
 
 .budget-header p {
   margin: 0;
-  color: #b8b8b0;
+  color: #64748b;
 }
 
 .budget-event-selector {
@@ -34,100 +33,104 @@
 }
 
 .budget-event-selector label {
-  color: white;
+  color: #0f172a;
   font-weight: 700;
   font-size: 14px;
 }
 
 .budget-event-selector select {
   padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #454542;
-  background-color: #1f1f1d;
-  color: white;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #0f172a;
   font-weight: 600;
   outline: none;
   cursor: pointer;
 }
 
 .budget-event-selector select:hover {
-  border-color: #6b7280;
+  border-color: #94a3b8;
 }
 
 .budget-event-selector select:focus {
-  border-color: #3b82f6;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .budget-loading,
 .budget-empty {
-  color: #b8b8b0;
+  color: #64748b;
 }
 
 .budget-summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
 .budget-card {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 16px;
-  padding: 22px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .budget-card h3 {
-  margin: 0 0 14px;
-  font-size: 16px;
-  color: white;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #475569;
 }
 
 .budget-card p {
   margin: 0;
-  font-size: 30px;
+  font-size: 24px;
   font-weight: 800;
-  color: white;
+  color: #0f172a;
 }
 
 .positive-difference {
-  color: #22c55e !important;
+  color: #16a34a !important;
 }
 
 .negative-difference {
-  color: #ef4444 !important;
+  color: #dc2626 !important;
 }
 
 .budget-sections {
   display: grid;
   grid-template-columns: 1fr 1.3fr;
-  gap: 24px;
+  gap: 18px;
 }
 
 .budget-section {
-  background-color: #1f1f1d;
-  border: 1px solid #454542;
-  border-radius: 16px;
-  padding: 22px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .budget-section h2 {
-  margin: 0 0 18px;
-  color: white;
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 18px;
 }
 
 .budget-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .budget-list-row,
 .expense-row {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 12px;
-  padding: 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -137,21 +140,22 @@
 .budget-list-row span,
 .budget-list-row strong,
 .expense-row strong {
-  color: white;
+  color: #0f172a;
 }
 
 .expense-row h3 {
-  margin: 0 0 6px;
-  color: white;
+  margin: 0 0 5px;
+  color: #0f172a;
+  font-size: 15px;
 }
 
 .expense-row p {
-  margin: 0 0 6px;
-  color: #b8b8b0;
+  margin: 0 0 5px;
+  color: #64748b;
 }
 
 .expense-row small {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .budget-section-header {
@@ -159,7 +163,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .budget-section-header h2 {
@@ -171,11 +175,12 @@
 .save-budget-button,
 .remove-breakdown-button {
   border: none;
-  border-radius: 10px;
-  padding: 9px 12px;
+  border-radius: 8px;
+  padding: 8px 11px;
   color: white;
   font-weight: 700;
   cursor: pointer;
+  font-size: 13px;
 }
 
 .edit-budget-button {
@@ -193,28 +198,33 @@
 }
 
 .planned-budget-form label {
-  color: white;
+  color: #0f172a;
   font-weight: 700;
 }
 
 .planned-budget-form h3 {
   margin: 10px 0 0;
-  color: white;
+  color: #0f172a;
 }
 
 .planned-budget-form input,
-.breakdown-edit-row input {
+.breakdown-edit-row input,
+.expense-form input,
+.expense-edit-form input {
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #454542;
-  background-color: #111111;
-  color: white;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #0f172a;
   outline: none;
 }
 
 .planned-budget-form input:focus,
-.breakdown-edit-row input:focus {
-  border-color: #3b82f6;
+.breakdown-edit-row input:focus,
+.expense-form input:focus,
+.expense-edit-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .breakdown-edit-row {
@@ -225,11 +235,11 @@
 }
 
 .add-breakdown-button {
-  background-color: #4b5563;
+  background-color: #475569;
 }
 
 .add-breakdown-button:hover {
-  background-color: #374151;
+  background-color: #334155;
 }
 
 .save-budget-button {
@@ -255,30 +265,16 @@
 }
 
 .breakdown-total {
-  color: #93c5fd;
+  color: #2563eb;
   font-weight: 700;
   margin: 0;
 }
-
 
 .expense-form {
   display: grid;
   grid-template-columns: 1fr 1.4fr 120px 150px auto;
   gap: 10px;
   margin-bottom: 18px;
-}
-
-.expense-form input {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #454542;
-  background-color: #111111;
-  color: white;
-  outline: none;
-}
-
-.expense-form input:focus {
-  border-color: #3b82f6;
 }
 
 .expense-actions {
@@ -309,45 +305,34 @@
   align-items: center;
 }
 
-.expense-edit-form input {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #454542;
-  background-color: #111111;
-  color: white;
-  outline: none;
-}
-
-.expense-edit-form input:focus {
-  border-color: #3b82f6;
-}
-
 .budget-comparison-section {
-  background-color: #1f1f1d;
-  border: 1px solid #454542;
-  border-radius: 16px;
-  padding: 22px;
-  margin-top: 32px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 24px;
   width: 100%;
   box-sizing: border-box;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .budget-comparison-section h2 {
-  margin: 0 0 18px;
-  color: white;
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 18px;
 }
 
 .comparison-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .comparison-row {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 12px;
-  padding: 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -355,15 +340,29 @@
 }
 
 .comparison-row h3 {
-  margin: 0 0 6px;
-  color: white;
+  margin: 0 0 5px;
+  color: #0f172a;
+  font-size: 15px;
 }
 
 .comparison-row p {
   margin: 0;
-  color: #b8b8b0;
+  color: #64748b;
 }
 
 .comparison-row strong {
-  font-size: 18px;
+  font-size: 17px;
+}
+
+@media (max-width: 1000px) {
+  .budget-summary-cards,
+  .budget-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-form,
+  .expense-edit-form,
+  .breakdown-edit-row {
+    grid-template-columns: 1fr;
+  }
 }
