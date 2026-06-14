@@ -22,6 +22,7 @@ import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
 import loginRoute from "./routes/routeLogin.js";
+import VendorTrackingRoutes from './routes/routeVendorTracking.js';
 
 
 import { setServers } from "node:dns/promises";
@@ -57,12 +58,16 @@ app.use("/api/notifications", notificationRoute);
 app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/browseVendors", browseVendorRoutes);
+app.use("/api/browseVendors/request", browseVendorRoutes);
 app.use("/api/workflow", workflowRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
 app.use("/api/auth", loginRoute);
+app.use('/api/vendorRequests', VendorTrackingRoutes);
+// Login route
+
 
 // Connect to DB then start server
 const connectToDatabase = async () => {
