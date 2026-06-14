@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getBroadcasts, sendBroadcast } from '../../services/serviceBroadcast';
+import { getBroadcasts, sendBroadcast, getUnseenRecipients } from '../../services/serviceBroadcast';
 
 const MESSAGE_TYPES = [
   { value: 'announcement', label: '📢 Announcement' },
@@ -8,12 +8,11 @@ const MESSAGE_TYPES = [
   { value: 'followup',     label: '↩ Follow-up'     },
 ];
 
-// KAN-278: Target guests by what they've done (or not done)
 const RSVP_TARGETS = [
-  { value: 'all',       label: 'All Guests'           },
-  { value: 'attending', label: 'Attending only'        },
-  { value: 'pending',   label: 'No response yet'      },
-  { value: 'declined',  label: 'Declined (follow-up)' },
+  { value: 'all',       label: 'All Guests'            },
+  { value: 'attending', label: 'Attending only'         },
+  { value: 'pending',   label: 'No response yet'       },
+  { value: 'declined',  label: 'Declined (follow-up)'  },
 ];
 
 function fmtDate(d) {
@@ -28,9 +27,15 @@ const TYPE_COLORS = {
   followup:     { bg: '#FDF4FF', text: '#7E22CE' },
 };
 
-const EMPTY_FORM = { title: '', message: '', type: 'announcement', rsvpFilter: 'all' };
+const EMPTY_FORM = {
+  title:            '',
+  message:          '',
+  type:             'announcement',
+  rsvpFilter:       'all',
+  specificGuestIds: null,   // array of _id strings when doing targeted follow-up
+};
 
-// ─── Delivery breakdown bar (KAN-277) ─────────────────────────────────────────
+// ─── Delivery breakdown bar ───────────────────────────────────────────────────
 
 function DeliveryBar({ broadcast }) {
   const total     = broadcast.totalSent      || 0;
@@ -47,61 +52,50 @@ function DeliveryBar({ broadcast }) {
       <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Delivery Stats</p>
 
       <div style={{ display: 'flex', gap: 16, marginBottom: 14, flexWrap: 'wrap' }}>
-        <div style={{ textAlign: 'center', minWidth: 64 }}>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' }}>{total}</p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sent to</p>
-        </div>
-        <div style={{ textAlign: 'center', minWidth: 64 }}>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#0EA5E9' }}>{delivered}</p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Delivered</p>
-        </div>
-        <div style={{ textAlign: 'center', minWidth: 64 }}>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#16A34A' }}>{read}</p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Seen</p>
-        </div>
-        <div style={{ textAlign: 'center', minWidth: 64 }}>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#DC2626' }}>{delivered - read}</p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Not seen</p>
-        </div>
+        {[
+          { label: 'Sent to',   value: total,              color: '#0F172A' },
+          { label: 'Delivered', value: delivered,           color: '#0EA5E9' },
+          { label: 'Seen',      value: read,               color: '#16A34A' },
+          { label: 'Not seen',  value: delivered - read,   color: '#DC2626' },
+        ].map(stat => (
+          <div key={stat.label} style={{ textAlign: 'center', minWidth: 64 }}>
+            <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: stat.color }}>{stat.value}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Stacked progress bar */}
       <div style={{ height: 8, borderRadius: 99, background: '#E2E8F0', overflow: 'hidden', position: 'relative' }}>
-        {/* Seen (green) */}
         <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${readPct}%`, background: '#16A34A', borderRadius: 99 }} />
-        {/* Delivered but not seen (blue) — starts after green */}
-        <div style={{ position: 'absolute', left: `${readPct}%`, top: 0, height: '100%', width: `${deliveredPct - readPct}%`, background: '#0EA5E9' }} />
+        <div style={{ position: 'absolute', left: `${readPct}%`, top: 0, height: '100%', width: `${Math.max(0, deliveredPct - readPct)}%`, background: '#0EA5E9' }} />
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 6, fontSize: 11, color: '#94A3B8' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ width: 8, height: 8, borderRadius: 2, background: '#16A34A', display: 'inline-block' }} /> Seen ({readPct}%)
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#0EA5E9', display: 'inline-block' }} /> Delivered, not seen ({deliveredPct - readPct}%)
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#0EA5E9', display: 'inline-block' }} /> Delivered, not seen ({Math.max(0, deliveredPct - readPct)}%)
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E2E8F0', display: 'inline-block' }} /> Not reached ({100 - deliveredPct}%)
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: '#E2E8F0', display: 'inline-block' }} /> Not reached ({Math.max(0, 100 - deliveredPct)}%)
         </span>
       </div>
     </div>
   );
 }
 
-// ─── Per-recipient table (KAN-277) ────────────────────────────────────────────
+// ─── Per-recipient table ──────────────────────────────────────────────────────
 
 function RecipientTable({ recipients }) {
   if (!recipients?.length) return null;
-
   return (
     <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid #E2E8F0', borderRadius: 8, marginTop: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
           <tr style={{ background: '#F8FAFC', position: 'sticky', top: 0 }}>
-            <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>Guest</th>
-            <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>RSVP</th>
-            <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>Sent via</th>
-            <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>Sent at</th>
-            <th style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>Seen</th>
+            {['Guest', 'RSVP', 'Sent via', 'Sent at', 'Seen'].map(h => (
+              <th key={h} style={{ textAlign: 'left', padding: '8px 12px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>{h}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -113,9 +107,9 @@ function RecipientTable({ recipients }) {
               </td>
               <td style={{ padding: '9px 12px', fontSize: 12, color: '#64748B', textTransform: 'capitalize' }}>{r.rsvpStatus}</td>
               <td style={{ padding: '9px 12px' }}>
-                {r.deliveryMethod === 'email'   && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#EFF6FF', color: '#1D4ED8', fontWeight: 600 }}>📧 Email</span>}
-                {r.deliveryMethod === 'in_app'  && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#F0FDF4', color: '#166534', fontWeight: 600 }}>🔔 In-app</span>}
-                {r.deliveryMethod === 'none'    && <span style={{ fontSize: 11, color: '#94A3B8' }}>—</span>}
+                {r.deliveryMethod === 'email'  && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#EFF6FF', color: '#1D4ED8', fontWeight: 600 }}>📧 Email</span>}
+                {r.deliveryMethod === 'in_app' && <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: '#F0FDF4', color: '#166534', fontWeight: 600 }}>🔔 In-app</span>}
+                {r.deliveryMethod === 'none'   && <span style={{ fontSize: 11, color: '#94A3B8' }}>—</span>}
               </td>
               <td style={{ padding: '9px 12px', fontSize: 12, color: '#64748B' }}>
                 {r.sentAt ? fmtDate(r.sentAt) : <span style={{ color: '#94A3B8' }}>Not sent</span>}
@@ -139,16 +133,17 @@ function RecipientTable({ recipients }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function TabMessages({ eventId }) {
-  const [broadcasts, setBroadcasts]     = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
-  const [showCompose, setShowCompose]   = useState(false);
-  const [form, setForm]                 = useState(EMPTY_FORM);
-  const [sending, setSending]           = useState(false);
-  const [sendError, setSendError]       = useState(null);
-  const [sendResult, setSendResult]     = useState(null);
-  const [expanded, setExpanded]         = useState(null);
-  const [showRecipients, setShowRecipients] = useState(null); // broadcast._id
+  const [broadcasts, setBroadcasts]         = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState(null);
+  const [showCompose, setShowCompose]       = useState(false);
+  const [form, setForm]                     = useState(EMPTY_FORM);
+  const [sending, setSending]               = useState(false);
+  const [sendError, setSendError]           = useState(null);
+  const [sendResult, setSendResult]         = useState(null);
+  const [expanded, setExpanded]             = useState(null);
+  const [showRecipients, setShowRecipients] = useState(null);
+  const [fetchingUnseen, setFetchingUnseen] = useState(null); // broadcastId being loaded
 
   const load = useCallback(async () => {
     try {
@@ -166,11 +161,45 @@ export default function TabMessages({ eventId }) {
     init();
   }, [load]);
 
-  // Poll every 30 seconds to update read receipts in real time
   useEffect(() => {
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
   }, [load]);
+
+  // ─── True per-broadcast follow-up ──────────────────────────────────────────
+  // Fetch the real unseen list from the server instead of guessing by RSVP status.
+  const handleFollowUp = async (broadcast) => {
+    setFetchingUnseen(broadcast._id);
+    try {
+      const result = await getUnseenRecipients(eventId, broadcast._id);
+      const guestIds = result.unseen.map(r => r.guestId);
+
+      setForm({
+        title:            `Follow-up: ${broadcast.title}`,
+        message:          broadcast.message,
+        type:             'followup',
+        rsvpFilter:       'all',
+        specificGuestIds: guestIds,  // targeted list — bypasses rsvpFilter on send
+      });
+      setSendResult(null);
+      setSendError(null);
+      setShowCompose(true);
+    } catch {
+      // Fall back to pre-filling without specific IDs if the endpoint fails
+      setForm({
+        title:            `Follow-up: ${broadcast.title}`,
+        message:          broadcast.message,
+        type:             'followup',
+        rsvpFilter:       'all',
+        specificGuestIds: null,
+      });
+      setSendResult(null);
+      setSendError(null);
+      setShowCompose(true);
+    } finally {
+      setFetchingUnseen(null);
+    }
+  };
 
   const handleSend = async () => {
     setSendError(null);
@@ -179,12 +208,25 @@ export default function TabMessages({ eventId }) {
 
     setSending(true);
     try {
-      const result = await sendBroadcast(eventId, form);
+      const payload = {
+        title:   form.title,
+        message: form.message,
+        type:    form.type,
+      };
+
+      // If we have specific guest IDs (targeted follow-up), pass those.
+      // Otherwise use the rsvpFilter.
+      if (form.specificGuestIds?.length > 0) {
+        payload.specificGuestIds = form.specificGuestIds;
+      } else {
+        payload.rsvpFilter = form.rsvpFilter;
+      }
+
+      const result = await sendBroadcast(eventId, payload);
       setSendResult(result);
       setBroadcasts(prev => [result.broadcast, ...prev]);
       setForm(EMPTY_FORM);
 
-      // Show result for a moment then close
       setTimeout(() => {
         setShowCompose(false);
         setSendResult(null);
@@ -198,8 +240,10 @@ export default function TabMessages({ eventId }) {
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  const inp  = { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' };
-  const lbl  = { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 };
+  const inp = { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' };
+  const lbl = { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 };
+
+  const isTargeted = form.specificGuestIds?.length > 0;
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -214,7 +258,7 @@ export default function TabMessages({ eventId }) {
         </div>
         {!showCompose && (
           <button
-            onClick={() => { setShowCompose(true); setSendError(null); setSendResult(null); }}
+            onClick={() => { setForm(EMPTY_FORM); setShowCompose(true); setSendError(null); setSendResult(null); }}
             style={{ padding: '10px 20px', background: '#0F172A', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             + New Message
@@ -235,7 +279,7 @@ export default function TabMessages({ eventId }) {
             </div>
           )}
 
-          {/* Success state — shows delivery summary */}
+          {/* Success state */}
           {sendResult && (
             <div style={{ background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', borderRadius: 8, padding: '14px', fontSize: 13, marginBottom: 14 }}>
               <p style={{ margin: '0 0 4px', fontWeight: 700 }}>✓ Broadcast sent!</p>
@@ -274,25 +318,44 @@ export default function TabMessages({ eventId }) {
                   </select>
                 </div>
                 <div style={{ flex: 1 }}>
-                  {/* KAN-278: Targeting filter */}
                   <label style={lbl}>Send To</label>
-                  <select style={inp} value={form.rsvpFilter} onChange={e => set('rsvpFilter', e.target.value)}>
-                    {RSVP_TARGETS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+                  {isTargeted ? (
+                    /* Targeted follow-up mode — show who will receive it and allow cancelling */
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #7E22CE', background: '#FDF4FF', fontSize: 14, color: '#7E22CE', fontWeight: 600 }}>
+                        📎 {form.specificGuestIds.length} specific guest{form.specificGuestIds.length !== 1 ? 's' : ''} (unseen)
+                      </div>
+                      <button
+                        onClick={() => set('specificGuestIds', null)}
+                        title="Remove targeting and use RSVP filter instead"
+                        style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', fontSize: 13, color: '#64748B', cursor: 'pointer' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <select style={inp} value={form.rsvpFilter} onChange={e => set('rsvpFilter', e.target.value)}>
+                      {RSVP_TARGETS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                  )}
                 </div>
               </div>
 
-              {/* Contextual hint based on selection */}
+              {/* Context hint */}
               <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 16px', background: '#F8FAFC', padding: '8px 12px', borderRadius: 6 }}>
-                {form.rsvpFilter === 'all'       && '📨 Will be sent to all guests. Messages go via email (if configured) and in-app for guests with accounts.'}
-                {form.rsvpFilter === 'attending' && '✅ Only guests who confirmed attendance. Good for logistics updates like venue directions.'}
-                {form.rsvpFilter === 'pending'   && '⏳ Guests who haven"t responded yet. Good for RSVP deadline reminders.'}
-                {form.rsvpFilter === 'declined'  && '↩ Guests who declined. Use sparingly — e.g. date change or last-minute re-invitation.'}
+                {isTargeted
+                  ? `📎 This follow-up will go only to the ${form.specificGuestIds.length} guest${form.specificGuestIds.length !== 1 ? 's' : ''} who were sent the original message but haven't read it yet. Click × to switch to a general audience filter instead.`
+                  : form.rsvpFilter === 'all'       ? '📨 Will be sent to all guests. Messages go via email (if configured) and in-app for guests with accounts.'
+                  : form.rsvpFilter === 'attending' ? '✅ Only guests who confirmed attendance. Good for logistics updates like venue directions.'
+                  : form.rsvpFilter === 'pending'   ? '⏳ Guests who haven\'t responded yet. Good for RSVP deadline reminders.'
+                  : form.rsvpFilter === 'declined'  ? '↩ Guests who declined. Use sparingly — e.g. date change or last-minute re-invitation.'
+                  : ''
+                }
               </p>
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setShowCompose(false); setSendError(null); }}
+                  onClick={() => { setShowCompose(false); setSendError(null); setForm(EMPTY_FORM); }}
                   style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#374151', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
                 >
                   Cancel
@@ -302,7 +365,7 @@ export default function TabMessages({ eventId }) {
                   disabled={sending}
                   style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: sending ? '#94A3B8' : '#0F172A', color: '#fff', fontWeight: 600, fontSize: 14, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
                 >
-                  {sending ? 'Sending…' : '📤 Send Broadcast'}
+                  {sending ? 'Sending…' : isTargeted ? `📤 Send to ${form.specificGuestIds.length} guests` : '📤 Send Broadcast'}
                 </button>
               </div>
             </>
@@ -326,10 +389,11 @@ export default function TabMessages({ eventId }) {
           </p>
 
           {broadcasts.map(bc => {
-            const isOpen      = expanded === bc._id;
-            const showRecips  = showRecipients === bc._id;
-            const tc = TYPE_COLORS[bc.type] || TYPE_COLORS.announcement;
+            const isOpen     = expanded === bc._id;
+            const showRecips = showRecipients === bc._id;
+            const tc         = TYPE_COLORS[bc.type] || TYPE_COLORS.announcement;
             const unseenCount = (bc.totalDelivered || 0) - (bc.totalRead || 0);
+            const isFetchingThis = fetchingUnseen === bc._id;
 
             return (
               <div key={bc._id} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
@@ -357,25 +421,25 @@ export default function TabMessages({ eventId }) {
                     </p>
                   </div>
 
-                  {/* KAN-278 quick action: follow-up button if anyone hasn't seen it */}
+                  {/* Follow-up button — uses real unseen endpoint */}
                   {unseenCount > 0 && (
                     <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        // Pre-fill compose form as a follow-up targeting the right guests
-                        setForm({
-                          title:      `Follow-up: ${bc.title}`,
-                          message:    bc.message,
-                          type:       'followup',
-                          rsvpFilter: 'all',  // Organizer can refine — we don't have "unseen" as a filter since it's per-broadcast not per-RSVP
-                        });
-                        setSendResult(null);
-                        setSendError(null);
-                        setShowCompose(true);
+                      onClick={e => { e.stopPropagation(); handleFollowUp(bc); }}
+                      disabled={isFetchingThis}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: 7,
+                        border: '1px solid #FECACA',
+                        background: isFetchingThis ? '#F1F5F9' : '#FFF5F5',
+                        color: isFetchingThis ? '#94A3B8' : '#DC2626',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: isFetchingThis ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
                       }}
-                      style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid #FECACA', background: '#FFF5F5', color: '#DC2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
                     >
-                      ↩ Follow-up ({unseenCount})
+                      {isFetchingThis ? '⟳ Loading…' : `↩ Follow-up (${unseenCount})`}
                     </button>
                   )}
 
@@ -385,15 +449,12 @@ export default function TabMessages({ eventId }) {
                 {/* Expanded content */}
                 {isOpen && (
                   <div style={{ padding: '0 20px 20px', borderTop: '1px solid #F1F5F9' }}>
-                    {/* Message body */}
                     <p style={{ margin: '14px 0', fontSize: 13, background: '#F8FAFC', padding: '12px 16px', borderRadius: 8, color: '#374151', lineHeight: 1.7, borderLeft: `3px solid ${tc.text}`, whiteSpace: 'pre-wrap' }}>
                       {bc.message}
                     </p>
 
-                    {/* Delivery stats bar (KAN-277) */}
                     <DeliveryBar broadcast={bc} />
 
-                    {/* Per-recipient detail toggle (KAN-277) */}
                     <div style={{ marginTop: 14 }}>
                       <button
                         onClick={() => setShowRecipients(showRecips ? null : bc._id)}

@@ -1,5 +1,6 @@
 import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
+import { sendInvitationEmail, isEmailConfigured } from '../utils/emailUtil.js';
 
 async function verifyAccess(userId, eventId) {
   const event = await Event.findById(eventId).lean();
@@ -116,15 +117,35 @@ export const sendInvitation = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const rsvpUrl = `${clientUrl}/guest/rsvp/${guest._id}`;
 
+    // Attempt to send an invitation email if SMTP is configured
+    let emailSent = false;
+    if (guest.email && isEmailConfigured()) {
+      try {
+        await sendInvitationEmail({
+          to:         guest.email,
+          guestName:  guest.fullName || 'Guest',
+          eventTitle: event.title,
+          eventDate:  event.date,
+          eventTime:  event.startTime || null,
+          rsvpUrl,
+        });
+        emailSent = true;
+      } catch (emailErr) {
+        // Log but don't fail the whole request — the organizer can still copy the link
+        console.error('Failed to send invitation email:', emailErr.message);
+      }
+    }
+
     await Guest.findByIdAndUpdate(guest._id, {
       invitationStatus: 'sent',
       invitationSentAt: new Date(),
     });
 
     res.json({
-      message: 'RSVP link generated',
+      message:    emailSent ? 'Invitation email sent' : 'RSVP link generated (email not configured)',
       rsvpUrl,
-      emailSent: false,
+      emailSent,
+      guestEmail: guest.email || null,
     });
   } catch (err) {
     console.error(err);

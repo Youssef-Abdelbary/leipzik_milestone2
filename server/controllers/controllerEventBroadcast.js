@@ -10,7 +10,13 @@ import { sendBroadcastEmail, isEmailConfigured } from '../utils/emailUtil.js';
 export const sendBroadcast = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { title, message, type = 'announcement', rsvpFilter = 'all' } = req.body;
+    const {
+      title,
+      message,
+      type = 'announcement',
+      rsvpFilter = 'all',
+      specificGuestIds,   // NEW: array of guest _id strings for targeted follow-ups
+    } = req.body;
 
     if (!title?.trim() || !message?.trim()) {
       return res.status(400).json({ message: 'Title and message are required' });
@@ -19,15 +25,19 @@ export const sendBroadcast = async (req, res) => {
     const event = await Event.findOne({ _id: eventId, organizerId: req.user.user_id }).lean();
     if (!event) return res.status(404).json({ message: 'Event not found or access denied' });
 
-    // Build guest filter — KAN-278: allow targeting by RSVP status for follow-ups
-    const guestFilter = { eventId };
-    if (rsvpFilter !== 'all') {
-      guestFilter['rsvp.status'] = rsvpFilter;
+    // Build guest query
+    // specificGuestIds takes priority — used for targeted follow-ups to unseen recipients
+    let guests;
+    if (Array.isArray(specificGuestIds) && specificGuestIds.length > 0) {
+      guests = await Guest.find({ eventId, _id: { $in: specificGuestIds } }).lean();
+    } else {
+      const guestFilter = { eventId };
+      if (rsvpFilter !== 'all') {
+        guestFilter['rsvp.status'] = rsvpFilter;
+      }
+      guests = await Guest.find(guestFilter).lean();
     }
 
-    const guests = await Guest.find(guestFilter).lean();
-
-    // Build recipient list with a unique readToken per guest
     const recipients = guests.map(g => ({
       guestId:        g._id,
       fullName:       g.fullName || '',
@@ -36,11 +46,9 @@ export const sendBroadcast = async (req, res) => {
       deliveryMethod: 'none',
       sentAt:         null,
       readAt:         null,
-      // crypto.randomBytes gives a URL-safe unique token — same approach as RSVP tokens
       readToken:      crypto.randomBytes(24).toString('hex'),
     }));
 
-    // Save the broadcast first so we have an _id to reference in emails
     const broadcast = await EventBroadcast.create({
       eventId,
       organizerId: req.user.user_id,
@@ -55,13 +63,11 @@ export const sendBroadcast = async (req, res) => {
     const clientUrl    = process.env.CLIENT_URL || 'http://localhost:5173';
     let delivered = 0;
 
-    // Process each guest individually
     for (let i = 0; i < guests.length; i++) {
-      const guest  = guests[i];
-      const recip  = broadcast.recipients[i];
-      let method   = 'none';
+      const guest = guests[i];
+      const recip = broadcast.recipients[i];
+      let method  = 'none';
 
-      // Path 1: Guest has a platform account → in-app notification
       if (guest.userId) {
         try {
           await createNotification({
@@ -79,13 +85,9 @@ export const sendBroadcast = async (req, res) => {
         }
       }
 
-      // Path 2: Guest has an email address → send email
-      // (Can happen alongside in_app — they might have both an account and email)
       if (guest.email && emailEnabled) {
         try {
-          // The read URL is a public endpoint — no auth needed, just the token
           const readUrl = `${process.env.SERVER_URL || 'http://localhost:5001'}/api/broadcasts/read/${recip.readToken}`;
-
           await sendBroadcastEmail({
             to:         guest.email,
             guestName:  guest.fullName || 'Guest',
@@ -94,11 +96,9 @@ export const sendBroadcast = async (req, res) => {
             readUrl,
             eventTitle: event.title,
           });
-
-          method    = method === 'in_app' ? 'in_app' : 'email'; // prefer in_app label if both
+          method = method === 'in_app' ? 'in_app' : 'email';
           delivered++;
 
-          // Record that the email was sent
           await EventBroadcast.updateOne(
             { _id: broadcast._id, 'recipients.guestId': guest._id },
             {
@@ -109,11 +109,9 @@ export const sendBroadcast = async (req, res) => {
             }
           );
         } catch (emailErr) {
-          // Don't fail the whole broadcast if one email bounces
           console.error(`Failed email to ${guest.email}:`, emailErr.message);
         }
       } else if (method !== 'none') {
-        // In-app only — still record the delivery
         await EventBroadcast.updateOne(
           { _id: broadcast._id, 'recipients.guestId': guest._id },
           {
@@ -126,7 +124,6 @@ export const sendBroadcast = async (req, res) => {
       }
     }
 
-    // Update aggregate counts
     await EventBroadcast.findByIdAndUpdate(broadcast._id, {
       $set: {
         totalSent:      guests.length,
@@ -134,7 +131,6 @@ export const sendBroadcast = async (req, res) => {
       },
     });
 
-    // Fetch the final state to return accurate data
     const finalBroadcast = await EventBroadcast.findById(broadcast._id).lean();
 
     return res.status(201).json({
@@ -171,50 +167,66 @@ export const getBroadcasts = async (req, res) => {
   }
 };
 
+// ─── Get unseen recipients for a specific broadcast ──────────────────────────
+// NEW: returns guests in this broadcast who were sent the message but haven't read it.
+// Used by the frontend follow-up flow to target truly unseen guests, not just an RSVP filter.
+
+export const getUnseenRecipients = async (req, res) => {
+  try {
+    const { eventId, broadcastId } = req.params;
+
+    const event = await Event.findOne({ _id: eventId, organizerId: req.user.user_id }).lean();
+    if (!event) return res.status(404).json({ message: 'Event not found or access denied' });
+
+    const broadcast = await EventBroadcast.findOne({ _id: broadcastId, eventId }).lean();
+    if (!broadcast) return res.status(404).json({ message: 'Broadcast not found' });
+
+    // "Unseen" = was sent (sentAt is set) but never read
+    const unseen = (broadcast.recipients || []).filter(
+      r => r.sentAt && !r.readAt
+    );
+
+    return res.json({
+      broadcastId,
+      broadcastTitle: broadcast.title,
+      unseen,
+      count: unseen.length,
+    });
+  } catch (err) {
+    console.error('getUnseenRecipients error:', err);
+    return res.status(500).json({ message: 'Failed to fetch unseen recipients' });
+  }
+};
+
 // ─── Public read-receipt endpoint ─────────────────────────────────────────────
-// Called when:
-//   - Guest clicks "Mark as received" link in email
-//   - Email client loads the 1×1 tracking pixel
-// No authentication required — the token itself proves identity.
 
 export const markAsRead = async (req, res) => {
   try {
     const { token } = req.params;
-    const isPixel   = req.query.pixel === '1';   // true if triggered by pixel load
+    const isPixel   = req.query.pixel === '1';
 
-    // Find the broadcast that contains this recipient token
-    const broadcast = await EventBroadcast.findOne({
-      'recipients.readToken': token,
-    });
+    const broadcast = await EventBroadcast.findOne({ 'recipients.readToken': token });
 
     if (!broadcast) {
-      if (isPixel) {
-        // Pixel requests must always return a valid image — don't return 404
-        return serveClearPixel(res);
-      }
+      if (isPixel) return serveClearPixel(res);
       return res.status(404).json({ message: 'Invalid read token' });
     }
 
-    const recipient = broadcast.recipients.find(r => r.readToken === token);
+    const recipient  = broadcast.recipients.find(r => r.readToken === token);
     const alreadyRead = Boolean(recipient?.readAt);
 
     if (!alreadyRead) {
-      // Mark this specific recipient as read
       await EventBroadcast.updateOne(
         { _id: broadcast._id, 'recipients.readToken': token },
         {
-          $set:  { 'recipients.$.readAt': new Date() },
-          $inc:  { totalRead: 1 },
+          $set: { 'recipients.$.readAt': new Date() },
+          $inc: { totalRead: 1 },
         }
       );
     }
 
-    if (isPixel) {
-      // Return the 1×1 transparent GIF that email clients expect
-      return serveClearPixel(res);
-    }
+    if (isPixel) return serveClearPixel(res);
 
-    // For link clicks — redirect to a simple confirmation page
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     res.redirect(`${clientUrl}/message-received`);
 
@@ -225,10 +237,7 @@ export const markAsRead = async (req, res) => {
   }
 };
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
 function serveClearPixel(res) {
-  // Minimal 1×1 transparent GIF — 43 bytes
   const pixel = Buffer.from(
     'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
     'base64'
