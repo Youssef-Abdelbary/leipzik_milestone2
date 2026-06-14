@@ -1,12 +1,12 @@
 import express from 'express';
 import { authenticate } from '../middleware/authMiddleware.js';
-import { sendFeedbackRequests, getFeedbackForm, submitFeedback } from '../controllers/controllerFeedback.js';
+import { sendFeedbackRequests, getFeedbackForm, submitFeedback, getEventFeedbackSummary } from '../controllers/controllerFeedback.js';
 import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
 
 const router = express.Router();
 
-// Public: get event info for RSVP page (by guest _id used as token)
+// Public: get event info for RSVP page
 router.get('/rsvp-info/:token', async (req, res) => {
   try {
     const guest = await Guest.findById(req.params.token).lean();
@@ -31,7 +31,8 @@ router.get('/rsvp-info/:token', async (req, res) => {
 router.get('/form/:token',    getFeedbackForm);
 router.post('/submit/:token', submitFeedback);
 
-// Protected
-router.post('/event/:eventId/send', authenticate, sendFeedbackRequests);
+// Protected — organizer
+router.post('/event/:eventId/send',    authenticate, sendFeedbackRequests);
+router.get('/event/:eventId/summary',  authenticate, getEventFeedbackSummary);
 
 export default router;

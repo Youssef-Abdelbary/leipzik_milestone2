@@ -7,12 +7,14 @@ import TabDayOf    from './tabs/TabDayOf';
 import TabMessages from './tabs/TabMessages';
 import { EVENT_TYPES } from '../utils/constants';
 import BudgetManagement from "./pageBudgetManagement";
+import TabFeedback from './tabs/TabFeedback';
 
 const TABS = [
   { id: 'overview',  label: '📋 Overview'  },
   { id: 'guests',    label: '🎟 Guests'    },
   { id: 'day-of',   label: '📅 Day-of'    },
   { id: 'messages',  label: '💬 Messages'  },
+  { id: 'feedback',  label: '⭐ Feedback'  },  // ← NEW
   { id: 'venue',     label: '🏛 Venue'     },
   { id: 'vendors',   label: '🛒 Vendors'   },
   { id: 'budget',    label: '💰 Budget'    },
@@ -148,11 +150,15 @@ export default function EventWorkspace() {
         <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
           <TabMessages eventId={eventId} />
         </div>
+        {/* Feedback tab */}
+        <div style={{ display: activeTab === 'feedback' ? 'block' : 'none' }}>
+          <TabFeedback eventId={eventId} event={event} />
+          </div>
         {activeTab === 'budget' && (
           <BudgetManagement />
         )}
-        {!['overview', 'guests', 'day-of', 'messages', 'budget'].includes(activeTab) && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        {!['overview', 'guests', 'day-of', 'messages', 'budget', 'feedback'].includes(activeTab) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
               <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>

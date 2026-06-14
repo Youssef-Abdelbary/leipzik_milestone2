@@ -14,13 +14,11 @@ function fmtDate(d) {
 
 export default function RsvpPage() {
   const { token } = useParams();
-  const [loading, setLoading]       = useState(true);
-  const [eventInfo, setEventInfo]   = useState(null);
-  const [error, setError]           = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult]         = useState(null);
-
-  // Form state
+  const [loading, setLoading]         = useState(true);
+  const [eventInfo, setEventInfo]     = useState(null);
+  const [error, setError]             = useState(null);
+  const [submitting, setSubmitting]   = useState(false);
+  const [result, setResult]           = useState(null); // { chosen, fullname, qrDataURL, qrCode }
   const [dietary, setDietary]         = useState('None');
   const [specialReqs, setSpecialReqs] = useState('');
 
@@ -43,8 +41,8 @@ export default function RsvpPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rsvpStatus: status,
-          dietaryPreferences: dietary !== 'None' ? dietary : '',
+          rsvpStatus:          status,
+          dietaryPreferences:  dietary !== 'None' ? dietary : '',
           specialRequirements: specialReqs,
         }),
       });
@@ -52,31 +50,94 @@ export default function RsvpPage() {
       if (!res.ok) throw new Error(data.message || 'RSVP failed');
       setResult({ ...data, chosen: status });
     } catch (err) {
-      setError(err.message || 'Invalid or expired RSVP link');
+      setError(err.message || 'Something went wrong');
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) return (
+    <div style={s.page}><div style={s.card}><p style={{ color: '#94A3B8' }}>Loading…</p></div></div>
+  );
+
+  // ─── Success: Attending with QR ──────────────────────────────────────────
+  if (result && result.chosen === 'attending') return (
     <div style={s.page}>
-      <div style={s.card}><p style={{ color: '#94A3B8' }}>Loading…</p></div>
+      <div style={{ ...s.card, maxWidth: 520 }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+        <h1 style={s.title}>You're going!</h1>
+        <p style={s.sub}>
+          {result.fullname ? `Thanks for confirming, ${result.fullname.split(' ')[0]}!` : 'Thanks for confirming!'}
+          {' '}See you at <strong>{eventInfo?.eventTitle || 'the event'}</strong>.
+        </p>
+
+        {result.qrDataURL && (
+          <div style={{
+            background: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: 16,
+            padding: '28px 24px',
+            margin: '24px 0 20px',
+            textAlign: 'center',
+          }}>
+            <p style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
+              Your Check-in QR Code
+            </p>
+
+            {/* QR code displayed prominently in the center */}
+            <div style={{
+              display: 'inline-block',
+              padding: 12,
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 4px 20px rgba(15,23,42,0.1)',
+              marginBottom: 16,
+            }}>
+              <img
+                src={result.qrDataURL}
+                alt="Your QR code"
+                style={{ width: 220, height: 220, display: 'block', borderRadius: 6 }}
+              />
+            </div>
+
+            <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
+              Show this QR code at the entrance for instant check-in.
+            </p>
+            <p style={{ margin: 0, fontSize: 11, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+              {result.qrCode}
+            </p>
+            <div style={{
+              margin: '14px 0 0',
+              padding: '10px 14px',
+              background: '#EFF6FF',
+              borderRadius: 8,
+              fontSize: 12,
+              color: '#1D4ED8',
+            }}>
+              📧 A copy with this QR code has been sent to your email.
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => window.print()}
+          style={{ ...s.btn, background: '#F8FAFC', color: '#374151', border: '1px solid #E2E8F0', marginBottom: 10 }}
+        >
+          🖨 Save / Print QR Code
+        </button>
+      </div>
     </div>
   );
 
-  if (result) return (
+  // ─── Success: Declined ───────────────────────────────────────────────────
+  if (result && result.chosen === 'declined') return (
     <div style={s.page}>
       <div style={s.card}>
-        <div style={{ fontSize: 56, marginBottom: 16 }}>
-          {result.chosen === 'attending' ? '🎉' : '😢'}
-        </div>
-        <h1 style={s.title}>
-          {result.chosen === 'attending' ? "You're going!" : "See you next time!"}
-        </h1>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>😢</div>
+        <h1 style={s.title}>See you next time!</h1>
         <p style={s.sub}>
-          {result.chosen === 'attending'
-            ? `Thanks for confirming${result.fullname ? `, ${result.fullname}` : ''}! We look forward to seeing you.`
-            : `We're sorry you can't make it${result.fullname ? `, ${result.fullname}` : ''}. Thanks for letting us know.`}
+          {result.fullname ? `We're sorry you can't make it, ${result.fullname.split(' ')[0]}.` : "We're sorry you can't make it."}
+          {' '}Thanks for letting us know.
         </p>
       </div>
     </div>
@@ -95,8 +156,12 @@ export default function RsvpPage() {
               <div style={s.detailRow}>
                 <span style={s.detailIcon}>📅</span>
                 <div>
-                  <p style={s.detailLabel}>Date & Time</p>
-                  <p style={s.detailVal}>{fmtDate(eventInfo.date)}{eventInfo.startTime ? ` at ${eventInfo.startTime}` : ''}{eventInfo.endTime ? ` – ${eventInfo.endTime}` : ''}</p>
+                  <p style={s.detailLabel}>Date &amp; Time</p>
+                  <p style={s.detailVal}>
+                    {fmtDate(eventInfo.date)}
+                    {eventInfo.startTime ? ` at ${eventInfo.startTime}` : ''}
+                    {eventInfo.endTime   ? ` – ${eventInfo.endTime}`   : ''}
+                  </p>
                 </div>
               </div>
             )}
@@ -147,8 +212,6 @@ export default function RsvpPage() {
             onClick={() => handleSubmit('attending')}
             disabled={submitting}
             style={{ ...s.btn, background: '#166534', color: '#fff', marginBottom: 10 }}
-            onMouseEnter={e => e.currentTarget.style.background = '#14532D'}
-            onMouseLeave={e => e.currentTarget.style.background = '#166534'}
           >
             ✓ Yes, I'll be there!
           </button>
@@ -156,8 +219,6 @@ export default function RsvpPage() {
             onClick={() => handleSubmit('declined')}
             disabled={submitting}
             style={{ ...s.btn, background: '#fff', color: '#374151', border: '1px solid #E2E8F0' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
-            onMouseLeave={e => e.currentTarget.style.background = '#fff'}
           >
             ✗ Sorry, I can't make it
           </button>
@@ -207,6 +268,6 @@ const s = {
   detailVal:   { margin: 0, fontSize: 14, fontWeight: 600, color: '#0F172A' },
   section:     { marginTop: 16 },
   sectionLabel:{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textAlign: 'left' },
-  btn:         { display: 'block', width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'background 0.12s', fontFamily: 'inherit' },
+  btn:         { display: 'block', width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 0 },
   input:       { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
 };
