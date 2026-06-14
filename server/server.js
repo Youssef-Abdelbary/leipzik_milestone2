@@ -21,6 +21,7 @@ import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
+import loginRoute from "./routes/routeLogin.js";
 
 
 import { setServers } from "node:dns/promises";
@@ -59,56 +60,7 @@ app.use("/api/workflow", workflowRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
-
-// Login route
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const email = req.body.email;
-    const password = req.body.password;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required",
-      });
-    }
-
-    const user = await User.findOne({ email: email });
-
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-
-    if (user.passwordHash !== password) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-    if (user.status !== "active") {
-      return res.status(403).json({
-        message: "Your account is inactive. Please contact the organizer.",
-      });
-    }
-
-    res.json({
-      message: "Login successful",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-
-    res.status(500).json({
-      message: "Server error during login",
-    });
-  }
-});
+app.use("/api/auth", loginRoute);
 
 // Connect to DB then start server
 const connectToDatabase = async () => {
