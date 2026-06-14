@@ -76,7 +76,7 @@ export default function TabOverview({ event, onEventUpdate }) {
     mh2:     { margin: '0 0 24px', fontSize: 19, fontWeight: 700, color: '#0F172A' },
     field:   { marginBottom: 14 },
     flbl:    { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 },
-    inp:     { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' },
+    inp:     { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#a9abb3' },
     row:     { display: 'flex', gap: 12 },
     half:    { flex: 1 },
     errBox:  { background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 },

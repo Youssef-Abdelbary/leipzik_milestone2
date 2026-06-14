@@ -1,5 +1,6 @@
 import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
+import { sendInvitationEmail, isEmailConfigured } from '../utils/emailUtil.js';
 
 async function verifyAccess(userId, eventId) {
   const event = await Event.findById(eventId).lean();
@@ -116,15 +117,37 @@ export const sendInvitation = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const rsvpUrl = `${clientUrl}/guest/rsvp/${guest._id}`;
 
+    let emailSent = false;
+    if (guest.email && isEmailConfigured()) {
+      try {
+        await sendInvitationEmail({
+          to:           guest.email,
+          guestName:    guest.fullName || 'Guest',
+          eventTitle:   event.title,
+          eventDate:    event.date,
+          eventTime:    event.startTime || null,
+          eventEndTime: event.endTime || null,
+          venueName:    event.locationSnapshot?.venueName !== 'TBD' ? event.locationSnapshot?.venueName : null,
+          dressCode:    event.dressCode || null,
+          agenda:       event.agenda || [],
+          rsvpUrl,
+        });
+        emailSent = true;
+      } catch (emailErr) {
+        console.error('Failed to send invitation email:', emailErr.message);
+      }
+    }
+
     await Guest.findByIdAndUpdate(guest._id, {
       invitationStatus: 'sent',
       invitationSentAt: new Date(),
     });
 
     res.json({
-      message: 'RSVP link generated',
+      message:    emailSent ? 'Invitation email sent' : 'RSVP link generated (email not configured)',
       rsvpUrl,
-      emailSent: false,
+      emailSent,
+      guestEmail: guest.email || null,
     });
   } catch (err) {
     console.error(err);
@@ -134,13 +157,20 @@ export const sendInvitation = async (req, res) => {
 
 export const submitRsvp = async (req, res) => {
   try {
-    const { rsvpStatus } = req.body;
+    const { rsvpStatus, dietaryPreferences, specialRequirements } = req.body;
     if (!['attending', 'declined'].includes(rsvpStatus))
       return res.status(400).json({ message: 'Status must be attending or declined' });
 
+    const update = {
+      'rsvp.status':      rsvpStatus,
+      'rsvp.respondedAt': new Date(),
+    };
+    if (dietaryPreferences) update['rsvp.dietaryPreferences'] = [dietaryPreferences];
+    if (specialRequirements !== undefined) update['rsvp.specialRequirements'] = specialRequirements;
+
     const guest = await Guest.findByIdAndUpdate(
       req.params.token,
-      { 'rsvp.status': rsvpStatus, 'rsvp.respondedAt': new Date() },
+      { $set: update },
       { new: true }
     ).lean();
 

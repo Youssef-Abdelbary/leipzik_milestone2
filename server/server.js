@@ -21,6 +21,7 @@ import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
+import feedbackRoutes from './routes/routeFeedback.js';
 import loginRoute from "./routes/routeLogin.js";
 import VendorTrackingRoutes from './routes/routeVendorTracking.js';
 
@@ -64,6 +65,7 @@ app.use("/api/budget", budgetRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
+app.use('/api/feedback', feedbackRoutes);
 app.use("/api/auth", loginRoute);
 app.use('/api/vendorRequests', VendorTrackingRoutes);
 // Login route
