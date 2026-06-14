@@ -241,10 +241,28 @@ export default function Events() {
     <div style={s.page}>
       <div style={s.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={s.navDot}><span style={{ color: '#fff', fontSize: 14 }}>⚙</span></div>
-          <span style={{ color: '#F8FAFC', fontSize: 15, fontWeight: 700 }}>PopEyez</span>
+          <button
+            onClick={() => navigate("/organizer/workflow")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748B",
+              cursor: "pointer",
+              fontSize: 13,
+              padding: "4px 8px",
+              borderRadius: 4,
+              fontFamily: "inherit",
+            }}
+          >
+            ← Workflow
+          </button>
+
+          <span style={{ color: '#334155', fontSize: 13 }}>/</span>
+
+          <span style={{ color: '#F8FAFC', fontSize: 15, fontWeight: 700 }}>
+            Events
+          </span>
         </div>
-        <span style={{ color: '#475569', fontSize: 13, marginLeft: 4 }}>/ Events</span>
       </div>
 
       <div style={s.inner}>

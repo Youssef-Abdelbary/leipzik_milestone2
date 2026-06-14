@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 
 // TODO: replace with the actual logged-in user's id (e.g. from auth context)
-const CURRENT_USER_ID = "665000000000000000000003";
+const CURRENT_USER_ID = "665000000000000000000006";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);

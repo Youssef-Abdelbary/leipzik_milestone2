@@ -19,6 +19,9 @@ import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
 import FeedbackPage from './pages/pageFeedback';
+import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
+import InvoiceVendorPage from "./pages/pageInvoicesVendor";
+import VendorTrackingPage from "./pages/pageVendorTracking";
 
 function getCurrentUserId() {
   try {
@@ -57,6 +60,9 @@ function App() {
         <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
         <Route path="/organizer/budget" element={<BudgetManagement />} />
         <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
+        <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+        <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
+        <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
       </Routes>
     </BrowserRouter>
   );

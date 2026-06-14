@@ -22,9 +22,12 @@ import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
 import feedbackRoutes from './routes/routeFeedback.js';
+import loginRoute from "./routes/routeLogin.js";
+import VendorTrackingRoutes from './routes/routeVendorTracking.js';
 
 
 import { setServers } from "node:dns/promises";
+import invoiceRoutes from "./routes/routeInvoices.js";
 
 const app = express();
 
@@ -56,62 +59,17 @@ app.use("/api/notifications", notificationRoute);
 app.use("/api/venues", venueRoutes);
 app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/browseVendors", browseVendorRoutes);
+app.use("/api/browseVendors/request", browseVendorRoutes);
 app.use("/api/workflow", workflowRoutes);
 app.use("/api/budget", budgetRoutes);
+app.use("/api/invoices", invoiceRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
 app.use('/api/feedback', feedbackRoutes);
-
-
+app.use("/api/auth", loginRoute);
+app.use('/api/vendorRequests', VendorTrackingRoutes);
 // Login route
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const email = req.body.email;
-    const password = req.body.password;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        message: "Email and password are required",
-      });
-    }
-
-    const user = await User.findOne({ email: email });
-
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-
-    if (user.passwordHash !== password) {
-      return res.status(401).json({
-        message: "Invalid email or password",
-      });
-    }
-    if (user.status !== "active") {
-      return res.status(403).json({
-        message: "Your account is inactive. Please contact the organizer.",
-      });
-    }
-
-    res.json({
-      message: "Login successful",
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-
-    res.status(500).json({
-      message: "Server error during login",
-    });
-  }
-});
 
 // Connect to DB then start server
 const connectToDatabase = async () => {

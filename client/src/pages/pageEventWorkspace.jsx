@@ -6,6 +6,7 @@ import TabOverview from './tabs/TabOverview';
 import TabDayOf    from './tabs/TabDayOf';
 import TabMessages from './tabs/TabMessages';
 import { EVENT_TYPES } from '../utils/constants';
+import BudgetManagement from "./pageBudgetManagement";
 
 const TABS = [
   { id: 'overview',  label: '📋 Overview'  },
@@ -147,12 +148,15 @@ export default function EventWorkspace() {
         <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
           <TabMessages eventId={eventId} />
         </div>
-
-        {!['overview', 'guests', 'day-of', 'messages'].includes(activeTab) && (
+        {activeTab === 'budget' && (
+          <BudgetManagement />
+        )}
+        {!['overview', 'guests', 'day-of', 'messages', 'budget'].includes(activeTab) && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
               <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>
+              {TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon            
             </div>
           </div>
         )}
