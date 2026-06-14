@@ -5,6 +5,7 @@ import TabGuests   from './tabs/TabGuests';
 import TabOverview from './tabs/TabOverview';
 import TabDayOf    from './tabs/TabDayOf';
 import TabMessages from './tabs/TabMessages';
+import TabVendors from './tabs/TabVendors';
 import { EVENT_TYPES } from '../utils/constants';
 
 const TABS = [
@@ -148,7 +149,11 @@ export default function EventWorkspace() {
           <TabMessages eventId={eventId} />
         </div>
 
-        {!['overview', 'guests', 'day-of', 'messages'].includes(activeTab) && (
+        <div style={{ display: activeTab === 'vendors' ? 'block' : 'none' }}>
+          <TabVendors eventId={eventId} organizerId={event.organizerId?._id || event.organizerId} />
+        </div>
+
+        {!['overview', 'guests', 'day-of', 'messages', 'vendors'].includes(activeTab) && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
