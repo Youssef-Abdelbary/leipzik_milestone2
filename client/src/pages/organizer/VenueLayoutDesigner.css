@@ -1,0 +1,201 @@
+.layout-page {
+  min-height: 100vh;
+  display: flex;
+  background-color: #111111;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.layout-sidebar {
+  width: 230px;
+  background-color: #2d2d2a;
+  border-right: 1px solid #454542;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.layout-sidebar h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 22px;
+  color: white;
+}
+
+.layout-sidebar button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 10px;
+  background-color: #1f1f1d;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.layout-sidebar button:hover {
+  background-color: #3b3b37;
+}
+
+.layout-main {
+  flex: 1;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.layout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.layout-header h1 {
+  margin: 0 0 8px;
+  font-size: 36px;
+  color: white;
+}
+
+.layout-header p {
+  margin: 0;
+  color: #b8b8b0;
+  font-size: 16px;
+}
+
+.layout-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.layout-actions button {
+  padding: 11px 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: #5b4ecb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.layout-actions button:hover {
+  background-color: #4c40b5;
+}
+
+.floor-plan {
+  position: relative;
+  height: 620px;
+  width: 100%;
+  border: 2px dashed #454542;
+  border-radius: 16px;
+  background-color: #1f1f1d;
+  overflow: hidden;
+}
+
+.layout-item {
+  position: absolute;
+  z-index: 10;
+  border-radius: 10px;
+  color: white;
+  font-weight: 700;
+  cursor: grab;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layout-item:active {
+  cursor: grabbing;
+}
+
+.layout-item.table {
+  width: 80px;
+  height: 50px;
+  background-color: #8b5e3c;
+}
+
+.layout-item.chair {
+  width: 40px;
+  height: 40px;
+  background-color: #2563eb;
+}
+
+.layout-item.stage {
+  width: 140px;
+  height: 70px;
+  background-color: #7c3aed;
+}
+
+.layout-item.booth {
+  width: 100px;
+  height: 60px;
+  background-color: #059669;
+}
+
+.layout-item.entrance {
+  width: 100px;
+  height: 40px;
+  background-color: #f59e0b;
+}
+
+.layout-item.selected {
+  outline: 3px solid white;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+.share-box {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.share-box select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #454542;
+  background-color: #1f1f1d;
+  color: white;
+}
+
+.share-box button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background-color: #059669;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.event-selector {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.event-selector label {
+  color: white;
+  font-weight: 700;
+}
+
+.event-selector select {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #454542;
+  background-color: #1f1f1f;
+  color: white;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.event-selector select:focus {
+  border-color: #3b82f6;
+}
