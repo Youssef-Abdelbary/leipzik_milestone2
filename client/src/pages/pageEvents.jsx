@@ -58,9 +58,12 @@ function EventModal({ initialForm = EMPTY_FORM, title, submitLabel, onSubmit, on
           </div>
           <div style={{ ...s.field, ...s.half }}>
             <label style={s.label}>Status</label>
-            <select style={s.input} value={form.status || 'planning'} onChange={e => set('status', e.target.value)}>
-              {STATUS_OPTIONS.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}
-            </select>
+            <input 
+              style={{ ...s.input, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' }} 
+              value="Planning" 
+              disabled 
+              title="New events are automatically set to Planning status"
+            />
           </div>
         </div>
 

@@ -21,6 +21,7 @@ import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
+import feedbackRoutes from './routes/routeFeedback.js';
 
 
 import { setServers } from "node:dns/promises";
@@ -59,6 +60,8 @@ app.use("/api/workflow", workflowRoutes);
 app.use("/api/budget", budgetRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use('/api/broadcasts', broadcastReadRoute);
+app.use('/api/feedback', feedbackRoutes);
+
 
 // Login route
 app.post("/api/auth/login", async (req, res) => {

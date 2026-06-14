@@ -18,6 +18,7 @@ import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
+import FeedbackPage from './pages/pageFeedback';
 
 function getCurrentUserId() {
   try {
@@ -55,6 +56,7 @@ function App() {
         <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
         <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
         <Route path="/organizer/budget" element={<BudgetManagement />} />
+        <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
       </Routes>
     </BrowserRouter>
   );

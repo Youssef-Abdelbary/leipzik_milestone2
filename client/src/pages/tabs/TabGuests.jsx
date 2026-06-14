@@ -245,6 +245,39 @@ export default function TabGuests({ eventId }) {
       showToast('Guest added');
     }
   };
+  const [sendingAll, setSendingAll]           = useState(false);
+const [inviteAllProgress, setInviteAllProgress] = useState('');
+
+const handleInviteAll = async () => {
+  const uninvited = guests.filter(g => g.invitationStatus !== 'sent');
+  if (uninvited.length === 0) {
+    showToast('All guests have already been invited', 'error');
+    return;
+  }
+  setSendingAll(true);
+  let sent = 0;
+  let lastResult = null;
+  for (const guest of uninvited) {
+    setInviteAllProgress(`${sent + 1}/${uninvited.length}`);
+    try {
+      const result = await sendInvitation(eventId, guest._id);
+      lastResult = result;
+      setGuests(prev => prev.map(g => g._id === guest._id
+        ? { ...g, invitationStatus: 'sent', invitationSentAt: new Date().toISOString() }
+        : g
+      ));
+      sent++;
+    } catch {
+      // continue on error
+    }
+  }
+  setSendingAll(false);
+  setInviteAllProgress('');
+  showToast(`Invitations sent to ${sent} guest(s)`);
+  if (lastResult?.rsvpUrl && sent > 0) {
+    // Show last RSVP link optionally
+  }
+};
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -337,12 +370,21 @@ export default function TabGuests({ eventId }) {
           placeholder="Filter dietary..."
           style={{ padding: '10px 14px', borderRadius: 9, border: '1px solid #E2E8F0', background: '#fff', fontSize: 14, color: '#0F172A', outline: 'none', minWidth: 150, fontFamily: 'inherit' }}
         />
+        
         <button
           onClick={() => { setEditingGuest(null); setShowModal(true); }}
           style={{ padding: '10px 20px', background: '#0F172A', color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
         >
           + Add Guest
         </button>
+        <button
+  onClick={handleInviteAll}
+  disabled={sendingAll}
+  style={{ padding: '10px 20px', background: sendingAll ? '#94A3B8' : '#4338CA', color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: sendingAll ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
+>
+  {sendingAll ? `Sending… ${inviteAllProgress}` : '✉ Invite All'}
+</button>
+        
       </div>
 
       {/* Table */}
