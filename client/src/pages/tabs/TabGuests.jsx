@@ -404,8 +404,9 @@ setGuests(prev => prev.map(g => g._id === guest._id ? { ...g, invitationStatus: 
                   <td style={{ padding: '14px 16px' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600, background: rs.bg, color: rs.text }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: rs.dot, display: 'inline-block' }} />
-{(guest.rsvp?.status || 'pending').charAt(0).toUpperCase() + (guest.rsvp?.status || 'pending').slice(1)}                    </span>
-{guest.rsvp?.respondedAt && (
+                      {(guest.rsvp?.status || 'pending').charAt(0).toUpperCase() + (guest.rsvp?.status || 'pending').slice(1)}           
+                      </span>
+                      {guest.rsvp?.respondedAt && (
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
                         {new Date(guest.rsvp?.respondedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                       </div>
@@ -414,7 +415,7 @@ setGuests(prev => prev.map(g => g._id === guest._id ? { ...g, invitationStatus: 
 
                   {/* Invitation — KAN-260 */}
                   <td style={{ padding: '14px 16px' }}>
-{guest.invitationStatus === 'sent' ? (
+                    {guest.invitationStatus === 'sent' ? (
                       <div>
                         <span style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>✓ Sent</span>
                         {guest.invitationSentAt && (

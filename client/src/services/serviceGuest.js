@@ -24,7 +24,7 @@ export const sendInvitation = (eventId, guestId) =>
 
 // Public endpoint — bypass apiFetch (no auth token needed)
 export const submitRsvp = async (token, rsvpStatus) => {
-  const res = await fetch(`http://localhost:5001/api/rsvp/${token}`, {
+  const res = await fetch(`http://localhost:5001/api/guest/rsvp/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ rsvpStatus }),
