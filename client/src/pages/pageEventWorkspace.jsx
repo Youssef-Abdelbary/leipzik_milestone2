@@ -1,51 +1,121 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent, updateEvent } from '../services/serviceEvent';
-import TabGuests   from './tabs/TabGuests';
-import TabOverview from './tabs/TabOverview';
-import TabDayOf    from './tabs/TabDayOf';
-import TabMessages from './tabs/TabMessages';
-import { EVENT_TYPES } from '../utils/constants';
+import { getEvent } from '../services/serviceEvent';
+
+// Sub-components & Tabs
+import TabGuests        from './tabs/TabGuests';
+import TabOverview      from './tabs/TabOverview';
+import TabDayOf         from './tabs/TabDayOf';
+import TabMessages      from './tabs/TabMessages';
+import TabFeedback      from './tabs/TabFeedback';
 import BudgetManagement from "./pageBudgetManagement";
-import TabFeedback from './tabs/TabFeedback';
+import SettingsModal    from '../components/SettingsModal';
+
+// Shared Theme & Assets
+import { P, icons, STATUS_COLORS } from '../utils/theme';
 
 const TABS = [
-  { id: 'overview',  label: '📋 Overview'  },
-  { id: 'guests',    label: '🎟 Guests'    },
-  { id: 'day-of',   label: '📅 Day-of'    },
-  { id: 'messages',  label: '💬 Messages'  },
-  { id: 'feedback',  label: '⭐ Feedback'  },  // ← NEW
-  { id: 'venue',     label: '🏛 Venue'     },
-  { id: 'vendors',   label: '🛒 Vendors'   },
-  { id: 'budget',    label: '💰 Budget'    },
-  { id: 'team',      label: '👥 Team'      },
+  { id: 'overview',  label: 'Overview',  icon: icons.overview  },
+  { id: 'guests',    label: 'Guests',    icon: icons.guests    },
+  { id: 'day-of',    label: 'Day-of',    icon: icons.dayof     },
+  { id: 'messages',  label: 'Messages',  icon: icons.messages  },
+  { id: 'feedback',  label: 'Feedback',  icon: icons.feedback  },
+  { id: 'venue',     label: 'Venue',     icon: icons.venue     },
+  { id: 'vendors',   label: 'Vendors',   icon: icons.vendors   },
+  { id: 'budget',    label: 'Budget',    icon: icons.budget    },
+  { id: 'team',      label: 'Team',      icon: icons.team      },
 ];
 
-const STATUS_COLORS = {
-  draft:     '#94A3B8',
-  planning:  '#818CF8',
-  confirmed: '#4ADE80',
-  completed: '#64748B',
-  cancelled: '#F87171',
-};
+// ─── Dock Tab Button ──────────────────────────────────────────────────────────
+function DockTab({ tab, isActive, onClick }) {
+  const [hovered, setHovered] = useState(false);
 
-const STATUS_OPTIONS = ['planning', 'confirmed', 'completed', 'cancelled'];
+  return (
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Tooltip (Hidden on mobile via CSS) */}
+      <div className="dock-tooltip" style={{
+        position: 'absolute',
+        bottom: '100%',
+        left: '50%',
+        transform: `translateX(-50%) translateY(${hovered ? '-12px' : '0px'})`,
+        background: '#21262d',
+        color: P.text,
+        fontSize: 12,
+        fontWeight: 600,
+        padding: '6px 12px',
+        borderRadius: 8,
+        border: `1px solid ${P.border}`,
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+        opacity: hovered ? 1 : 0,
+        transition: 'opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        marginBottom: 8,
+        letterSpacing: '0.02em',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        zIndex: 10,
+      }}>
+        {tab.label}
+      </div>
 
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        title={tab.label}
+        style={{
+          width: 56, 
+          height: 56, 
+          borderRadius: 16,
+          border: 'none',
+          background: isActive
+            ? 'rgba(68,147,248,0.15)'
+            : hovered
+              ? 'rgba(255,255,255,0.08)'
+              : 'transparent',
+          color: isActive ? P.blue : hovered ? P.text : P.sub,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+          transform: hovered ? 'scale(1.15) translateY(-6px)' : isActive ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
+          boxShadow: isActive ? `0 0 0 1px rgba(68,147,248,0.3), 0 0 16px rgba(68,147,248,0.15)` : hovered ? '0 8px 16px rgba(0,0,0,0.2)' : 'none',
+          outline: 'none',
+        }}
+      >
+        <div style={{ transform: 'scale(1.15)', display: 'flex' }}>
+          {tab.icon}
+        </div>
+      </button>
+
+      {/* Active dot */}
+      <div style={{
+        position: 'absolute',
+        bottom: -10,
+        width: 5,
+        height: 5,
+        borderRadius: '50%',
+        background: isActive ? P.blue : 'transparent',
+        transition: 'background 0.3s ease, transform 0.3s ease',
+        transform: isActive ? 'scale(1)' : 'scale(0)',
+      }} />
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function EventWorkspace() {
   const { eventId }  = useParams();
   const navigate     = useNavigate();
-  const [event, setEvent]         = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [event, setEvent]               = useState(null);
+  const [activeTab, setActiveTab]       = useState('overview');
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsForm, setSettingsForm] = useState({});
-  const [saving, setSaving]             = useState(false);
-  const [saveError, setSaveError]       = useState(null);
 
   useEffect(() => {
     getEvent(eventId)
-      .then(ev => { setEvent(ev); })
+      .then(ev => setEvent(ev))
       .catch(() => setError('Event not found or access denied.'))
       .finally(() => setLoading(false));
   }, [eventId]);
@@ -56,154 +126,162 @@ export default function EventWorkspace() {
     return () => window.removeEventListener('workspace-tab', handler);
   }, []);
 
-  const openSettings = () => {
-    setSettingsForm({
-      title:             event.title || '',
-      description:       event.description || '',
-      date:              event.date ? new Date(event.date).toISOString().split('T')[0] : '',
-      startTime:         event.startTime || '',
-      endTime:           event.endTime || '',
-      eventType:         event.eventType || '',
-      expectedAttendees: event.expectedAttendees || '',
-      location:          event.locationSnapshot?.venueName !== 'TBD' ? (event.locationSnapshot?.venueName || '') : '',
-      dressCode:         event.dressCode || '',
-      status:            event.status || 'planning',
-    });
-    setSaveError(null);
-    setShowSettings(true);
-  };
-
-  const handleSettingsSave = async () => {
-    setSaveError(null);
-    if (!settingsForm.title?.trim()) { setSaveError('Title is required'); return; }
-    setSaving(true);
-    try {
-      const updated = await updateEvent(eventId, settingsForm);
-      setEvent(updated);
-      setShowSettings(false);
-    } catch (err) {
-      setSaveError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const setF = (k, v) => setSettingsForm(p => ({ ...p, [k]: v }));
-
+  // Skeleton Loader Implementation (Much faster perceived performance)
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', fontFamily: 'system-ui, sans-serif' }}>
-      <p style={{ color: '#94A3B8' }}>Loading workspace…</p>
+    <div style={{ minHeight: '100vh', background: P.bg, padding: 24 }}>
+      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      <div style={{ height: 60, background: P.surface, borderRadius: 12, animation: 'pulse 1.5s infinite', marginBottom: 32 }} />
+      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 60%', height: 400, background: P.surface, borderRadius: 16, animation: 'pulse 1.5s infinite 0.2s' }} />
+        <div style={{ flex: '1 1 30%', height: 400, background: P.surface, borderRadius: 16, animation: 'pulse 1.5s infinite 0.4s' }} />
+      </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: P.bg, fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ textAlign: 'center' }}>
-        <p style={{ color: '#991B1B', fontSize: 15, marginBottom: 16 }}>{error}</p>
-        <button onClick={() => navigate('/organizer/events')} style={{ padding: '8px 20px', background: '#0F172A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>← Back to Events</button>
+        <p style={{ color: P.red, fontSize: 14, marginBottom: 16 }}>{error}</p>
+        <button onClick={() => navigate('/organizer/events')} style={{ padding: '8px 20px', background: P.blue, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
+          ← Back to Events
+        </button>
       </div>
     </div>
   );
 
-  const inp  = { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' };
-  const flbl = { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 };
+  const statusColor = STATUS_COLORS[event.status] || P.sub;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#0F172A', padding: '0 24px', display: 'flex', alignItems: 'center', height: 60, gap: 8 }}>
-        <button onClick={() => navigate('/organizer/events')} style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', fontSize: 13, padding: '4px 8px', borderRadius: 4, fontFamily: 'inherit' }}>← Events</button>
-        <span style={{ color: '#334155', fontSize: 13 }}>/</span>
-        <span style={{ color: '#F8FAFC', fontSize: 14, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</span>
-        <span style={{ padding: '2px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: '#1E293B', color: STATUS_COLORS[event.status] || '#94A3B8', letterSpacing: '0.05em', flexShrink: 0 }}>
-          {event.status?.toUpperCase() || 'PLANNING'}
-        </span>
-        {event.date && <span style={{ color: '#64748B', fontSize: 12, flexShrink: 0 }}>📅 {new Date(event.date).toDateString()}</span>}
-        <button onClick={openSettings}
-          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#F8FAFC', fontSize: 14, cursor: 'pointer', padding: '6px 12px', fontFamily: 'inherit', fontWeight: 500, flexShrink: 0 }}
-          onMouseEnter={e => Object.assign(e.currentTarget.style, { background: 'rgba(255,255,255,0.15)' })}
-          onMouseLeave={e => Object.assign(e.currentTarget.style, { background: 'rgba(255,255,255,0.08)' })}>
-          ⚙ Settings
-        </button>
-      </div>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: P.bg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: P.text, overflow: 'hidden' }}>
+      
+      {/* Universal Component Styles */}
+      <style>{`
+        @keyframes tabFadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Mobile Scrollable Dock Configuration */
+        @media (max-width: 768px) {
+          .dock-container {
+            overflow-x: auto;
+            justify-content: flex-start !important;
+            padding-bottom: 8px; 
+            border-radius: 12px !important;
+          }
+          .dock-tooltip { display: none !important; }
+        }
+        
+        /* Scrollbar Hiding for sleek dock */
+        .dock-container::-webkit-scrollbar { display: none; }
+        .dock-container { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
-      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '0 24px', display: 'flex', overflowX: 'auto', flexShrink: 0 }}>
-        {TABS.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: '14px 16px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'inherit', color: activeTab === tab.id ? '#0F172A' : '#64748B', borderBottom: activeTab === tab.id ? '2px solid #0F172A' : '2px solid transparent', transition: 'all 0.12s' }}>
-            {tab.label}
+      {/* Main Content Area (Scrolls UNDER the Top Bar to activate Glassmorphism) */}
+      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', paddingBottom: 140 }}>
+        
+        {/* Top Bar with Glassmorphism (Positioned Sticky inside scroll area) */}
+        <div style={{ 
+          position: 'sticky', top: 0, zIndex: 50, 
+          background: 'rgba(22, 27, 34, 0.75)', 
+          backdropFilter: 'blur(16px)', 
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: `1px solid ${P.border}`, 
+          padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 
+        }}>
+          <button
+            onClick={() => navigate('/organizer/events')}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: P.sub, cursor: 'pointer', fontSize: 13, padding: '4px 8px', borderRadius: 6, fontFamily: 'inherit', transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = P.text}
+            onMouseLeave={e => e.currentTarget.style.color = P.sub}
+          >
+            {icons.back}
+            Events
           </button>
-        ))}
-      </div>
-
-      <div style={{ flex: 1 }}>
-        <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
-          <TabOverview event={event} onEventUpdate={setEvent} />
-        </div>
-        
-        <div style={{ display: activeTab === 'guests' ? 'block' : 'none' }}>
-          <TabGuests eventId={eventId} />
-        </div>
-        
-        <div style={{ display: activeTab === 'day-of' ? 'block' : 'none' }}>
-          <TabDayOf eventId={eventId} event={event} />
-        </div>
-        
-        <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
-          <TabMessages eventId={eventId} />
-        </div>
-        {/* Feedback tab */}
-        <div style={{ display: activeTab === 'feedback' ? 'block' : 'none' }}>
-          <TabFeedback eventId={eventId} event={event} />
+          <span style={{ color: P.muted, fontSize: 13 }}>/</span>
+          <span style={{ color: P.text, fontSize: 15, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {event.title}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: statusColor + '20', color: statusColor, border: `1px solid ${statusColor}40`, letterSpacing: '0.05em' }}>
+              {event.status?.toUpperCase() || 'PLANNING'}
+            </span>
+            {event.date && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.sub, fontSize: 12, marginLeft: 8 }}>
+                {icons.calendar} {new Date(event.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+            <button
+              onClick={() => setShowSettings(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', border: `1px solid ${P.border}`, borderRadius: 8, color: P.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: '6px 12px', fontFamily: 'inherit', transition: 'all 0.15s', marginLeft: 8 }}
+              onMouseEnter={e => { e.currentTarget.style.color = P.text; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = P.sub; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+            >
+              {icons.settings} Settings
+            </button>
           </div>
-        {activeTab === 'budget' && (
-          <BudgetManagement />
-        )}
-        {!['overview', 'guests', 'day-of', 'messages', 'budget', 'feedback'].includes(activeTab) && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
-              <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>
-              {TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon            
+        </div>
+
+        {/* Tab content wrapped with Fade In transition */}
+        <div>
+          <div style={{ display: activeTab === 'overview' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
+            <TabOverview event={event} onEventUpdate={setEvent} />
+          </div>
+          <div style={{ display: activeTab === 'guests' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
+            <TabGuests eventId={eventId} />
+          </div>
+          <div style={{ display: activeTab === 'day-of' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
+            <TabDayOf eventId={eventId} event={event} />
+          </div>
+          <div style={{ display: activeTab === 'messages' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
+            <TabMessages eventId={eventId} />
+          </div>
+          <div style={{ display: activeTab === 'feedback' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
+            <TabFeedback eventId={eventId} event={event} />
+          </div>
+          {activeTab === 'budget' && (
+            <div style={{ animation: 'tabFadeIn 0.35s ease forwards' }}>
+               <BudgetManagement />
             </div>
-          </div>
-        )}
+          )}
+          {!['overview', 'guests', 'day-of', 'messages', 'budget', 'feedback'].includes(activeTab) && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, flexDirection: 'column', gap: 12, animation: 'tabFadeIn 0.3s ease' }}>
+              <p style={{ fontSize: 36, margin: 0 }}>🚧</p>
+              <p style={{ color: P.sub, fontSize: 14 }}>{TABS.find(t => t.id === activeTab)?.label} — coming soon</p>
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Floating macOS Dock Nav with class "dock-container" for mobile queries */}
+      <div style={{ 
+        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+        maxWidth: '95vw' // Ensures dock never breaks viewport width on mobile
+      }}>
+        <div className="dock-container" style={{ 
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, 
+          background: 'rgba(22, 27, 34, 0.75)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          border: `1px solid ${P.border}`, borderRadius: 24, padding: '12px 20px', 
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5)' 
+        }}>
+          {TABS.map(tab => (
+            <DockTab
+              key={tab.id}
+              tab={tab}
+              isActive={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Settings Modal Extracted Component */}
       {showSettings && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(2px)', padding: 20, overflowY: 'auto' }} onClick={() => setShowSettings(false)}>
-          <div style={{ background: '#fff', borderRadius: 14, padding: '32px 36px', width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ margin: '0 0 24px', fontSize: 19, fontWeight: 700, color: '#0F172A' }}>⚙ Event Settings</h2>
-            {saveError && <div style={{ background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 14 }}>{saveError}</div>}
-
-            <div style={{ marginBottom: 14 }}><label style={flbl}>Event Title *</label><input style={inp} value={settingsForm.title} onChange={e => setF('title', e.target.value)} /></div>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}><label style={flbl}>Event Type</label><select style={inp} value={settingsForm.eventType} onChange={e => setF('eventType', e.target.value)}><option value="">Select…</option>{EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-              <div style={{ flex: 1 }}><label style={flbl}>Status</label><select style={inp} value={settingsForm.status} onChange={e => setF('status', e.target.value)}>{STATUS_OPTIONS.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}</select></div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}><label style={flbl}>Date</label><input style={inp} type="date" value={settingsForm.date} onChange={e => setF('date', e.target.value)} /></div>
-              <div style={{ flex: 1 }}><label style={flbl}>Expected Attendees</label><input style={inp} type="number" min="0" value={settingsForm.expectedAttendees} onChange={e => setF('expectedAttendees', e.target.value)} /></div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}><label style={flbl}>Start Time</label><input style={inp} type="time" value={settingsForm.startTime} onChange={e => setF('startTime', e.target.value)} /></div>
-              <div style={{ flex: 1 }}><label style={flbl}>End Time</label><input style={inp} type="time" value={settingsForm.endTime} onChange={e => setF('endTime', e.target.value)} /></div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}><label style={flbl}>Venue / Location</label><input style={inp} value={settingsForm.location} onChange={e => setF('location', e.target.value)} placeholder="e.g. The Garden Hall" /></div>
-              <div style={{ flex: 1 }}><label style={flbl}>Dress Code</label><input style={inp} value={settingsForm.dressCode} onChange={e => setF('dressCode', e.target.value)} placeholder="e.g. Smart casual" /></div>
-            </div>
-
-            <div style={{ marginBottom: 14 }}><label style={flbl}>Description</label><textarea style={{ ...inp, minHeight: 80, resize: 'vertical' }} value={settingsForm.description} onChange={e => setF('description', e.target.value)} /></div>
-
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowSettings(false)} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#374151', fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={handleSettingsSave} disabled={saving} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? '#94A3B8' : '#0F172A', color: '#fff', fontWeight: 600, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Saving…' : 'Save Changes'}</button>
-            </div>
-          </div>
-        </div>
+        <SettingsModal
+          event={event}
+          onSave={setEvent}
+          onClose={() => setShowSettings(false)}
+        />
       )}
     </div>
   );

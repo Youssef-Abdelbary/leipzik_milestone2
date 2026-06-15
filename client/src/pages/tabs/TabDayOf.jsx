@@ -1,29 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { listGuests } from '../../services/serviceGuest';
+import { P } from '../../utils/theme';
 
+// ─── Stat Card Component ──────────────────────────────────────────────────────
 function StatCard({ label, value, color, sub }) {
   return (
     <div style={{
-      background: '#fff',
-      border: '1px solid #E2E8F0',
+      background: P.panel,
+      border: `1px solid ${P.border}`,
       borderRadius: 12,
       padding: '20px 24px',
       flex: '1 1 140px',
-      boxShadow: '0 1px 4px rgba(15,23,42,0.04)',
-    }}>
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.transform = 'translateY(-2px)';
+      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.transform = 'translateY(0)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    }}
+    >
       <p style={{ margin: 0, fontSize: 32, fontWeight: 800, color, letterSpacing: '-0.03em', lineHeight: 1 }}>{value}</p>
-      <p style={{ margin: '6px 0 0', fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{label}</p>
-      {sub && <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94A3B8' }}>{sub}</p>}
+      <p style={{ margin: '8px 0 0', fontSize: 13, fontWeight: 600, color: P.text }}>{label}</p>
+      {sub && <p style={{ margin: '4px 0 0', fontSize: 12, color: P.sub }}>{sub}</p>}
     </div>
   );
 }
 
+// ─── Theme Mappings for RSVP Status ───────────────────────────────────────────
 const RSVP_STYLES = {
-  attending: { bg: '#F0FDF4', text: '#166534', dot: '#22C55E' },
-  declined:  { bg: '#FEF2F2', text: '#991B1B', dot: '#EF4444' },
-  pending:   { bg: '#FFF7ED', text: '#C2410C', dot: '#F59E0B' },
+  attending: { bg: 'rgba(63, 185, 80, 0.15)', text: P.green, dot: P.green },
+  declined:  { bg: 'rgba(248, 81, 73, 0.15)', text: P.red,   dot: P.red },
+  pending:   { bg: 'rgba(227, 179, 65, 0.15)', text: P.amber, dot: P.amber },
 };
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function TabDayOf({ eventId }) {
   const [guests, setGuests]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +45,8 @@ export default function TabDayOf({ eventId }) {
   const [query, setQuery]     = useState('');
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // Only show full loading state on initial mount to prevent flashing
+    if (guests.length === 0) setLoading(true);
     try {
       const data = await listGuests(eventId);
       setGuests(Array.isArray(data) ? data : []);
@@ -40,7 +55,7 @@ export default function TabDayOf({ eventId }) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, guests.length]);
 
   useEffect(() => {
     const init = async () => { await load(); };
@@ -59,9 +74,6 @@ export default function TabDayOf({ eventId }) {
   const pending    = guests.filter(g => !g.rsvp?.status || g.rsvp.status === 'pending').length;
   const arrived    = guests.filter(g => g.checkIn?.status === 'Arrived').length;
 
-  // FIX: guests who declined should not count toward check-in denominator.
-  // A declined guest "hasn't arrived" by definition — they said no.
-  // total for check-in = everyone except declined
   const expectedTotal = guests.filter(g => g.rsvp?.status !== 'declined').length;
   const arrivalPct    = expectedTotal > 0 ? Math.round((arrived / expectedTotal) * 100) : 0;
   const stillExpected = expectedTotal - arrived;
@@ -79,23 +91,27 @@ export default function TabDayOf({ eventId }) {
 
   const fmtTime = (d) => d ? new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '—';
 
+  // ─── Styles ─────────────────────────────────────────────────────────────────
   const s = {
-    page:    { maxWidth: 1000, margin: '0 auto', padding: '28px 24px', fontFamily: 'system-ui, -apple-system, sans-serif' },
-    hdr:     { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
-    h1:      { margin: 0, fontSize: 22, fontWeight: 800, color: '#0F172A' },
-    sub:     { margin: '4px 0 0', fontSize: 14, color: '#64748B' },
-    refreshBtn: { padding: '8px 16px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151' },
-    statsRow:{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' },
-    note:    { background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#64748B', marginBottom: 16, lineHeight: 1.5 },
-    progress:{ background: '#F1F5F9', borderRadius: 99, height: 10, overflow: 'hidden', marginBottom: 24 },
-    progBar: { height: '100%', borderRadius: 99, background: 'linear-gradient(90deg, #22C55E 0%, #16A34A 100%)', transition: 'width 0.5s ease' },
-    cols:    { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
-    card:    { background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '20px', boxShadow: '0 1px 4px rgba(15,23,42,0.04)' },
-    cardH:   { margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: '#0F172A' },
-    inp:     { width: '100%', padding: '9px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 12 },
-    row:     { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid #F1F5F9' },
-    avatar:  { width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 },
-    errBox:  { background: '#FEF2F2', color: '#991B1B', borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 20 },
+    page:       { maxWidth: 1040, margin: '0 auto', padding: '32px 24px', fontFamily: 'system-ui, -apple-system, sans-serif' },
+    hdr:        { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 },
+    h1:         { margin: 0, fontSize: 24, fontWeight: 800, color: P.text, letterSpacing: '-0.02em' },
+    sub:        { margin: '6px 0 0', fontSize: 14, color: P.sub },
+    refreshBtn: { 
+      padding: '8px 16px', borderRadius: 8, border: `1px solid ${P.border}`, background: 'transparent', 
+      fontSize: 13, fontWeight: 600, cursor: 'pointer', color: P.text, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6
+    },
+    statsRow:   { display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' },
+    note:       { background: 'rgba(68,147,248,0.1)', border: `1px solid rgba(68,147,248,0.2)`, borderRadius: 10, padding: '12px 16px', fontSize: 13, color: P.text, marginBottom: 20, lineHeight: 1.5, display: 'flex', gap: 10, alignItems: 'flex-start' },
+    progress:   { background: P.surface, borderRadius: 99, height: 10, overflow: 'hidden', marginBottom: 32, border: `1px solid ${P.border}` },
+    progBar:    { height: '100%', borderRadius: 99, background: P.green, transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)' },
+    cols:       { display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }, // Slightly wider guest list
+    card:       { background: P.panel, border: `1px solid ${P.border}`, borderRadius: 16, padding: '24px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' },
+    cardH:      { margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: P.text },
+    inp:        { width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${P.border}`, background: P.bg, color: P.text, fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 16, transition: 'border-color 0.2s' },
+    row:        { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 10px', borderBottom: `1px solid ${P.border}`, transition: 'background 0.2s', borderRadius: 8 },
+    avatar:     { width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 },
+    errBox:     { background: 'rgba(248, 81, 73, 0.1)', border: `1px solid rgba(248, 81, 73, 0.3)`, color: P.red, borderRadius: 8, padding: '12px 16px', fontSize: 13, marginBottom: 20 },
   };
 
   const getInitials = (g) => {
@@ -104,14 +120,14 @@ export default function TabDayOf({ eventId }) {
     const isDeclined = g.rsvp?.status === 'declined';
     return {
       initials: init,
-      bg:    isArrived ? '#DBEAFE' : isDeclined ? '#FEF2F2' : '#F1F5F9',
-      color: isArrived ? '#1D4ED8' : isDeclined ? '#991B1B' : '#94A3B8',
+      bg:    isArrived ? 'rgba(63, 185, 80, 0.15)' : isDeclined ? 'rgba(248, 81, 73, 0.15)' : P.surface,
+      color: isArrived ? P.green : isDeclined ? P.red : P.text,
     };
   };
 
   const tagStyle = (status) => {
     const rs = RSVP_STYLES[status] || RSVP_STYLES.pending;
-    return { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: rs.bg, color: rs.text };
+    return { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: rs.bg, color: rs.text, letterSpacing: '0.02em', textTransform: 'uppercase' };
   };
 
   const dotStyle = (status) => {
@@ -119,96 +135,100 @@ export default function TabDayOf({ eventId }) {
     return { width: 6, height: 6, borderRadius: '50%', background: rs.dot, display: 'inline-block' };
   };
 
-  if (loading) return <div style={s.page}><p style={{ color: '#94A3B8' }}>Loading day-of dashboard…</p></div>;
-  if (error)   return <div style={s.page}><div style={s.errBox}>{error}</div></div>;
+  // ─── Loading Skeleton ───────────────────────────────────────────────────────
+  if (loading) return (
+    <div style={s.page}>
+      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+      <div style={{ height: 60, background: P.panel, borderRadius: 12, animation: 'pulse 1.5s infinite', marginBottom: 24, border: `1px solid ${P.border}` }} />
+      <div style={{ display: 'flex', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
+        {[1,2,3,4,5].map(i => <div key={i} style={{ flex: '1 1 140px', height: 110, background: P.panel, borderRadius: 12, animation: `pulse 1.5s infinite ${i * 0.1}s`, border: `1px solid ${P.border}` }} />)}
+      </div>
+      <div style={{ height: 400, background: P.panel, borderRadius: 16, animation: 'pulse 1.5s infinite 0.4s', border: `1px solid ${P.border}` }} />
+    </div>
+  );
+
+  if (error) return <div style={s.page}><div style={s.errBox}>{error}</div></div>;
 
   return (
     <div style={s.page}>
+      {/* Header */}
       <div style={s.hdr}>
         <div>
           <h2 style={s.h1}>📅 Day-of Dashboard</h2>
-          <p style={s.sub}>Live check-in tracking — refreshes every 30 seconds</p>
+          <p style={s.sub}>Live check-in tracking — auto-refreshes every 30s</p>
         </div>
-        <button style={s.refreshBtn} onClick={load}>↺ Refresh</button>
+        <button 
+          style={s.refreshBtn} 
+          onClick={load}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = P.sub; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = P.border; }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
+          </svg>
+          Refresh
+        </button>
       </div>
 
+      {/* Metric Cards */}
       <div style={s.statsRow}>
-        <StatCard
-          label="Total Guests"
-          value={totalAll}
-          color="#0F172A"
-          sub={declined > 0 ? `${declined} declined` : undefined}
-        />
-        <StatCard
-          label="Expected"
-          value={expectedTotal}
-          color="#0EA5E9"
-          sub="excl. declined"
-        />
-        <StatCard
-          label="Checked In"
-          value={arrived}
-          color="#16A34A"
-          sub={`${arrivalPct}% of expected`}
-        />
-        <StatCard
-          label="Still Expected"
-          value={stillExpected}
-          color="#C2410C"
-          sub="not arrived yet"
-        />
-        <StatCard label="RSVP Attending" value={attending} color="#4338CA" />
-        <StatCard label="RSVP Pending"   value={pending}   color="#F59E0B" />
+        <StatCard label="Total Guests"   value={totalAll}      color={P.text}  sub={declined > 0 ? `${declined} declined` : undefined} />
+        <StatCard label="Expected"       value={expectedTotal} color={P.blue}  sub="excl. declined" />
+        <StatCard label="Checked In"     value={arrived}       color={P.green} sub={`${arrivalPct}% of expected`} />
+        <StatCard label="Still Expected" value={stillExpected} color={P.amber} sub="not arrived yet" />
+        <StatCard label="RSVP Attending" value={attending}     color={P.blue} />
       </div>
 
-      {/* Contextual note explaining the exclusion */}
+      {/* Info Note */}
       {declined > 0 && (
         <div style={s.note}>
-          ℹ️ <strong>{declined} guest{declined !== 1 ? 's' : ''} declined</strong> the invitation —
-          they are excluded from the arrival percentage and "Still Expected" count.
-          The progress bar tracks <strong>{expectedTotal} expected guest{expectedTotal !== 1 ? 's' : ''}</strong>.
+          <span style={{ fontSize: 16 }}>ℹ️</span>
+          <div>
+            <strong>{declined} guest{declined !== 1 ? 's' : ''} declined</strong> the invitation — they are excluded from the arrival percentage and "Still Expected" count. The progress bar tracks exactly <strong>{expectedTotal} expected guest{expectedTotal !== 1 ? 's' : ''}</strong>.
+          </div>
         </div>
       )}
 
-      <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748B' }}>
+      {/* Progress Bar */}
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', fontSize: 13, color: P.sub, fontWeight: 500 }}>
         <span>Arrival Progress (of {expectedTotal} expected)</span>
-        <span>{arrived} / {expectedTotal} checked in</span>
+        <span style={{ color: P.text }}>{arrived} / {expectedTotal} checked in</span>
       </div>
       <div style={s.progress}>
         <div style={{ ...s.progBar, width: `${arrivalPct}%` }} />
       </div>
 
       <div style={s.cols}>
-        {/* All guests list */}
+        
+        {/* All Guests List Area */}
         <div style={s.card}>
           <p style={s.cardH}>All Guests ({totalAll})</p>
           <input
             style={s.inp}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search guest…"
+            placeholder="Search guest by name or email…"
+            onFocus={e => e.target.style.borderColor = P.blue}
+            onBlur={e => e.target.style.borderColor = P.border}
           />
-          <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+          <div style={{ maxHeight: 380, overflowY: 'auto', paddingRight: 4 }}>
             {displayGuests.length === 0 && (
-              <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No guests yet</p>
+              <p style={{ fontSize: 13, color: P.sub, textAlign: 'center', padding: '30px 0' }}>No guests found</p>
             )}
             {displayGuests.map(g => {
               const { initials, bg, color } = getInitials(g);
               const isArrived  = g.checkIn?.status === 'Arrived';
               const isDeclined = g.rsvp?.status === 'declined';
               const rsvp       = g.rsvp?.status || 'pending';
+              
               return (
-                <div key={g._id} style={s.row}>
+                <div key={g._id} style={s.row} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <div style={{ ...s.avatar, background: bg, color }}>{initials}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
-                      margin: 0,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: isDeclined ? '#94A3B8' : '#0F172A',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      margin: '0 0 4px 0', fontSize: 14, fontWeight: 600,
+                      color: isDeclined ? P.muted : P.text,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       textDecoration: isDeclined ? 'line-through' : 'none',
                     }}>
                       {g.fullName}
@@ -219,17 +239,14 @@ export default function TabDayOf({ eventId }) {
                     </span>
                   </div>
                   {isDeclined ? (
-                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: '#FEF2F2', color: '#991B1B' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8, background: 'rgba(248, 81, 73, 0.1)', color: P.red }}>
                       Declined
                     </span>
                   ) : (
                     <span style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      background: isArrived ? '#F0FDF4' : '#F8FAFC',
-                      color:      isArrived ? '#166534' : '#94A3B8',
+                      fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8,
+                      background: isArrived ? 'rgba(63, 185, 80, 0.15)' : P.surface,
+                      color:      isArrived ? P.green : P.sub,
                     }}>
                       {isArrived ? '✓ In' : 'Pending'}
                     </span>
@@ -240,21 +257,21 @@ export default function TabDayOf({ eventId }) {
           </div>
         </div>
 
-        {/* Recent check-ins + RSVP breakdown */}
+        {/* Recent Check-ins & Breakdown Area */}
         <div style={s.card}>
-          <p style={s.cardH}>Recent Check-ins ({recentArrivals.length})</p>
+          <p style={s.cardH}>Recent Check-ins</p>
           {recentArrivals.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>No check-ins yet</p>
+            <p style={{ fontSize: 13, color: P.sub, textAlign: 'center', padding: '30px 0' }}>No check-ins yet</p>
           ) : (
-            <div>
+            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
               {recentArrivals.map(g => {
                 const { initials } = getInitials(g);
                 return (
-                  <div key={g._id} style={{ ...s.row, alignItems: 'flex-start' }}>
-                    <div style={{ ...s.avatar, background: '#DBEAFE', color: '#1D4ED8' }}>{initials}</div>
+                  <div key={g._id} style={{ ...s.row, alignItems: 'flex-start', borderBottom: 'none', padding: '8px 0' }}>
+                    <div style={{ ...s.avatar, background: 'rgba(63, 185, 80, 0.15)', color: P.green }}>{initials}</div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{g.fullName}</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: '#64748B' }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: P.text }}>{g.fullName}</p>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: P.sub }}>
                         Arrived at {fmtTime(g.checkIn?.checkedInAt)} · {g.checkIn?.method || 'manual'}
                       </p>
                     </div>
@@ -264,30 +281,33 @@ export default function TabDayOf({ eventId }) {
             </div>
           )}
 
-          <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #F1F5F9' }}>
-            <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#0F172A' }}>RSVP Breakdown</p>
+          {/* Graphical RSVP Breakdown */}
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: `1px solid ${P.border}` }}>
+            <p style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: P.text }}>RSVP Breakdown</p>
             {[
-              { label: 'Attending', value: attending, color: '#22C55E',  total: totalAll },
-              { label: 'Declined',  value: declined,  color: '#EF4444',  total: totalAll },
-              { label: 'Pending',   value: pending,   color: '#F59E0B',  total: totalAll },
+              { label: 'Attending', value: attending, color: P.green, total: totalAll },
+              { label: 'Pending',   value: pending,   color: P.amber, total: totalAll },
+              { label: 'Declined',  value: declined,  color: P.red,   total: totalAll },
             ].map(item => (
-              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 12, color: '#64748B', width: 64 }}>{item.label}</span>
-                <div style={{ flex: 1, background: '#F1F5F9', borderRadius: 4, height: 8, overflow: 'hidden' }}>
+              <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <span style={{ fontSize: 12, color: P.sub, width: 70 }}>{item.label}</span>
+                <div style={{ flex: 1, background: P.surface, borderRadius: 6, height: 10, overflow: 'hidden' }}>
                   <div style={{
                     width: item.total > 0 ? `${Math.round((item.value / item.total) * 100)}%` : '0%',
                     height: '100%',
                     background: item.color,
-                    borderRadius: 4,
+                    borderRadius: 6,
+                    transition: 'width 0.5s ease',
                   }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', minWidth: 24, textAlign: 'right' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: P.text, minWidth: 28, textAlign: 'right' }}>
                   {item.value}
                 </span>
               </div>
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );
