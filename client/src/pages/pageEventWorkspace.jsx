@@ -160,14 +160,17 @@ export default function EventWorkspace() {
         <div style={{ display: activeTab === 'vendors' ? 'block' : 'none' }}>
           <TabVendors eventId={eventId} organizerId={event.organizerId?._id || event.organizerId} />
         </div>
+
+        <div style={{ display: activeTab === 'budget' ? 'block' : 'none' }}>
+          <BudgetManagement eventId={eventId} />
+        </div>
         
 
         {!['overview', 'guests', 'day-of', 'messages', 'vendors','budget', 'team'].includes(activeTab) && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
-              <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>
-              {TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon            
+              <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>           
             </div>
           </div>
         )}
