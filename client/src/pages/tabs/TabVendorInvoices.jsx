@@ -8,11 +8,14 @@ const STATUS_COLORS = {
   rejected:       { bg: "#FEF2F2", text: "#991B1B" },
 };
 
-export default function TabVendorInvoices({ organizerId }) {
+export default function TabVendorInvoices({ eventId, organizerId }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!organizerId) return;
+
+    setLoading(true);
     fetchInvoices(organizerId)
       .then((data) => {
         setInvoices(data.data || []);
@@ -28,19 +31,35 @@ export default function TabVendorInvoices({ organizerId }) {
     reviewInvoice(invoiceId, status).catch(() => {});
   };
 
+  // ─── FILTER INVOICES ON THE FRONTEND ───────────────────────────────────
+  // We extract the plain string IDs to handle both object or string structures safely
+  const filteredInvoices = invoices.filter((inv) => {
+    const invEventId = inv.eventId?.$oid || inv.eventId;
+    const currentEventId = eventId?.$oid || eventId;
+
+    // Convert both to strings to ensure an exact match
+    return String(invEventId) === String(currentEventId);
+  });
+  // ───────────────────────────────────────────────────────────────────────
+
   return (
     <div>
       <p style={{ margin: "0 0 20px", fontSize: 14, color: "#64748B" }}>
-        Review invoices submitted by your vendors.
+        Review invoices submitted by your vendors for this event.
       </p>
 
       {loading ? (
-        <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>Loading invoices...</div>
-      ) : invoices.length === 0 ? (
-        <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>No invoices yet.</div>
+        <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>
+          Loading invoices...
+        </div>
+      ) : filteredInvoices.length === 0 ? (
+        <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>
+          No invoices found for this event.
+        </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 800 }}>
-          {invoices.map((inv) => (
+          {/* Loop over filteredInvoices instead of the raw invoices array */}
+          {filteredInvoices.map((inv) => (
             <InvoiceCard key={inv._id} invoice={inv} onReview={handleReview} />
           ))}
         </div>
