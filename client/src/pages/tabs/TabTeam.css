@@ -1,0 +1,299 @@
+.team-tab {
+  padding: 24px;
+  color: #0f172a;
+}
+
+.team-header {
+  margin-bottom: 24px;
+}
+
+.team-header h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: #0f172a;
+}
+
+.team-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.team-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 18px;
+}
+
+.team-section {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.team-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.team-section-header select {
+  min-width: 150px;
+}
+
+.team-section-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.team-section-header select,
+.assign-select {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #0f172a;
+  font-weight: 600;
+  outline: none;
+}
+
+.team-section-header select:focus,
+.assign-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.team-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.team-card h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.team-card p {
+  margin: 0 0 5px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.task-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.task-status-badge {
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.task-status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.task-status-badge.in_progress {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.task-status-badge.done {
+  background-color: #dcfce7;
+  color: #047857;
+}
+
+.task-status-badge.not_assigned {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.assign-select {
+  margin-top: 10px;
+  width: 100%;
+}
+
+@media (max-width: 1000px) {
+  .team-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .team-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .team-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.assign-select:disabled {
+  background-color: #e5e7eb;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.done-task-note {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.staff-card-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+}
+
+.staff-card-clickable:hover {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.selected-staff-card {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.staff-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.staff-name-row h3 {
+  margin: 0;
+}
+
+.staff-name-row span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.staff-inline-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.staff-inline-details p {
+  margin: 0 0 7px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.staff-task-count {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.task-meta-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.task-meta-row span {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.assigned-staff-badge {
+  margin-top: 8px;
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #3730a3;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.task-progress-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.task-progress-row strong {
+  color: #0f172a;
+}
+
+.task-progress-bar {
+  margin-top: 6px;
+  width: 100%;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.task-progress-fill {
+  height: 100%;
+  background-color: #2563eb;
+  border-radius: 999px;
+}
+
+.team-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.team-summary-card {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.team-summary-card h3 {
+  margin: 0 0 10px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.team-summary-card p {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+}

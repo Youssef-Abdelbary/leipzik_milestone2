@@ -9,6 +9,7 @@ import TabVendors from './tabs/TabVendors';
 import { EVENT_TYPES } from '../utils/constants';
 import BudgetManagement from "./pageBudgetManagement";
 import TabFeedback from './tabs/TabFeedback';
+import TabTeam from './tabs/TabTeam';
 
 const TABS = [
   { id: 'overview',  label: '📋 Overview'  },
@@ -152,11 +153,16 @@ export default function EventWorkspace() {
           <TabMessages eventId={eventId} />
         </div>
 
+        <div style={{ display: activeTab === 'team' ? 'block' : 'none' }}>
+          <TabTeam eventId={eventId} />
+        </div>
+
         <div style={{ display: activeTab === 'vendors' ? 'block' : 'none' }}>
           <TabVendors eventId={eventId} organizerId={event.organizerId?._id || event.organizerId} />
         </div>
+        
 
-        {!['overview', 'guests', 'day-of', 'messages', 'vendors'].includes(activeTab) && (
+        {!['overview', 'guests', 'day-of', 'messages', 'vendors','budget', 'team'].includes(activeTab) && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>

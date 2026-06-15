@@ -24,7 +24,7 @@ import broadcastReadRoute from './routes/routeBroadcastRead.js';
 import feedbackRoutes from './routes/routeFeedback.js';
 import loginRoute from "./routes/routeLogin.js";
 import VendorTrackingRoutes from './routes/routeVendorTracking.js';
-
+import teamRoutes from "./routes/routeTeam.js";
 
 import { setServers } from "node:dns/promises";
 import invoiceRoutes from "./routes/routeInvoices.js";
@@ -68,7 +68,7 @@ app.use('/api/broadcasts', broadcastReadRoute);
 app.use('/api/feedback', feedbackRoutes);
 app.use("/api/auth", loginRoute);
 app.use('/api/vendorRequests', VendorTrackingRoutes);
-// Login route
+app.use("/api/team", teamRoutes);
 
 
 // Connect to DB then start server
