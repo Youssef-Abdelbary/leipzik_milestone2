@@ -23,6 +23,7 @@ import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
 import InvoiceVendorPage from "./pages/pageInvoicesVendor";
 import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
+import StaffTasks from "./pages/pageStaffTasks";
 
 function getCurrentUserId() {
   try {
@@ -65,6 +66,8 @@ function App() {
         <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
         <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
         <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
+
+        <Route path="/staff/dashboard" element={<StaffTasks />} />
       </Routes>
     </BrowserRouter>
   );
