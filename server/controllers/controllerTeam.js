@@ -2,31 +2,6 @@ import mongoose from "mongoose";
 import EventLayout from "../models/EventLayout.js";
 
 
-async function removeStaffFromLayoutIfNoTasks(eventId, oldStaffId) {
-  if (!eventId || !oldStaffId) {
-    return;
-  }
-
-  const tasksCollection = mongoose.connection.db.collection("event_tasks");
-
-  const remainingTaskForOldStaff = await tasksCollection.findOne({
-    eventId: new mongoose.Types.ObjectId(eventId),
-    assignedTo: new mongoose.Types.ObjectId(oldStaffId),
-  });
-
-  if (remainingTaskForOldStaff) {
-    return;
-  }
-
-  await EventLayout.updateMany(
-    { eventId: new mongoose.Types.ObjectId(eventId) },
-    {
-      $pull: {
-        sharedWithStaff: new mongoose.Types.ObjectId(oldStaffId),
-      },
-    }
-  );
-}
 
 export function testTeamRoute(req, res) {
   res.json({ message: "Team route is working" });
