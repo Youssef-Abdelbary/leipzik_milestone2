@@ -169,3 +169,56 @@ export async function assignTaskToStaff(req, res) {
     res.status(500).json({ message: "Failed to assign task" });
   }
 }
+
+export async function createEventTask(req, res) {
+  try {
+    const { eventId } = req.params;
+    const { title, description, category, priority, dueDate } = req.body;
+
+    if (!title || !description || !category) {
+      return res.status(400).json({
+        message: "Title, description, and category are required",
+      });
+    }
+
+    const eventsCollection = mongoose.connection.db.collection("events");
+    const tasksCollection = mongoose.connection.db.collection("event_tasks");
+
+    const event = await eventsCollection.findOne({
+      _id: new mongoose.Types.ObjectId(eventId),
+    });
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const newTask = {
+      eventId: new mongoose.Types.ObjectId(eventId),
+      organizerId: event.organizerId,
+      assignedTo: null,
+      title,
+      description,
+      category,
+      status: "not_assigned",
+      priority: priority || "medium",
+      dueDate: dueDate ? new Date(dueDate) : null,
+      progressPercent: 0,
+      reminderAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await tasksCollection.insertOne(newTask);
+
+    res.status(201).json({
+      message: "Task created successfully",
+      task: {
+        _id: result.insertedId,
+        ...newTask,
+      },
+    });
+  } catch (error) {
+    console.error("Create event task error:", error);
+    res.status(500).json({ message: "Failed to create event task" });
+  }
+}

@@ -10,6 +10,15 @@ export default function TabTeam({ eventId }) {
   const [taskStatusFilter, setTaskStatusFilter] = useState("");
   const [specialityFilter, setSpecialityFilter] = useState("");
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+
+  const [taskForm, setTaskForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    priority: "medium",
+    dueDate: "",
+  });
 
   useEffect(() => {
     loadAllStaffMembers();
@@ -23,6 +32,49 @@ export default function TabTeam({ eventId }) {
   useEffect(() => {
     loadTasks();
   }, [eventId, taskStatusFilter]);
+  function updateTaskForm(field, value) {
+    setTaskForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }));
+  }
+  async function createTask() {
+    if (!taskForm.title || !taskForm.description || !taskForm.category) {
+      alert("Please fill title, description, and category.");
+      return;
+    }
+
+    const response = await fetch(
+      `http://localhost:5001/api/team/events/${eventId}/tasks`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(taskForm),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.message || "Failed to create task");
+      return;
+    }
+
+    setTaskForm({
+      title: "",
+      description: "",
+      category: "",
+      priority: "medium",
+      dueDate: "",
+    });
+
+    setShowTaskForm(false);
+
+    loadAllTasks();
+    loadTasks();
+  }
 
   async function loadStaffMembers() {
     const params = new URLSearchParams();
@@ -216,10 +268,18 @@ export default function TabTeam({ eventId }) {
           <div className="team-section-header">
             <h2>Event Tasks</h2>
 
-            <select
-              value={taskStatusFilter}
-              onChange={(e) => setTaskStatusFilter(e.target.value)}
-            >
+            <div className="task-header-actions">
+              <button
+                className="add-task-button"
+                onClick={() => setShowTaskForm(!showTaskForm)}
+              >
+                {showTaskForm ? "Cancel" : "+ Add Task"}
+              </button>
+
+              <select
+                value={taskStatusFilter}
+                onChange={(e) => setTaskStatusFilter(e.target.value)}
+              >
               <option value="">All statuses</option>
               <option value="not_assigned">Not assigned</option>
               <option value="pending">Pending</option>
@@ -227,6 +287,50 @@ export default function TabTeam({ eventId }) {
               <option value="done">Done</option>
             </select>
           </div>
+        </div>
+        {showTaskForm && (
+          <div className="add-task-form">
+            <input
+              type="text"
+              placeholder="Task title"
+              value={taskForm.title}
+              onChange={(e) => updateTaskForm("title", e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Description"
+              value={taskForm.description}
+              onChange={(e) => updateTaskForm("description", e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Category, e.g. Logistics"
+              value={taskForm.category}
+              onChange={(e) => updateTaskForm("category", e.target.value)}
+            />
+
+            <select
+              value={taskForm.priority}
+              onChange={(e) => updateTaskForm("priority", e.target.value)}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+
+            <input
+              type="datetime-local"
+              value={taskForm.dueDate}
+              onChange={(e) => updateTaskForm("dueDate", e.target.value)}
+            />
+
+            <button className="save-task-button" onClick={createTask}>
+              Save Task
+            </button>
+          </div>
+        )}
 
           <div className="team-list">
             {tasks.map((task) => (
