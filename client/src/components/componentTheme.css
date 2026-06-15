@@ -1,0 +1,56 @@
+
+:root {
+  /* Surfaces */
+  --opal-void:    #0a0a0f;
+  --opal-bg:      #0d0d13;
+  --opal-panel:   #15151d;
+  --opal-surface: #1e1e29;
+  --opal-surface-hover: #262633;
+
+  /* Borders / lines */
+  --opal-border:       rgba(255, 255, 255, 0.07);
+  --opal-border-hover: rgba(255, 255, 255, 0.14);
+
+  /* Accents */
+  --opal-violet:      #7c5cfc;
+  --opal-violet-dim:  rgba(124, 92, 252, 0.14);
+  --opal-teal:        #4fd1c5;
+  --opal-teal-dim:    rgba(79, 209, 197, 0.12);
+  --opal-amber:       #f5b34a;
+  --opal-amber-dim:   rgba(245, 179, 74, 0.12);
+  --opal-red:         #ff5c66;
+  --opal-red-dim:     rgba(255, 92, 102, 0.1);
+
+  /* Text */
+  --opal-text:   #e8e6f0;
+  --opal-sub:    rgba(232, 230, 240, 0.5);
+  --opal-muted:  rgba(232, 230, 240, 0.26);
+
+  /* Fonts */
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Base type scale — slightly larger overall for readability */
+  --text-xs:   0.78rem;
+  --text-sm:   0.9rem;
+  --text-base: 1.05rem;
+  --text-lg:   1.2rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--opal-bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 92, 252, 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(79, 209, 197, 0.08), transparent);
+  background-attachment: fixed;
+  color: var(--opal-text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}

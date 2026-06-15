@@ -3,20 +3,20 @@ import {
     VscHome, VscMail, VscCalendar, VscSettingsGear,
 } from 'react-icons/vsc';
 import {
-    fetchBookingRequests,
-    approveBooking,
-    declineBooking,
-    fetchMessages,
-    sendMessage,
+    fetchMyVenueReplies,
+    fetchBookingMessages,
     fetchVenueAvailability,
-} from '../services/serviceResponseVenue.js';
+    sendBookingMessage,
+    sendCounterProposal,
+    matchCounterProposal,
+} from '../services/serviceReplyVenue.js';
 import AppHeader from '../components/componentAppHeader.jsx';
 import Dock from '../components/componentDock.jsx';
 import CalendarAvailability from '../components/componentCalendar.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import '../components/componentTheme.css';
 
-// ─── Decode user_id from stored JWT (reads payload only — auth is server-side) ──
+// ─── Decode user_id from stored JWT ──────────────────────────────────────────
 function getUserIdFromToken() {
     try {
         const token = localStorage.getItem('token');
@@ -30,18 +30,18 @@ function getUserIdFromToken() {
     }
 }
 
-// ─── Status tokens (mapped onto the Opal palette) ─────────────────────────
+// ─── Status map (lowercase keys to match backend) ────────────────────────────
 const STATUS = {
-    Pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)' },
-    Approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)' },
-    Declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)' },
-    Countered: { bg: 'var(--opal-violet-dim)',border: 'rgba(124,92,252,0.28)', text: 'var(--opal-violet)' },
+    pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Pending' },
+    approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)',   label: 'Approved' },
+    declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)',    label: 'Declined' },
+    countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Countered' },
 };
 
-// ─── Tiny helpers ───────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function Avatar({ name = '?', size = 36 }) {
-    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return (
         <div style={{
             width: size, height: size, borderRadius: size / 2.8,
@@ -56,7 +56,7 @@ function Avatar({ name = '?', size = 36 }) {
 }
 
 function Badge({ status }) {
-    const s = STATUS[status] ?? STATUS.Pending;
+    const s = STATUS[status] ?? STATUS.pending;
     return (
         <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -65,7 +65,7 @@ function Badge({ status }) {
             color: s.text, fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
         }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.text }} />
-            {status}
+            {s.label}
         </span>
     );
 }
@@ -81,11 +81,10 @@ function Btn({ label, color, textColor = '#0a0a0f', onClick, disabled, style = {
             style={{
                 padding: '8px 18px', borderRadius: 10, border: 'none',
                 background: color,
-                opacity: hov && !disabled ? 0.85 : 1,
+                opacity: hov && !disabled ? 0.85 : disabled ? 0.35 : 1,
                 color: textColor, fontSize: 13, fontWeight: 600,
-                cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-body)',
-                transition: 'all 0.15s', ...style,
-                ...(disabled ? { opacity: 0.35 } : {}),
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--font-body)', transition: 'all 0.15s', ...style,
             }}
         >
             {label}
@@ -96,22 +95,17 @@ function Btn({ label, color, textColor = '#0a0a0f', onClick, disabled, style = {
 const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 const fmtTime = d => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-// ─── Glass card wrapper ─────────────────────────────────────────────────────
-
 function GlassCard({ children, style = {}, ...rest }) {
     return (
-        <div
-            {...rest}
-            style={{
-                background: 'rgba(30,30,41,0.55)',
-                backdropFilter: 'blur(18px) saturate(140%)',
-                WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-                border: '1px solid var(--opal-border)',
-                borderRadius: 16,
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
-                ...style,
-            }}
-        >
+        <div {...rest} style={{
+            background: 'rgba(30,30,41,0.55)',
+            backdropFilter: 'blur(18px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+            border: '1px solid var(--opal-border)',
+            borderRadius: 16,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+            ...style,
+        }}>
             {children}
         </div>
     );
@@ -121,6 +115,7 @@ function GlassCard({ children, style = {}, ...rest }) {
 
 function Bubble({ msg, isMine }) {
     const isCP = msg.type === 'counter_proposal';
+    const cp   = msg.counterProposal;
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
             {isCP && (
@@ -134,28 +129,24 @@ function Bubble({ msg, isMine }) {
             <div style={{
                 maxWidth: '72%', padding: '10px 14px', borderRadius: 14,
                 borderBottomRightRadius: isMine ? 4 : 14,
-                borderBottomLeftRadius: isMine ? 14 : 4,
+                borderBottomLeftRadius:  isMine ? 14 : 4,
                 background: isMine ? 'var(--opal-violet)' : 'var(--opal-surface)',
                 border: isCP ? '1px solid rgba(245,179,74,0.28)' : '1px solid var(--opal-border)',
                 color: isMine ? '#0a0a0f' : 'var(--opal-text)', fontSize: 15, lineHeight: 1.55,
             }}>
                 {msg.text}
-                {isCP && msg.counterProposal && (
+                {isCP && cp && (cp.adjustedPrice != null || cp.alternativeDates?.length > 0) && (
                     <div style={{
                         marginTop: 8, paddingTop: 8,
                         borderTop: `1px solid ${isMine ? 'rgba(10,10,15,0.18)' : 'rgba(255,255,255,0.1)'}`,
                         fontSize: 12, color: isMine ? 'rgba(10,10,15,0.7)' : 'var(--opal-sub)',
                         display: 'flex', flexDirection: 'column', gap: 3,
                     }}>
-                        {msg.counterProposal.adjustedPrice != null && (
-                            <span>💰 Adjusted price: <strong>${msg.counterProposal.adjustedPrice.toLocaleString()}</strong></span>
+                        {cp.adjustedPrice != null && (
+                            <span>💰 Price: <strong>{cp.adjustedPrice.toLocaleString()} {cp.currency ?? 'EGP'}</strong></span>
                         )}
-                        {msg.counterProposal.proposedDates?.length > 0 && (
-                            <span>📅 Proposed dates: <strong>
-                                {msg.counterProposal.proposedDates
-                                    .map(d => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }))
-                                    .join(', ')}
-                            </strong></span>
+                        {cp.alternativeDates?.length > 0 && (
+                            <span>📅 Dates: <strong>{cp.alternativeDates.map(fmtDate).join(', ')}</strong></span>
                         )}
                     </div>
                 )}
@@ -168,45 +159,42 @@ function Bubble({ msg, isMine }) {
     );
 }
 
-// ─── Message thread panel ─────────────────────────────────────────────────────
+// ─── Message thread ───────────────────────────────────────────────────────────
 
-function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
-    const [messages, setMessages] = useState([]);
-    const [text, setText] = useState('');
-    const [isCP, setIsCP] = useState(defaultIsCP);
-    const [cpPrice, setCpPrice] = useState('');
-    const [cpDates, setCpDates] = useState([]);
-    const [calOpen, setCalOpen] = useState(false);   // popover open/close
-    const [sending, setSending] = useState(false);
+function MessageThread({ booking, currentUserId, onBookingUpdate }) {
+    const [messages,   setMessages]  = useState(booking.messages ?? []);
+    const [text,       setText]      = useState('');
+    const [isCP,       setIsCP]      = useState(false);
+    const [cpPrice,    setCpPrice]   = useState('');
+    const [cpDates,    setCpDates]   = useState([]);
+    const [calOpen,    setCalOpen]   = useState(false);
+    const [sending,    setSending]   = useState(false);
+    const [matchedIds, setMatchedIds] = useState(new Set());
     const bottomRef = useRef(null);
-    const pollRef   = useRef(null);
-    const calBtnRef = useRef(null);                   // anchor for popover position
+    const calBtnRef = useRef(null);
 
-    // Re-seed isCP whenever the prop changes
-    useEffect(() => {
-        setIsCP(defaultIsCP);
-        if (!defaultIsCP) { setCpPrice(''); setCpDates([]); setCalOpen(false); }
-    }, [defaultIsCP, booking?._id]);
-
-    // Close calendar popover when CP mode is toggled off
+    // Close calendar if CP mode is turned off
     useEffect(() => { if (!isCP) setCalOpen(false); }, [isCP]);
+
+    const incomingCounters  = booking.incomingCounterProposals ?? [];
+    const latestCounter     = incomingCounters[incomingCounters.length - 1];
+    const latestIsMatched   = latestCounter && matchedIds.has(latestCounter._id);
 
     const load = useCallback(async () => {
         if (!booking?._id) return;
         try {
-            const msgs = await fetchMessages(booking._id);
-            setMessages(msgs);
+            const data = await fetchBookingMessages(booking._id);
+            setMessages(data.messages);
+            onBookingUpdate(booking._id, { unreadCount: 0, incomingCounterProposals: data.incomingCounterProposals });
         } catch { /* silent */ }
-    }, [booking?._id]);
+    }, [booking?._id, onBookingUpdate]);
 
     useEffect(() => {
-        setMessages([]);
-        setText('');
-        setIsCP(defaultIsCP);
+        setMessages(booking.messages ?? []);
+        setText(''); setIsCP(false); setCpPrice(''); setCpDates([]); setCalOpen(false);
+        setMatchedIds(new Set());
         load();
-        pollRef.current = setInterval(load, 6000);
-        return () => clearInterval(pollRef.current);
-    }, [load]);
+    }, [booking?._id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -216,21 +204,43 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
         if (!text.trim() || sending) return;
         setSending(true);
         try {
-            const cp = isCP ? {
-                adjustedPrice: cpPrice ? Number(cpPrice) : null,
-                proposedDates: cpDates.length ? cpDates : null,
-            } : null;
-            const msg = await sendMessage(booking._id, {
-                text,
-                type: isCP ? 'counter_proposal' : 'message',
-                counterProposal: cp,
+            let data;
+            if (isCP) {
+                data = await sendCounterProposal(booking._id, {
+                    text: text.trim(),
+                    counterProposal: {
+                        adjustedPrice:    cpPrice ? Number(cpPrice) : null,
+                        alternativeDates: cpDates.length ? cpDates : [],
+                        note:             text.trim(),
+                    },
+                });
+                onBookingUpdate(booking._id, {
+                    status: 'countered',
+                    proposedPrice:  data.booking.proposedPrice,
+                    requestedDates: data.booking.requestedDates,
+                });
+            } else {
+                data = await sendBookingMessage(booking._id, text.trim());
+            }
+            setMessages(prev => [...prev, data.message]);
+            setText(''); setCpPrice(''); setCpDates([]); setCalOpen(false); setIsCP(false);
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleMatch = async () => {
+        if (!latestCounter || sending) return;
+        setSending(true);
+        try {
+            const data = await matchCounterProposal(booking._id, { messageId: latestCounter._id });
+            setMessages(prev => [...prev, data.message]);
+            setMatchedIds(prev => new Set(prev).add(latestCounter._id));
+            onBookingUpdate(booking._id, {
+                status: 'countered',
+                proposedPrice:  data.booking.proposedPrice,
+                requestedDates: data.booking.requestedDates,
             });
-            setMessages(prev => [...prev, msg]);
-            setText('');
-            setCpPrice('');
-            setCpDates([]);
-            setCalOpen(false);
-            setIsCP(false);
         } finally {
             setSending(false);
         }
@@ -240,20 +250,68 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
         background: 'var(--opal-surface)', border: '1px solid var(--opal-border)',
         borderRadius: 10, color: 'var(--opal-text)', fontSize: 13,
         padding: '9px 12px', fontFamily: 'var(--font-body)', outline: 'none',
+        boxSizing: 'border-box',
+    };
+
+    // pill-button style reused for price input + calendar button
+    const pillActive = {
+        fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
+        borderRadius: 8, padding: '4px 10px',
+        fontFamily: 'var(--font-body)', transition: 'all 0.15s',
     };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-            {/* Scrollable message list */}
+
+            {/* ── Incoming counter-proposal banner ── */}
+            {latestCounter && (
+                <div style={{ padding: '14px 20px 0' }}>
+                    <GlassCard style={{
+                        padding: '12px 16px',
+                        border: '1px solid rgba(245,179,74,0.28)',
+                        background: 'var(--opal-amber-dim)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+                    }}>
+                        <div style={{ fontSize: 12, color: 'var(--opal-amber)' }}>
+                            <strong style={{ fontWeight: 700 }}>Incoming counter-proposal</strong>
+                            {latestCounter.counterProposal?.adjustedPrice != null && (
+                                <span> · {latestCounter.counterProposal.adjustedPrice.toLocaleString()} {latestCounter.counterProposal.currency ?? 'EGP'}</span>
+                            )}
+                            {latestCounter.counterProposal?.alternativeDates?.length > 0 && (
+                                <span> · {latestCounter.counterProposal.alternativeDates.map(fmtDate).join(', ')}</span>
+                            )}
+                        </div>
+                        {latestIsMatched ? (
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                padding: '5px 12px', borderRadius: 8,
+                                background: 'var(--opal-teal-dim)', border: '1px solid rgba(79,209,197,0.28)',
+                                color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
+                            }}>✓ Matched</span>
+                        ) : (
+                            <Btn
+                                label="Match this offer"
+                                color="var(--opal-amber)"
+                                onClick={handleMatch}
+                                disabled={sending}
+                                style={{ padding: '6px 14px', fontSize: 12 }}
+                            />
+                        )}
+                    </GlassCard>
+                </div>
+            )}
+
+            {/* ── Messages ── */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 24px' }}>
                 {messages.length === 0 && (
                     <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 32 }}>
                         No messages yet — start the conversation.
                     </p>
                 )}
-                {messages.map(m => (
-                    <Bubble key={m._id} msg={m} isMine={m.sender._id === currentUserId} />
-                ))}
+                {messages.map(m => {
+                    const senderId = m.sender?._id?.toString?.() ?? m.sender?.toString?.() ?? m.sender;
+                    return <Bubble key={m._id} msg={m} isMine={senderId === currentUserId} />;
+                })}
                 <div ref={bottomRef} />
             </div>
 
@@ -261,65 +319,54 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
             <div style={{
                 padding: '14px 20px', borderTop: '1px solid var(--opal-border)',
                 background: 'rgba(21,21,29,0.6)', display: 'flex', flexDirection: 'column', gap: 10,
-                // Relative so the calendar popover can be positioned absolutely inside
                 position: 'relative',
             }}>
-                {/* MiniCalendar popover — floats upward above the composer */}
+                {/* MiniCalendar popover — floats upward */}
                 {isCP && calOpen && (
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '100%',
-                        left: 20,
-                        marginBottom: 8,
-                        zIndex: 50,
-                    }}>
+                    <div style={{ position: 'absolute', bottom: '100%', left: 20, marginBottom: 8, zIndex: 50 }}>
                         <MiniCalendar selectedDates={cpDates} onChange={setCpDates} />
                     </div>
                 )}
 
-                {/* Counter toggle + optional price + calendar button */}
+                {/* Counter toggle + price input + dates button */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => setIsCP(p => !p)} style={{
-                        fontSize: 11, fontWeight: 600,
-                        color: isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                        ...pillActive,
+                        color:      isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
                         background: isCP ? 'var(--opal-amber-dim)' : 'transparent',
-                        border: `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
-                        borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
-                        fontFamily: 'var(--font-body)', transition: 'all 0.15s', letterSpacing: 0.3,
+                        border:     `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                        cursor: 'pointer',
                     }}>
                         ↩ Counter-proposal
                     </button>
 
                     {isCP && (
                         <>
+                            {/* Price — styled as a pill button */}
                             <input
                                 type="number"
                                 placeholder="💵 Price"
                                 value={cpPrice}
                                 onChange={e => setCpPrice(e.target.value)}
                                 style={{
-                                    fontSize: 11, fontWeight: 600,
-                                    color: cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                    ...pillActive,
+                                    color:      cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                     background: cpPrice ? 'var(--opal-amber-dim)' : 'transparent',
-                                    border: `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
-                                    borderRadius: 8, padding: '4px 10px', cursor: 'text',
-                                    fontFamily: 'var(--font-body)', transition: 'all 0.15s', letterSpacing: 0.3,
-                                    width: 110, outline: 'none',
+                                    border:     `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                    cursor: 'text', width: 110, outline: 'none',
                                 }}
                             />
 
-                            {/* Calendar toggle button */}
+                            {/* Calendar toggle */}
                             <button
                                 ref={calBtnRef}
                                 onClick={() => setCalOpen(o => !o)}
                                 style={{
-                                    fontSize: 11, fontWeight: 600,
-                                    color: isCP || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                    ...pillActive,
+                                    color:      calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                     background: calOpen || cpDates.length > 0 ? 'var(--opal-amber-dim)' : 'transparent',
-                                    border: `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
-                                    borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
-                                    fontFamily: 'var(--font-body)', transition: 'all 0.15s', letterSpacing: 0.3,
-                                    display: 'flex', alignItems: 'center', gap: 5,
+                                    border:     `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
                                 }}
                             >
                                 📅 {cpDates.length > 0 ? `${cpDates.length} date${cpDates.length > 1 ? 's' : ''}` : 'Dates'}
@@ -328,7 +375,7 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
                     )}
                 </div>
 
-                {/* Text + send */}
+                {/* Textarea + send */}
                 <div style={{ display: 'flex', gap: 8 }}>
                     <textarea
                         rows={2}
@@ -347,9 +394,7 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
                             cursor: text.trim() ? 'pointer' : 'not-allowed',
                             color: '#0a0a0f', fontSize: 16, transition: 'background 0.15s', flexShrink: 0,
                         }}
-                    >
-                        ↑
-                    </button>
+                    >↑</button>
                 </div>
             </div>
         </div>
@@ -360,12 +405,10 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
 
 const DOCK_HEIGHT = 120;
 
-function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
+function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvailability }) {
     const [tab, setTab] = useState('details');
-    // ← When Counter is clicked we flip to messages AND pre-arm the CP toggle
-    const [defaultIsCP, setDefaultIsCP] = useState(false);
 
-    useEffect(() => { setTab('details'); setDefaultIsCP(false); }, [booking?._id]);
+    useEffect(() => { setTab('details'); }, [booking?._id]);
 
     if (!booking) return (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10 }}>
@@ -374,39 +417,32 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
         </div>
     );
 
-    const isPending = booking.status === 'Pending';
+    const venue    = booking.venueId;
+    const venueId  = venue?._id ?? venue;
 
     const fields = [
-        { label: 'Venue',      value: booking.venueName ?? booking.venueId?.name },
+        { label: 'Venue',      value: venue?.name },
         { label: 'Event Type', value: booking.eventType },
-        { label: 'Date',       value: fmtDate(booking.eventDate) },
+        { label: 'Dates',      value: booking.requestedDates?.map(fmtDate).join(', ') },
         { label: 'Attendees',  value: booking.expectedAttendees?.toLocaleString() },
-        { label: 'Budget',     value: booking.proposedPrice?.amount
+        { label: 'Price',      value: booking.proposedPrice?.amount
             ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
             : '—' },
     ];
 
-    const venueId = booking.venueId?._id ?? booking.venueId;
-
-    // Navigates to messages tab with counter-proposal pre-selected
-    const handleCounter = () => {
-        setDefaultIsCP(true);
-        setTab('messages');
-    };
-
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* ── Header: organizer info + tab strip ── */}
+            {/* Header */}
             <div style={{ padding: '20px 24px 0', borderBottom: '1px solid var(--opal-border)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <Avatar name={booking.organizerId?.name ?? 'User'} size={44} />
+                        <Avatar name={venue?.name ?? 'Venue'} size={44} />
                         <div>
                             <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--opal-text)', letterSpacing: -0.3, fontFamily: 'var(--font-display)' }}>
-                                {booking.organizerId?.name}
+                                {venue?.name}
                             </p>
                             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>
-                                {booking.organizerId?.email}
+                                {booking.eventType}
                             </p>
                         </div>
                     </div>
@@ -418,25 +454,31 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
                         <button key={t} onClick={() => setTab(t)} style={{
                             padding: '8px 16px', background: 'none', border: 'none',
                             borderBottom: tab === t ? '2px solid var(--opal-violet)' : '2px solid transparent',
-                            color: tab === t ? 'var(--opal-violet)' : 'var(--opal-sub)', fontSize: 13, fontWeight: 600,
-                            cursor: 'pointer', fontFamily: 'var(--font-body)', textTransform: 'capitalize',
-                            transition: 'all 0.15s',
-                        }}>{t}</button>
+                            color: tab === t ? 'var(--opal-violet)' : 'var(--opal-sub)',
+                            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            fontFamily: 'var(--font-body)', textTransform: 'capitalize', transition: 'all 0.15s',
+                        }}>
+                            {t}
+                            {t === 'messages' && booking.unreadCount > 0 && (
+                                <span style={{
+                                    marginLeft: 6, background: 'var(--opal-red)', color: '#0a0a0f',
+                                    borderRadius: 20, fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                                }}>
+                                    {booking.unreadCount}
+                                </span>
+                            )}
+                        </button>
                     ))}
                 </div>
             </div>
 
-            {/* ── Details tab ── */}
+            {/* Details tab */}
             {tab === 'details' && (
                 <div style={{
-                    flex: 1,
-                    overflowY: 'auto',
+                    flex: 1, overflowY: 'auto',
                     padding: `20px 24px ${DOCK_HEIGHT + 16}px`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
+                    display: 'flex', flexDirection: 'column', gap: 16,
                 }}>
-                    {/* Field grid */}
                     <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden' }}>
                         {fields.map(({ label, value }, i) => (
                             <div key={label} style={{
@@ -452,7 +494,7 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
                         ))}
                     </GlassCard>
 
-                    {/* Calendar + Special Requirements */}
+                    {/* Calendar — fix: pass fetchVenueAvailability directly from prop */}
                     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                         <div style={{ flexShrink: 0 }}>
                             <CalendarAvailability
@@ -480,15 +522,9 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
                         )}
                     </div>
 
-                    {/* Pending / Countered actions */}
-                    {(booking.status === 'Pending' || booking.status === 'Countered') && (
-                        <GlassCard style={{ display: 'flex', gap: 10, padding: '16px 18px' }}>
-                            <Btn label="✓ Approve" color="var(--opal-teal)"   onClick={() => onApprove(booking._id)} style={{ flex: 1 }} />
-                            <Btn label="✕ Decline" color="var(--opal-red)"    textColor="#0a0a0f" onClick={() => onDecline(booking._id)} style={{ flex: 1 }} />
-                            {/* ← Now calls handleCounter instead of setTab directly */}
-                            <Btn label="↩ Counter" color="var(--opal-amber)"  textColor="#0a0a0f" onClick={handleCounter} style={{ flex: 1 }} />
-                        </GlassCard>
-                    )}
+                    <GlassCard style={{ display: 'flex', gap: 10, padding: '16px 18px' }}>
+                        <Btn label="↩ Open conversation" color="var(--opal-violet)" onClick={() => setTab('messages')} style={{ flex: 1 }} />
+                    </GlassCard>
                 </div>
             )}
 
@@ -498,7 +534,7 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
                     <MessageThread
                         booking={booking}
                         currentUserId={currentUserId}
-                        defaultIsCP={defaultIsCP}       // ← passed down
+                        onBookingUpdate={onBookingUpdate}
                     />
                 </div>
             )}
@@ -508,40 +544,39 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function PageResponseVenue() {
+export default function PageReplyVenue() {
     const currentUserId = getUserIdFromToken();
 
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [filter, setFilter]     = useState('All');
-    const [loading, setLoading]   = useState(true);
+    const [filter,   setFilter]   = useState('All');
+    const [loading,  setLoading]  = useState(true);
 
     useEffect(() => {
-        fetchBookingRequests()
-            .then(data => { setBookings(data); setSelected(data[0] ?? null); })
+        fetchMyVenueReplies()
+            .then(data => { setBookings(data.replies); setSelected(data.replies[0] ?? null); })
             .finally(() => setLoading(false));
     }, []);
 
-    const handleApprove = async (id) => {
-        await approveBooking(id);
-        setBookings(prev => prev.map(b => b._id === id ? { ...b, status: 'Approved' } : b));
-        setSelected(prev => prev?._id === id ? { ...prev, status: 'Approved' } : prev);
-    };
+    const handleBookingUpdate = useCallback((bookingId, patch) => {
+        setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, ...patch } : b));
+        setSelected(prev => prev?._id === bookingId ? { ...prev, ...patch } : prev);
+    }, []);
 
-    const handleDecline = async (id) => {
-        await declineBooking(id);
-        setBookings(prev => prev.map(b => b._id === id ? { ...b, status: 'Declined' } : b));
-        setSelected(prev => prev?._id === id ? { ...prev, status: 'Declined' } : prev);
+    // countered is grouped under Pending in the sidebar tab filter, but keeps its own badge label
+    const sidebarLabel = (b) => {
+        if (b.status === 'countered') return 'Pending';
+        return STATUS[b.status]?.label ?? 'Pending';
     };
 
     const tabs = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
         All:      bookings.length,
-        Pending:  bookings.filter(b => b.status === 'Pending').length,
-        Approved: bookings.filter(b => b.status === 'Approved').length,
-        Declined: bookings.filter(b => b.status === 'Declined').length,
+        Pending:  bookings.filter(b => sidebarLabel(b) === 'Pending').length,
+        Approved: bookings.filter(b => sidebarLabel(b) === 'Approved').length,
+        Declined: bookings.filter(b => sidebarLabel(b) === 'Declined').length,
     };
-    const filtered = filter === 'All' ? bookings : bookings.filter(b => b.status === filter);
+    const filtered = filter === 'All' ? bookings : bookings.filter(b => sidebarLabel(b) === filter);
 
     const stats = [
         { label: 'Total',    value: counts.All,      color: 'var(--opal-violet)' },
@@ -558,12 +593,8 @@ export default function PageResponseVenue() {
     ];
 
     return (
-        <div style={{
-            height: '100vh', display: 'flex', flexDirection: 'column',
-            fontFamily: 'var(--font-body)',
-            color: 'var(--opal-text)',
-        }}>
-            <AppHeader crumb="Booking Requests" right={<Avatar name="Venue Manager" size={32} />} />
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
+            <AppHeader crumb="Venue Replies" right={<Avatar name="Account" size={32} />} />
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* Sidebar */}
@@ -582,7 +613,7 @@ export default function PageResponseVenue() {
                             <button key={t} onClick={() => setFilter(t)} style={{
                                 flex: 1, padding: '5px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
                                 background: filter === t ? 'var(--opal-violet-dim)' : 'transparent',
-                                color: filter === t ? 'var(--opal-violet)' : 'var(--opal-muted)',
+                                color:      filter === t ? 'var(--opal-violet)' : 'var(--opal-muted)',
                                 fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-body)',
                                 letterSpacing: 0.3, transition: 'all 0.15s',
                             }}>{t}</button>
@@ -594,11 +625,12 @@ export default function PageResponseVenue() {
                             <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>Loading…</p>
                         )}
                         {!loading && filtered.length === 0 && (
-                            <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>No requests</p>
+                            <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>No conversations</p>
                         )}
                         {filtered.map(b => {
                             const isActive = selected?._id === b._id;
-                            const s = STATUS[b.status] ?? STATUS.Pending;
+                            const s        = STATUS[b.status] ?? STATUS.pending;
+                            const listS    = s;  // was: b.status === 'countered' ? STATUS.pending : s
                             return (
                                 <button key={b._id} onClick={() => setSelected(b)} style={{
                                     width: '100%', textAlign: 'left',
@@ -608,21 +640,27 @@ export default function PageResponseVenue() {
                                     marginBottom: 3, display: 'flex', alignItems: 'center', gap: 10,
                                     transition: 'all 0.15s',
                                 }}>
-                                    <Avatar name={b.organizerId?.name ?? 'U'} size={36} />
+                                    <Avatar name={b.venueId?.name ?? 'V'} size={36} />
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                                             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--opal-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {b.organizerId?.name}
+                                                {b.venueId?.name}
                                             </p>
-                                            <span style={{ fontSize: 10, color: 'var(--opal-muted)', flexShrink: 0, marginLeft: 4 }}>
-                                                {fmtDate(b.eventDate)}
-                                            </span>
+                                            {b.unreadCount > 0 && (
+                                                <span style={{
+                                                    fontSize: 10, fontWeight: 700, color: '#0a0a0f',
+                                                    background: 'var(--opal-red)', borderRadius: 20,
+                                                    padding: '1px 6px', flexShrink: 0, marginLeft: 4,
+                                                }}>
+                                                    {b.unreadCount}
+                                                </span>
+                                            )}
                                         </div>
                                         <p style={{ margin: 0, fontSize: 12, color: 'var(--opal-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {b.eventType}
                                         </p>
-                                        <span style={{ fontSize: 10, fontWeight: 600, color: s.text, marginTop: 4, display: 'block' }}>
-                                            ● {b.status}
+                                        <span style={{ fontSize: 10, fontWeight: 600, color: listS.text, marginTop: 4, display: 'block' }}>
+                                            ● {listS.label}
                                         </span>
                                     </div>
                                 </button>
@@ -635,9 +673,9 @@ export default function PageResponseVenue() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <DetailPanel
                         booking={selected}
-                        onApprove={handleApprove}
-                        onDecline={handleDecline}
                         currentUserId={currentUserId}
+                        onBookingUpdate={handleBookingUpdate}
+                        fetchVenueAvailability={fetchVenueAvailability}
                     />
                 </div>
             </div>

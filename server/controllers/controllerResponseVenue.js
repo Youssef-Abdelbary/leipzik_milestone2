@@ -121,9 +121,6 @@ export async function declineBooking(req, res) {
 
 // ─── Venue availability ──────────────────────────────────────────────────────
 
-// Returns the dates that are locked out for this venue (from approved
-// bookings). The frontend overlays the *current* booking's own requested
-// dates on top of this, so we don't need to fetch other bookings here.
 export async function getVenueAvailability(req, res) {
     try {
         const { venueId } = req.params;
@@ -131,15 +128,51 @@ export async function getVenueAvailability(req, res) {
         const venue = await Venue.findById(venueId).select('name bookedDates').lean();
         if (!venue) return res.status(404).json({ message: 'Venue not found' });
 
-        const bookedDates = (venue.bookedDates || []).map(b => ({
-            date: b.date,
-            bookingId: b.bookingId,
-        }));
+        const toDateStr = (value) => {
+            const dt = new Date(value);
+            const y  = dt.getUTCFullYear();
+            const m  = String(dt.getUTCMonth() + 1).padStart(2, '0');
+            const d  = String(dt.getUTCDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        };
+
+        const seen   = new Set();
+        const merged = [];
+
+        // ── 1. Dates from venue.bookedDates with no bookingId = manually blocked ──
+        for (const entry of venue.bookedDates ?? []) {
+            const key = toDateStr(entry.date);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push({
+                date:      key,
+                bookingId: entry.bookingId ?? null,
+                source:    entry.bookingId ? 'booking' : 'manual',
+            });
+        }
+
+        // ── 2. Approved BrowseVenue bookings ────────────────────────────────────
+        const approvedBookings = await BrowseVenue.find({ venueId, status: 'approved' })
+            .select('requestedDates')
+            .lean();
+
+        for (const booking of approvedBookings) {
+            for (const date of booking.requestedDates ?? []) {
+                const key = toDateStr(date);
+                if (seen.has(key)) continue;   // venue.bookedDates already has it
+                seen.add(key);
+                merged.push({
+                    date:      key,
+                    bookingId: booking._id,
+                    source:    'booking',
+                });
+            }
+        }
 
         return res.status(200).json({
             venueId,
-            venueName: venue.name,
-            bookedDates,
+            venueName:   venue.name,
+            bookedDates: merged,   // [{ date, bookingId, source: 'booking'|'manual' }]
         });
     } catch (err) {
         return res.status(500).json({ message: 'Failed to fetch venue availability', error: err.message });
