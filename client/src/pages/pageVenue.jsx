@@ -6,10 +6,15 @@ import {
   deleteVenue,
   deactivateVenue,
 } from "../services/serviceVenue";
+import {
+    VscHome, VscMail, VscCalendar,
+} from 'react-icons/vsc';
 import { getConfirmedBookings } from "../services/serviceBookingCalendar";
 import AppHeader from "../components/componentAppHeader.jsx";
 import MiniCalendar from "../components/componentMiniCalendar.jsx";
 import { OpalSelect } from "../components/componentMenus.jsx";
+import Dock from "../components/componentDock.jsx";
+import { useNavigate } from "react-router-dom";
 import "../components/componentTheme.css";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -18,6 +23,8 @@ const AMENITY_OPTIONS = [
   "Parking","Outdoor Area","Stage","Wi-Fi","Catering","AV Equipment","Dressing Room",
 ];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const DOCK_HEIGHT = 120;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,7 +86,7 @@ function Avatar({ name = "?", size = 34 }) {
   );
 }
 
-// ─── Date filter popover (reused from browse page) ────────────────────────────
+// ─── Date filter popover ──────────────────────────────────────────────────────
 
 function DateFilterPopover({ value, onChange, label }) {
   const [open, setOpen] = useState(false);
@@ -192,8 +199,7 @@ function ConfirmedBookingsSection() {
     return new Set((selectedBooking.requestedDates || []).map(d => dateKey(d)));
   }, [selectedBooking]);
 
-  // Build calendar display dates from bookingsByDate for MiniCalendar highlight
-  const bookedDatesList = useMemo(() => Array.from(bookingsByDate.keys()), [bookingsByDate]);
+  const bookedDatesList  = useMemo(() => Array.from(bookingsByDate.keys()), [bookingsByDate]);
   const selectedDatesList = useMemo(() => Array.from(selectedKeys), [selectedKeys]);
 
   const handleSelectBooking = b => {
@@ -209,7 +215,6 @@ function ConfirmedBookingsSection() {
       {/* ── Filters bar ── */}
       <GlassPanel style={{ padding:"14px 18px", marginBottom:16, position:"relative", zIndex:10 }}>
         <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
-
           <div style={{ display:"flex", flexDirection:"column" }}>
             <SectionLabel style={{ marginBottom:5 }}>Venue</SectionLabel>
             <OpalSelect
@@ -220,7 +225,6 @@ function ConfirmedBookingsSection() {
               style={{ minWidth:160 }}
             />
           </div>
-
           <div style={{ display:"flex", flexDirection:"column" }}>
             <SectionLabel style={{ marginBottom:5 }}>Status</SectionLabel>
             <OpalSelect
@@ -231,19 +235,8 @@ function ConfirmedBookingsSection() {
               style={{ minWidth:140 }}
             />
           </div>
-
-          <DateFilterPopover
-            label="From"
-            value={filters.startDate}
-            onChange={v => setFilters(f => ({ ...f, startDate:v }))}
-          />
-
-          <DateFilterPopover
-            label="To"
-            value={filters.endDate}
-            onChange={v => setFilters(f => ({ ...f, endDate:v }))}
-          />
-
+          <DateFilterPopover label="From" value={filters.startDate} onChange={v => setFilters(f => ({ ...f, startDate:v }))} />
+          <DateFilterPopover label="To"   value={filters.endDate}   onChange={v => setFilters(f => ({ ...f, endDate:v }))} />
           {hasActiveFilters && (
             <button
               onClick={() => setFilters({ venueId:"", status:"approved", startDate:"", endDate:"" })}
@@ -261,7 +254,6 @@ function ConfirmedBookingsSection() {
         {/* Col 1 — MiniCalendar */}
         <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column" }}>
           <SectionLabel>Calendar</SectionLabel>
-          {/* MiniCalendar navigated to currentMonth, booked dates highlighted via amber, selected in violet */}
           <MiniCalendarControlled
             currentMonth={currentMonth}
             onChangeMonth={setCurrentMonth}
@@ -335,26 +327,22 @@ function ConfirmedBookingsSection() {
                   </div>
                 </div>
               </div>
-
               {selectedBooking.organizerId?.phone && (
                 <div style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))" }}>
                   📞 {selectedBooking.organizerId.phone}
                 </div>
               )}
-
               <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
                 <span style={css.chipAmber}>{selectedBooking.eventType}</span>
                 {selectedBooking.expectedAttendees && (
                   <span style={css.chipMuted}>{selectedBooking.expectedAttendees} guests</span>
                 )}
               </div>
-
               {selectedBooking.specialRequirements && (
                 <div style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))", fontStyle:"italic", lineHeight:1.5 }}>
                   "{selectedBooking.specialRequirements}"
                 </div>
               )}
-
               <div style={{ marginTop:"auto", paddingTop:12, borderTop:"1px solid var(--opal-border,rgba(255,255,255,0.08))", fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", lineHeight:1.6 }}>
                 <div>{selectedBooking.venueId?.name}</div>
                 <div>{selectedBooking.requestedDates.map(d => fmtDate(d)).join(", ")}</div>
@@ -371,9 +359,7 @@ function ConfirmedBookingsSection() {
   );
 }
 
-// ─── Controlled calendar overlay on top of MiniCalendar ──────────────────────
-// MiniCalendar controls its own month internally; we render a custom grid
-// that matches its visual style but is driven externally.
+// ─── Controlled MiniCalendar ──────────────────────────────────────────────────
 
 function MiniCalendarControlled({ currentMonth, onChangeMonth, bookedDates, selectedDates, onDayClick }) {
   const year  = currentMonth.getUTCFullYear();
@@ -387,7 +373,6 @@ function MiniCalendarControlled({ currentMonth, onChangeMonth, bookedDates, sele
 
   const bookedSet   = new Set(bookedDates);
   const selectedSet = new Set(selectedDates);
-
   const todayKey = (() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; })();
 
   const NAV_BTN = {
@@ -401,23 +386,16 @@ function MiniCalendarControlled({ currentMonth, onChangeMonth, bookedDates, sele
 
   return (
     <div style={{ userSelect:"none" }}>
-      {/* Month nav */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
         <button style={NAV_BTN} onClick={() => onChangeMonth(new Date(Date.UTC(year, month-1, 1)))}>‹</button>
-        <span style={{ fontSize:11, fontWeight:600, color:"var(--opal-text,#e8e6f0)", minWidth:90, textAlign:"center" }}>
-          {monthLabel}
-        </span>
+        <span style={{ fontSize:11, fontWeight:600, color:"var(--opal-text,#e8e6f0)", minWidth:90, textAlign:"center" }}>{monthLabel}</span>
         <button style={NAV_BTN} onClick={() => onChangeMonth(new Date(Date.UTC(year, month+1, 1)))}>›</button>
       </div>
-
-      {/* Day-of-week headers */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:2 }}>
         {["S","M","T","W","T","F","S"].map((d,i) => (
           <div key={i} style={{ textAlign:"center", fontSize:9, fontWeight:700, color:"var(--opal-muted,rgba(232,230,240,0.35))", letterSpacing:0.4 }}>{d}</div>
         ))}
       </div>
-
-      {/* Day cells */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2 }}>
         {cells.map((day, i) => {
           if (!day) return <div key={`b-${i}`} />;
@@ -425,27 +403,15 @@ function MiniCalendarControlled({ currentMonth, onChangeMonth, bookedDates, sele
           const isPast   = key < todayKey;
           const isBooked = bookedSet.has(key);
           const isSel    = selectedSet.has(key);
-
-          let bg     = "transparent";
-          let color  = isPast ? "rgba(255,255,255,0.15)" : "var(--opal-sub,rgba(232,230,240,0.55))";
-          let border = "1px solid transparent";
-
+          let bg = "transparent", color = isPast ? "rgba(255,255,255,0.15)" : "var(--opal-sub,rgba(232,230,240,0.55))", border = "1px solid transparent";
           if (isBooked && !isSel) { bg = "rgba(255,92,102,0.15)"; color = "var(--opal-red,#ff5c66)"; border = "1px solid rgba(255,92,102,0.3)"; }
           if (isSel)              { bg = "rgba(79,209,197,0.18)";  color = "var(--opal-teal,#4fd1c5)"; border = "1px solid rgba(79,209,197,0.4)"; }
-
           return (
-            <button
-              key={key}
-              onClick={() => onDayClick(key)}
-              style={{
-                aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center",
-                borderRadius:7, fontSize:11, fontWeight:600, border, cursor: isBooked ? "pointer" : "default",
-                background:bg, color, transition:"background 0.1s, color 0.1s",
-                fontFamily:"var(--font-body,system-ui)",
-              }}
-            >
-              {day}
-            </button>
+            <button key={key} onClick={() => onDayClick(key)} style={{
+              aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center",
+              borderRadius:7, fontSize:11, fontWeight:600, border, cursor: isBooked ? "pointer" : "default",
+              background:bg, color, transition:"background 0.1s, color 0.1s", fontFamily:"var(--font-body,system-ui)",
+            }}>{day}</button>
           );
         })}
       </div>
@@ -559,7 +525,6 @@ function VenueFormModal({ initial, onSave, onCancel }) {
           <button style={css.closeBtn} onClick={onCancel}>×</button>
         </div>
         <div style={css.modalBody}>
-
           <SectionLabel>Basic Info</SectionLabel>
           <label style={css.formLabel}>
             Venue name *
@@ -692,13 +657,13 @@ function VenueCard({ venue, onEdit, onDelete, onDeactivate }) {
       ) : (
         <div style={{ ...css.vCardImg, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(21,21,29,0.8)", fontSize:32 }}>🏛️</div>
       )}
-      <div style={{ padding:"16px 18px 18px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+      <div style={{ padding:"12px 14px 14px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
           <div>
-            <h3 style={{ fontSize:16, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:0, fontFamily:"var(--font-display,system-ui)", letterSpacing:-0.2 }}>
+            <h3 style={{ fontSize:14, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:0, fontFamily:"var(--font-display,system-ui)", letterSpacing:-0.2 }}>
               {venue.name}
             </h3>
-            <p style={{ fontSize:11, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:"3px 0 0" }}>
+            <p style={{ fontSize:10, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:"2px 0 0" }}>
               {[venue.location?.area, venue.location?.city].filter(Boolean).join(", ")}
             </p>
           </div>
@@ -706,28 +671,28 @@ function VenueCard({ venue, onEdit, onDelete, onDeactivate }) {
             {venue.isActive ? "Active" : "Inactive"}
           </span>
         </div>
-        <p style={{ fontSize:13, color:"var(--opal-sub,rgba(232,230,240,0.55))", lineHeight:1.5, marginBottom:14, display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+        <p style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))", lineHeight:1.4, marginBottom:10, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
           {venue.description}
         </p>
-        <div style={{ display:"flex", gap:12, fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:16, flexWrap:"wrap" }}>
+        <div style={{ display:"flex", gap:10, fontSize:11, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:12, flexWrap:"wrap" }}>
           <span>👥 {venue.capacity}</span>
-          <span>📐 {venue.dimensionsSqm} sqm</span>
+          <span>📐 {venue.dimensionsSqm}sqm</span>
           <span>💰 {formatPrice(venue.pricing)}</span>
         </div>
         {confirming === "delete" ? (
-          <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-            <span style={{ fontSize:12, color:"var(--opal-red,#ff5c66)" }}>Delete this venue?</span>
-            <button style={css.confirmYes} onClick={() => { onDelete(venue._id); setConfirming(null); }}>Yes, delete</button>
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:"var(--opal-red,#ff5c66)" }}>Delete?</span>
+            <button style={css.confirmYes} onClick={() => { onDelete(venue._id); setConfirming(null); }}>Yes</button>
             <button style={css.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
           </div>
         ) : confirming === "deactivate" ? (
-          <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-            <span style={{ fontSize:12, color:"var(--opal-amber,#f5b34a)" }}>Deactivate?</span>
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:"var(--opal-amber,#f5b34a)" }}>Deactivate?</span>
             <button style={css.confirmYes} onClick={() => { onDeactivate(venue._id); setConfirming(null); }}>Yes</button>
             <button style={css.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
           </div>
         ) : (
-          <div style={{ display:"flex", gap:8 }}>
+          <div style={{ display:"flex", gap:6 }}>
             <button style={css.vBtnEdit}       onClick={() => onEdit(venue)}>Edit</button>
             <button style={css.vBtnDeactivate} onClick={() => setConfirming("deactivate")}>Deactivate</button>
             <button style={css.vBtnDelete}     onClick={() => setConfirming("delete")}>Delete</button>
@@ -778,8 +743,8 @@ function MyVenuesSection() {
   return (
     <div style={{ flex:"1 1 0", minWidth:0 }}>
       {/* Toolbar */}
-      <div style={{ display:"flex", gap:10, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
-        <div style={{ position:"relative", flex:"1 1 200px" }}>
+      <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
+        <div style={{ position:"relative", flex:"1 1 160px" }}>
           <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", pointerEvents:"none" }}>⌕</span>
           <input
             style={css.searchInput}
@@ -792,7 +757,7 @@ function MyVenuesSection() {
               onClick={() => setSearch("")}>×</button>
           )}
         </div>
-        <div style={{ display:"flex", gap:6 }}>
+        <div style={{ display:"flex", gap:5 }}>
           {["all","active","inactive"].map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{ ...css.filterBtn, ...(filter===f ? css.filterBtnActive : {}) }}>
               {f.charAt(0).toUpperCase()+f.slice(1)}
@@ -805,14 +770,14 @@ function MyVenuesSection() {
       </div>
 
       {loading ? (
-        <p style={{ color:"var(--opal-muted,rgba(232,230,240,0.35))", fontSize:14 }}>Loading venues…</p>
+        <p style={{ color:"var(--opal-muted,rgba(232,230,240,0.35))", fontSize:13 }}>Loading venues…</p>
       ) : filtered.length === 0 ? (
-        <GlassPanel style={{ textAlign:"center", padding:"48px 24px" }}>
-          <p style={{ fontSize:32, margin:"0 0 10px" }}>🏛️</p>
-          <p style={{ fontSize:16, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:"0 0 6px", fontFamily:"var(--font-display,system-ui)" }}>
+        <GlassPanel style={{ textAlign:"center", padding:"36px 24px" }}>
+          <p style={{ fontSize:28, margin:"0 0 8px" }}>🏛️</p>
+          <p style={{ fontSize:15, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:"0 0 5px", fontFamily:"var(--font-display,system-ui)" }}>
             {search ? "No venues match your search" : "No venues yet"}
           </p>
-          <p style={{ fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:20 }}>
+          <p style={{ fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:16 }}>
             {search ? "Try a different search term." : "Create your first listing to get started."}
           </p>
           {!search && <button style={css.newVenueBtn} onClick={() => { setEditing(null); setShowForm(true); }}>+ New Venue</button>}
@@ -846,9 +811,9 @@ function MyVenuesSection() {
 
 function NotificationsPanel() {
   return (
-    <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+    <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", height:"100%" }}>
       <SectionLabel>Notifications</SectionLabel>
-      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10, padding:"40px 0" }}>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10 }}>
         <span style={{ fontSize:28, opacity:0.25 }}>🔔</span>
         <p style={{ fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:0, textAlign:"center" }}>
           No notifications yet
@@ -861,6 +826,14 @@ function NotificationsPanel() {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function PageOwnerDashboard() {
+  const navigate = useNavigate();
+
+  const dockItems = [
+    { icon: <VscMail size={26} />,     label: "Requests",  onClick: () => navigate("/venueowner/venueresponse") },
+    { icon: <VscHome size={26} />,     label: "Home",      active: true, onClick: () => navigate("/venueowner/venues") },
+    { icon: <VscCalendar size={26} />, label: "Reports",   onClick: () => navigate("/venueowner/venuereports") },
+  ];
+
   return (
     <div style={css.page}>
       <AppHeader
@@ -870,22 +843,24 @@ export default function PageOwnerDashboard() {
 
       <div style={css.content}>
         {/* ── Confirmed Bookings ── */}
-        <section style={{ marginBottom:36 }}>
+        <section style={{ marginBottom:28 }}>
           <ConfirmedBookingsSection />
         </section>
 
-        <div style={css.divider} />
-
-        {/* ── Notifications + My Venues ── */}
+        {/* ── Notifications + My Venues side by side ── */}
         <section>
           <div style={css.bottomLayout}>
-            <div style={{ flex:"0 0 300px", minWidth:240 }}>
+            {/* Notifications — fixed width, stretches to match venues height */}
+            <div style={{ flex:"0 0 280px", minWidth:220, display:"flex", flexDirection:"column" }}>
               <NotificationsPanel />
             </div>
+            {/* My Venues — takes remaining space, 2-column grid */}
             <MyVenuesSection />
           </div>
         </section>
       </div>
+
+      <Dock items={dockItems} />
     </div>
   );
 }
@@ -901,16 +876,14 @@ const css = {
     WebkitFontSmoothing: "antialiased",
   },
   content: {
-    padding: "28px 28px 60px",
+    // bottom padding clears the dock (120px) + some breathing room
+    padding: `28px 28px ${DOCK_HEIGHT + 24}px`,
   },
 
-  divider: {
-    height: 1,
-    background: "var(--opal-border,rgba(255,255,255,0.08))",
-    margin: "36px 0",
-  },
   bottomLayout: {
-    display: "flex", gap: 20, alignItems: "stretch",
+    display: "flex",
+    gap: 20,
+    alignItems: "stretch",
   },
 
   // Filter controls
@@ -944,11 +917,11 @@ const css = {
     border: "1px solid var(--opal-border,rgba(255,255,255,0.08))", fontSize: 11,
   },
 
-  // Venue grid — 3 columns fixed
+  // Venue grid — 2 columns (smaller cards to give space to notifications)
   venueGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 18,
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 14,
   },
   vCard: {
     overflow: "hidden",
@@ -960,56 +933,56 @@ const css = {
     boxShadow: "0 6px 24px rgba(124,92,252,0.18), inset 0 1px 0 rgba(255,255,255,0.04)",
   },
   vCardImg: {
-    width: "100%", height: 200, objectFit: "cover", display: "block",
+    width: "100%", height: 150, objectFit: "cover", display: "block",
   },
   statusBadge: {
-    fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 20, flexShrink: 0,
+    fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, flexShrink: 0,
   },
   statusGreen: { background: "rgba(48,209,88,0.15)", color: "#30d158", border: "1px solid rgba(48,209,88,0.3)" },
   statusGray:  { background: "rgba(255,255,255,0.06)", color: "var(--opal-muted,rgba(232,230,240,0.35))", border: "1px solid var(--opal-border,rgba(255,255,255,0.08))" },
 
   vBtnEdit: {
-    flex: 1, padding: "8px 0",
-    border: "1px solid rgba(124,92,252,0.4)", borderRadius: 8,
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(124,92,252,0.4)", borderRadius: 7,
     background: "rgba(124,92,252,0.08)", color: "var(--opal-violet,#7c5cfc)",
-    fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
   },
   vBtnDeactivate: {
-    flex: 1, padding: "8px 0",
-    border: "1px solid rgba(245,179,74,0.35)", borderRadius: 8,
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(245,179,74,0.35)", borderRadius: 7,
     background: "rgba(245,179,74,0.07)", color: "var(--opal-amber,#f5b34a)",
-    fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
   },
   vBtnDelete: {
-    flex: 1, padding: "8px 0",
-    border: "1px solid rgba(255,92,102,0.35)", borderRadius: 8,
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(255,92,102,0.35)", borderRadius: 7,
     background: "rgba(255,92,102,0.07)", color: "var(--opal-red,#ff5c66)",
-    fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
   },
   confirmYes: {
-    padding: "5px 12px", background: "var(--opal-red,#ff5c66)", color: "#0a0a0f",
+    padding: "4px 10px", background: "var(--opal-red,#ff5c66)", color: "#0a0a0f",
     border: "none", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
     fontFamily: "var(--font-body,system-ui)",
   },
   confirmNo: {
-    padding: "5px 12px", background: "rgba(255,255,255,0.07)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    padding: "4px 10px", background: "rgba(255,255,255,0.07)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
     border: "1px solid var(--opal-border,rgba(255,255,255,0.08))", borderRadius: 6,
     fontSize: 11, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
   },
 
   // Venue toolbar
   searchInput: {
-    width: "100%", padding: "9px 36px",
+    width: "100%", padding: "8px 32px",
     border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
-    borderRadius: 10, fontSize: 13,
+    borderRadius: 10, fontSize: 12,
     background: "rgba(21,21,29,0.7)", outline: "none",
     color: "var(--opal-text,#e8e6f0)",
     fontFamily: "var(--font-body,system-ui)", boxSizing: "border-box",
   },
   filterBtn: {
-    padding: "8px 14px",
+    padding: "7px 11px",
     border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
-    borderRadius: 10, fontSize: 12, fontWeight: 500,
+    borderRadius: 9, fontSize: 11, fontWeight: 500,
     color: "var(--opal-sub,rgba(232,230,240,0.55))",
     background: "rgba(21,21,29,0.6)", cursor: "pointer",
     fontFamily: "var(--font-body,system-ui)",
@@ -1019,10 +992,10 @@ const css = {
     border: "1px solid var(--opal-violet,#7c5cfc)",
   },
   newVenueBtn: {
-    padding: "9px 18px",
+    padding: "8px 14px",
     background: "linear-gradient(135deg, var(--opal-violet,#7c5cfc) 0%, var(--opal-teal,#4fd1c5) 100%)",
-    color: "#0a0a0f", border: "none", borderRadius: 10,
-    fontSize: 13, fontWeight: 700, cursor: "pointer",
+    color: "#0a0a0f", border: "none", borderRadius: 9,
+    fontSize: 12, fontWeight: 700, cursor: "pointer",
     fontFamily: "var(--font-body,system-ui)", whiteSpace: "nowrap",
   },
 
@@ -1105,14 +1078,6 @@ const css = {
     background: "rgba(21,21,29,0.7)",
     border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
     borderRadius: 14, padding: "14px 16px",
-  },
-  navBtn: {
-    width: 24, height: 24, borderRadius: 6,
-    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
-    background: "rgba(30,30,41,0.8)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
-    fontSize: 14, cursor: "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontFamily: "var(--font-body,system-ui)", lineHeight: 1, padding: 0,
   },
   formActions: {
     display: "flex", gap: 10, justifyContent: "flex-end",

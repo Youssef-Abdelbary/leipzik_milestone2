@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    VscHome, VscMail, VscCalendar, VscSettingsGear,
+    VscHome, VscMail, VscCalendar,
 } from 'react-icons/vsc';
 import {
     fetchBookingRequests,
@@ -15,6 +15,7 @@ import Dock from '../components/componentDock.jsx';
 import CalendarAvailability from '../components/componentCalendar.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import '../components/componentTheme.css';
+import { useNavigate } from 'react-router-dom';
 
 // ─── Decode user_id from stored JWT (reads payload only — auth is server-side) ──
 function getUserIdFromToken() {
@@ -510,7 +511,7 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
 
 export default function PageResponseVenue() {
     const currentUserId = getUserIdFromToken();
-
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
     const [filter, setFilter]     = useState('All');
@@ -551,10 +552,9 @@ export default function PageResponseVenue() {
     ];
 
     const dockItems = [
-        { icon: <VscHome size={26} />,         label: 'Bookings', active: true, onClick: () => {} },
-        { icon: <VscMail size={26} />,         label: 'Messages',              onClick: () => {} },
-        { icon: <VscCalendar size={26} />,     label: 'Calendar',              onClick: () => {} },
-        { icon: <VscSettingsGear size={26} />, label: 'Settings',              onClick: () => {} },
+        { icon: <VscMail size={26} />,     active: true, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
+        { icon: <VscHome size={26} />,     label: 'Home',     onClick: () => navigate('/venueowner/venues') },
+        { icon: <VscCalendar size={26} />, label: 'Reports',  onClick: () => navigate('/venueowner/venuereports') },
     ];
 
     return (
