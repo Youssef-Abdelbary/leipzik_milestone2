@@ -175,7 +175,6 @@ function InviteResultModal({ result, onClose }) {
             {copied ? '✓ Copied' : 'Copy'}
           </button>
         </div>
-
         <button onClick={onClose} style={{ width: '100%', marginTop: 20, padding: '10px 0', borderRadius: 8, border: 'none', background: '#0F172A', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
           Done
         </button>

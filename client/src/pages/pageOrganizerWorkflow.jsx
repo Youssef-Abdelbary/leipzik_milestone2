@@ -162,7 +162,6 @@ function OrganizerWorkflow() {
 
         <div className="summary-card">
           <h3>⚠️ Avg Negative Feedback</h3>
-
           <p>{summary ? summary.averageNegativeFeedback.toFixed(2) : "Loading..."}</p>
         </div>
       </div>
