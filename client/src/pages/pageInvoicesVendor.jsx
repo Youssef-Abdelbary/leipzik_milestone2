@@ -186,12 +186,13 @@ function CreateInvoiceForm({ onCreate }) {
   const addItemRow = () => setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0 }]);
 
   const submit = () => {
-    if (!organizerEmail || !invoiceNumber || items.some((it) => !it.description)) return;
+    // Enhanced block: 'eventId' is now fully required alongside other crucial items
+    if (!eventId || !organizerEmail || !invoiceNumber || items.some((it) => !it.description)) return;
 
     onCreate({
       organizerEmail,
       vendorId: CURRENT_USER_ID,
-      eventId: eventId || null,
+      eventId: eventId,
       vendorRequestId: vendorRequestId || null,
       invoiceNumber,
       items,
@@ -236,7 +237,7 @@ function CreateInvoiceForm({ onCreate }) {
         <input
           value={eventId}
           onChange={(e) => setEventId(e.target.value)}
-          placeholder="Event ID (optional)"
+          placeholder="Event ID"
           style={{ flex: 1, padding: "9px 12px", borderRadius: 7, border: "1px solid #E2E8F0", fontSize: 13, outline: "none" }}
         />
         <input
