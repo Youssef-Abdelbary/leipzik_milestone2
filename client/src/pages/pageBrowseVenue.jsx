@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { requestVenueBooking, searchVenues } from "../services/serviceBrowseVenue";
 import AppHeader from "../components/componentAppHeader.jsx";
 import MiniCalendar from "../components/componentMiniCalendar.jsx";
@@ -429,6 +430,7 @@ function DateFilterPopover({ value, onChange }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function VenueDiscovery() {
+  const navigate = useNavigate();
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -529,8 +531,16 @@ export default function VenueDiscovery() {
 
       {/* ── Search bar ── */}
       <div style={css.searchBar}>
-        <div style={css.searchBarInner}>
-          {/* Name search */}
+            <div style={css.searchBarInner}>
+            {/* Name search */}
+            <div style={css.backBtnWrap}>
+                <button
+                    style={css.backBtn}
+                        onClick={() => navigate('/organizer/reply')}
+                        >
+                    ←
+                </button>
+            </div>
           <div style={css.searchFieldWrap}>
             <span style={css.searchFieldIcon}>⌕</span>
             <input
@@ -683,18 +693,25 @@ const css = {
     border: "1px solid rgba(255,92,102,0.28)",
     color: "var(--opal-red)",
   },
-searchBar: {
-  background: "rgba(21,21,29,0.6)",
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  borderBottom: "1px solid var(--opal-border)",
-  padding: "16px 24px",
-  position: "relative",   // ← add
-  zIndex: 10,             // ← add
-},
+  backBtnWrap: { padding: "0" },
+  backBtn: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "9px 14px", border: "1px solid var(--opal-border)",
+    borderRadius: 10, fontSize: 13, fontWeight: 600,
+    color: "var(--opal-text)", background: "var(--opal-surface)",
+    cursor: "pointer", fontFamily: "var(--font-body)",
+  },
+  searchBar: {
+    background: "rgba(21,21,29,0.6)",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    borderBottom: "1px solid var(--opal-border)",
+    padding: "16px 24px",
+    position: "relative",
+    zIndex: 10,
+  },
   searchBarInner: {
-    maxWidth: 1280,
-    margin: "0 auto",
+    width: "100%",
     display: "flex",
     gap: 10,
     alignItems: "center",
@@ -761,8 +778,8 @@ searchBar: {
     padding: "1px 6px",
   },
   expandedFilters: {
-    maxWidth: 1280,
-    margin: "14px auto 0",
+    width: "100%",
+    margin: "14px 0 0",
     display: "flex",
     gap: 16,
     alignItems: "flex-end",
@@ -782,15 +799,15 @@ searchBar: {
     alignSelf: "flex-end",
     height: 40,
   },
-  resultsHeader: { maxWidth: 1280, margin: "0 auto", padding: "14px 24px 0" },
+  resultsHeader: { width: "100%", padding: "14px 24px 0", boxSizing: "border-box" },
   resultsCount: { fontSize: 13, color: "var(--opal-muted)", margin: 0 },
   resultsDateTag: { color: "var(--opal-violet)" },
   grid: {
-    maxWidth: 1280,
-    margin: "0 auto",
+    width: "100%",
     padding: "16px 24px 40px",
+    boxSizing: "border-box",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(600px, 1fr))",
     gap: 20,
   },
   card: {

@@ -585,11 +585,6 @@ export default function PageReplyVenue() {
         { label: 'Approved', value: counts.Approved, color: 'var(--opal-teal)' },
         { label: 'Declined', value: counts.Declined, color: 'var(--opal-red)' },
     ];
-    const dockItems = [
-        { icon: <VscMail size={26} />,     active: true, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
-        { icon: <VscHome size={26} />,     label: 'Home',     onClick: () => navigate('/venueowner/venues') },
-        { icon: <VscCalendar size={26} />, label: 'Reports',  onClick: () => navigate('/venueowner/venuereports') },
-    ];
 
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
@@ -597,7 +592,21 @@ export default function PageReplyVenue() {
 
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* Sidebar */}
-                <div style={{ width: 300, borderRight: '1px solid var(--opal-border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                                <div style={{ width: 300, borderRight: '1px solid var(--opal-border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                    <div style={{ padding: '14px 14px 0', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                        <Btn
+                            label="Venue Layout"
+                            color="var(--opal-amber)"
+                            onClick={() => navigate('/organizer/venuelayout')}
+                            style={{ width: '100%', padding: '8px 0', fontSize: 12, textAlign: 'center' }}
+                        /> 
+                        <Btn
+                            label="Browse Venues"
+                            color="var(--opal-teal)"
+                            onClick={() => navigate('/organizer/browsevenues')}
+                            style={{ width: '100%', padding: '8px 0', fontSize: 12, textAlign: 'center' }}
+                        />
+                    </div>
                     <div style={{ padding: '16px 14px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
                         {stats.map(s => (
                             <GlassCard key={s.label} style={{ padding: '11px 13px' }}>
@@ -678,8 +687,6 @@ export default function PageReplyVenue() {
                     />
                 </div>
             </div>
-
-            <Dock items={dockItems} />
         </div>
     );
 }
