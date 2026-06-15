@@ -35,7 +35,7 @@ function Login() {
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
-        navigate("/organizer/budget");
+        navigate("/organizer/workflow");
       }
       if (data.user.role === "staff") {
         navigate("/staff/shared-layout");

@@ -7,12 +7,15 @@ import TabDayOf    from './tabs/TabDayOf';
 import TabMessages from './tabs/TabMessages';
 import TabVendors from './tabs/TabVendors';
 import { EVENT_TYPES } from '../utils/constants';
+import BudgetManagement from "./pageBudgetManagement";
+import TabFeedback from './tabs/TabFeedback';
 
 const TABS = [
   { id: 'overview',  label: '📋 Overview'  },
   { id: 'guests',    label: '🎟 Guests'    },
   { id: 'day-of',   label: '📅 Day-of'    },
   { id: 'messages',  label: '💬 Messages'  },
+  { id: 'feedback',  label: '⭐ Feedback'  },  // ← NEW
   { id: 'venue',     label: '🏛 Venue'     },
   { id: 'vendors',   label: '🛒 Vendors'   },
   { id: 'budget',    label: '💰 Budget'    },
@@ -158,6 +161,7 @@ export default function EventWorkspace() {
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
               <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>
+              {TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon            
             </div>
           </div>
         )}

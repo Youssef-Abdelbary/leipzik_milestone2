@@ -31,7 +31,7 @@ function EventModal({ initialForm = EMPTY_FORM, title, submitLabel, onSubmit, on
     heading: { margin: '0 0 24px', fontSize: 20, fontWeight: 700, color: '#0F172A' },
     field:   { marginBottom: 16 },
     label:   { display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 },
-    input:   { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0F172A' },
+    input:   { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#a9abb3' },
     row:     { display: 'flex', gap: 12 },
     half:    { flex: 1 },
     actions: { display: 'flex', gap: 10, marginTop: 8 },
@@ -58,9 +58,12 @@ function EventModal({ initialForm = EMPTY_FORM, title, submitLabel, onSubmit, on
           </div>
           <div style={{ ...s.field, ...s.half }}>
             <label style={s.label}>Status</label>
-            <select style={s.input} value={form.status || 'planning'} onChange={e => set('status', e.target.value)}>
-              {STATUS_OPTIONS.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}
-            </select>
+            <input 
+              style={{ ...s.input, backgroundColor: '#F8FAFC', color: '#94A3B8', cursor: 'not-allowed' }} 
+              value="Planning" 
+              disabled 
+              title="New events are automatically set to Planning status"
+            />
           </div>
         </div>
 
@@ -238,10 +241,28 @@ export default function Events() {
     <div style={s.page}>
       <div style={s.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={s.navDot}><span style={{ color: '#fff', fontSize: 14 }}>⚙</span></div>
-          <span style={{ color: '#F8FAFC', fontSize: 15, fontWeight: 700 }}>PopEyez</span>
+          <button
+            onClick={() => navigate("/organizer/workflow")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#64748B",
+              cursor: "pointer",
+              fontSize: 13,
+              padding: "4px 8px",
+              borderRadius: 4,
+              fontFamily: "inherit",
+            }}
+          >
+            ← Workflow
+          </button>
+
+          <span style={{ color: '#334155', fontSize: 13 }}>/</span>
+
+          <span style={{ color: '#F8FAFC', fontSize: 15, fontWeight: 700 }}>
+            Events
+          </span>
         </div>
-        <span style={{ color: '#475569', fontSize: 13, marginLeft: 4 }}>/ Events</span>
       </div>
 
       <div style={s.inner}>

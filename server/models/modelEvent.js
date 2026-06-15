@@ -21,7 +21,8 @@ const eventSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ['planning','confirmed'], 
+        // FIX: was ['planning','confirmed'] — completed/cancelled were silently rejected
+        enum: ['planning', 'confirmed', 'completed', 'cancelled'], 
         default: 'planning' 
     },
     date: { 
@@ -29,11 +30,11 @@ const eventSchema = new mongoose.Schema({
         required: true 
     },
     startTime: { 
-        type: String, // Stored as "HH:MM"
+        type: String,
         required: true 
     },
     endTime: { 
-        type: String // Stored as "HH:MM"
+        type: String
     },
     venueId: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -59,7 +60,7 @@ const eventSchema = new mongoose.Schema({
         type: String 
     },
     agenda: [{
-        time: { type: String, required: true }, // "HH:MM"
+        time: { type: String, required: true },
         title: { type: String, required: true },
         description: { type: String }
     }],
@@ -80,7 +81,7 @@ const eventSchema = new mongoose.Schema({
     }
 }, 
     { 
-        timestamps: true, // Automatically handles createdAt and updatedAt
+        timestamps: true,
         collection: 'events' 
     }
 );

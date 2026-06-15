@@ -22,14 +22,21 @@ export const deleteGuest = (eventId, guestId) =>
 export const sendInvitation = (eventId, guestId) =>
   apiFetch(`${base(eventId)}/${guestId}/invite`, { method: 'POST' });
 
+// QR check-in — staff scans a guest QR code
+export const checkInByQR = (code) =>
+  apiFetch('/guests/checkin/qr', {
+    method: 'PATCH',
+    body: JSON.stringify({ code }),
+  });
+
 // Public endpoint — bypass apiFetch (no auth token needed)
-export const submitRsvp = async (token, rsvpStatus) => {
+export const submitRsvp = async (token, rsvpStatus, dietaryPreferences = '', specialRequirements = '') => {
   const res = await fetch(`http://localhost:5001/api/guest/rsvp/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rsvpStatus }),
+    body: JSON.stringify({ rsvpStatus, dietaryPreferences, specialRequirements }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || 'RSVP failed');
-  return data;
+  return data; // includes qrDataURL when attending
 };
