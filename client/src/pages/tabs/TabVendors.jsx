@@ -34,7 +34,7 @@ export default function TabVendors({ eventId, organizerId }) {
 
       {activeSubTab === 'sourcing' && <TabVendorSourcing eventId={eventId} organizerId={organizerId} />}
       {activeSubTab === 'tracking' && <TabVendorTracking eventId={eventId} />}
-      {activeSubTab === 'invoices' && <TabVendorInvoices organizerId={organizerId} />}
+      {activeSubTab === 'invoices' && <TabVendorInvoices eventId={eventId} organizerId={organizerId} />}
     </div>
   );
 }
