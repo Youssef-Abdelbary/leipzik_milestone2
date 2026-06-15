@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent } from '../services/serviceEvent';
 
-// Sub-components & Tabs
 import TabGuests        from './tabs/TabGuests';
 import TabOverview      from './tabs/TabOverview';
 import TabDayOf         from './tabs/TabDayOf';
 import TabMessages      from './tabs/TabMessages';
 import TabFeedback      from './tabs/TabFeedback';
-import BudgetManagement from "./pageBudgetManagement";
+import BudgetManagement from './pageBudgetManagement';
 import SettingsModal    from '../components/SettingsModal';
 
-// Shared Theme & Assets
 import { P, icons, STATUS_COLORS } from '../utils/theme';
 
+// ─── Tab registry ─────────────────────────────────────────────────────────────
 const TABS = [
   { id: 'overview',  label: 'Overview',  icon: icons.overview  },
   { id: 'guests',    label: 'Guests',    icon: icons.guests    },
@@ -26,92 +25,140 @@ const TABS = [
   { id: 'team',      label: 'Team',      icon: icons.team      },
 ];
 
-// ─── Dock Tab Button ──────────────────────────────────────────────────────────
-function DockTab({ tab, isActive, onClick }) {
-  const [hovered, setHovered] = useState(false);
+// Dock groups with separators between them
+const DOCK_GROUPS = [
+  ['overview', 'guests', 'day-of'],
+  ['messages', 'feedback'],
+  ['venue', 'vendors', 'budget', 'team'],
+];
+
+// ─── Single dock button ───────────────────────────────────────────────────────
+function DockBtn({ tab, isActive, onClick }) {
+  const [hov, setHov] = useState(false);
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {/* Tooltip (Hidden on mobile via CSS) */}
-      <div className="dock-tooltip" style={{
-        position: 'absolute',
-        bottom: '100%',
-        left: '50%',
-        transform: `translateX(-50%) translateY(${hovered ? '-12px' : '0px'})`,
-        background: '#21262d',
-        color: P.text,
-        fontSize: 12,
-        fontWeight: 600,
-        padding: '6px 12px',
-        borderRadius: 8,
-        border: `1px solid ${P.border}`,
-        whiteSpace: 'nowrap',
-        pointerEvents: 'none',
-        opacity: hovered ? 1 : 0,
-        transition: 'opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        marginBottom: 8,
-        letterSpacing: '0.02em',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-        zIndex: 10,
-      }}>
+      {/* Tooltip */}
+      <div
+        aria-hidden="true"
+        style={{
+          position:    'absolute',
+          bottom:      'calc(100% + 14px)',
+          left:        '50%',
+          transform:   `translateX(-50%) translateY(${hov ? '0' : '6px'})`,
+          pointerEvents: 'none',
+          opacity:     hov ? 1 : 0,
+          transition:  'opacity 0.18s ease, transform 0.18s ease',
+          // Card
+          background:  P.panel,
+          border:      `1px solid ${P.border}`,
+          borderRadius: 8,
+          padding:     '5px 10px',
+          fontSize:    12,
+          fontWeight:  600,
+          color:       P.text,
+          letterSpacing: '0.01em',
+          whiteSpace:  'nowrap',
+          boxShadow:   '0 8px 24px rgba(0,0,0,0.5)',
+          zIndex:      20,
+        }}
+      >
         {tab.label}
+        {/* Arrow */}
+        <div style={{
+          position: 'absolute',
+          top: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 0,
+          height: 0,
+          borderLeft:  '5px solid transparent',
+          borderRight: '5px solid transparent',
+          borderTop:   `5px solid ${P.border}`,
+        }} />
       </div>
 
+      {/* Icon button */}
       <button
         onClick={onClick}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => setHov(true)}
+        onMouseLeave={() => setHov(false)}
         title={tab.label}
+        aria-label={tab.label}
+        aria-pressed={isActive}
         style={{
-          width: 56, 
-          height: 56, 
-          borderRadius: 16,
-          border: 'none',
-          background: isActive
-            ? 'rgba(68,147,248,0.15)'
-            : hovered
-              ? 'rgba(255,255,255,0.08)'
-              : 'transparent',
-          color: isActive ? P.blue : hovered ? P.text : P.sub,
-          cursor: 'pointer',
-          display: 'flex',
+          width:      52,
+          height:     52,
+          borderRadius: 14,
+          border:     'none',
+          cursor:     'pointer',
+          display:    'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-          transform: hovered ? 'scale(1.15) translateY(-6px)' : isActive ? 'scale(1.05) translateY(-2px)' : 'scale(1)',
-          boxShadow: isActive ? `0 0 0 1px rgba(68,147,248,0.3), 0 0 16px rgba(68,147,248,0.15)` : hovered ? '0 8px 16px rgba(0,0,0,0.2)' : 'none',
+          // Color & depth
+          background: isActive
+            ? `rgba(91,156,246,0.14)`
+            : hov
+              ? 'rgba(255,255,255,0.07)'
+              : 'transparent',
+          color: isActive ? P.blue : hov ? P.text : P.sub,
+          // Motion
+          transition: 'all 0.22s cubic-bezier(0.34,1.56,0.64,1)',
+          transform:  hov ? 'scale(1.18) translateY(-5px)' : isActive ? 'scale(1.06) translateY(-2px)' : 'scale(1)',
+          // Glow ring on active
+          boxShadow: isActive
+            ? `0 0 0 1px rgba(91,156,246,0.35), 0 0 18px rgba(91,156,246,0.18)`
+            : hov
+              ? '0 6px 18px rgba(0,0,0,0.3)'
+              : 'none',
           outline: 'none',
         }}
       >
-        <div style={{ transform: 'scale(1.15)', display: 'flex' }}>
+        <div style={{ transform: 'scale(1.1)', display: 'flex' }}>
           {tab.icon}
         </div>
       </button>
 
       {/* Active dot */}
       <div style={{
-        position: 'absolute',
-        bottom: -10,
-        width: 5,
-        height: 5,
+        position:   'absolute',
+        bottom:     -9,
+        width:      4,
+        height:     4,
         borderRadius: '50%',
-        background: isActive ? P.blue : 'transparent',
-        transition: 'background 0.3s ease, transform 0.3s ease',
-        transform: isActive ? 'scale(1)' : 'scale(0)',
+        background: P.blue,
+        opacity:    isActive ? 1 : 0,
+        transform:  isActive ? 'scale(1)' : 'scale(0)',
+        transition: 'all 0.2s ease',
       }} />
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Dock separator ───────────────────────────────────────────────────────────
+function DockSep() {
+  return (
+    <div style={{
+      width:      1,
+      height:     28,
+      background: P.border,
+      borderRadius: 1,
+      flexShrink: 0,
+      margin:     '0 2px',
+      alignSelf:  'center',
+    }} />
+  );
+}
+
+// ─── Main workspace ───────────────────────────────────────────────────────────
 export default function EventWorkspace() {
   const { eventId }  = useParams();
   const navigate     = useNavigate();
-  const [event, setEvent]               = useState(null);
-  const [activeTab, setActiveTab]       = useState('overview');
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
+  const [event,       setEvent]        = useState(null);
+  const [activeTab,   setActiveTab]    = useState('overview');
+  const [loading,     setLoading]      = useState(true);
+  const [error,       setError]        = useState(null);
+  const [showSettings,setShowSettings] = useState(false);
 
   useEffect(() => {
     getEvent(eventId)
@@ -120,162 +167,208 @@ export default function EventWorkspace() {
       .finally(() => setLoading(false));
   }, [eventId]);
 
+  // Let child tabs navigate the dock (e.g. Overview tile clicks)
   useEffect(() => {
-    const handler = (e) => setActiveTab(e.detail);
-    window.addEventListener('workspace-tab', handler);
-    return () => window.removeEventListener('workspace-tab', handler);
+    const h = e => setActiveTab(e.detail);
+    window.addEventListener('workspace-tab', h);
+    return () => window.removeEventListener('workspace-tab', h);
   }, []);
 
-  // Skeleton Loader Implementation (Much faster perceived performance)
+  // ─── Loading skeleton ───────────────────────────────────────────────────────
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: P.bg, padding: 24 }}>
-      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
-      <div style={{ height: 60, background: P.surface, borderRadius: 12, animation: 'pulse 1.5s infinite', marginBottom: 32 }} />
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 60%', height: 400, background: P.surface, borderRadius: 16, animation: 'pulse 1.5s infinite 0.2s' }} />
-        <div style={{ flex: '1 1 30%', height: 400, background: P.surface, borderRadius: 16, animation: 'pulse 1.5s infinite 0.4s' }} />
+    <div style={{ minHeight: '100vh', background: P.bg, padding: 24, fontFamily: 'system-ui,sans-serif' }}>
+      <style>{`@keyframes skpulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
+      <div style={{ height: 56, background: P.surface, borderRadius: 10, marginBottom: 24, border:`1px solid ${P.border}`, animation:'skpulse 1.4s infinite' }}/>
+      <div style={{ display:'flex', gap:20 }}>
+        {[1,2,3,4].map(i => (
+          <div key={i} style={{ flex:1, height:420, background:P.surface, borderRadius:14, border:`1px solid ${P.border}`, animation:`skpulse 1.4s infinite ${i*0.12}s` }}/>
+        ))}
       </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: P.bg, fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ textAlign: 'center' }}>
-        <p style={{ color: P.red, fontSize: 14, marginBottom: 16 }}>{error}</p>
-        <button onClick={() => navigate('/organizer/events')} style={{ padding: '8px 20px', background: P.blue, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:P.bg, fontFamily:'system-ui,sans-serif' }}>
+      <div style={{ textAlign:'center', padding: 40 }}>
+        <p style={{ color:P.red, fontSize:14, marginBottom:20 }}>{error}</p>
+        <button
+          onClick={() => navigate('/organizer/events')}
+          style={{ padding:'10px 24px', background:P.blue, color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, fontFamily:'inherit', fontSize:14 }}
+        >
           ← Back to Events
         </button>
       </div>
     </div>
   );
 
-  const statusColor = STATUS_COLORS[event.status] || P.sub;
+  const statusColor = STATUS_COLORS[event.status] || P.muted;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: P.bg, fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: P.text, overflow: 'hidden' }}>
-      
-      {/* Universal Component Styles */}
+    <div style={{
+      minHeight:  '100vh',
+      display:    'flex',
+      flexDirection: 'column',
+      background: P.bg,
+      fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif",
+      color:      P.text,
+      overflow:   'hidden',
+    }}>
       <style>{`
-        @keyframes tabFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Mobile Scrollable Dock Configuration */
-        @media (max-width: 768px) {
-          .dock-container {
-            overflow-x: auto;
-            justify-content: flex-start !important;
-            padding-bottom: 8px; 
-            border-radius: 12px !important;
-          }
+        @keyframes tabIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .tab-panel { animation: tabIn 0.28s ease forwards; }
+        /* Mobile: dock scrolls horizontally */
+        @media (max-width: 720px) {
+          .dock-row { overflow-x: auto; justify-content: flex-start !important; border-radius: 16px !important; padding: 10px 14px !important; }
           .dock-tooltip { display: none !important; }
         }
-        
-        /* Scrollbar Hiding for sleek dock */
-        .dock-container::-webkit-scrollbar { display: none; }
-        .dock-container { -ms-overflow-style: none; scrollbar-width: none; }
+        .dock-row::-webkit-scrollbar { display: none; }
+        .dock-row { -ms-overflow-style:none; scrollbar-width:none; }
       `}</style>
 
-      {/* Main Content Area (Scrolls UNDER the Top Bar to activate Glassmorphism) */}
-      <div style={{ flex: 1, overflowY: 'auto', position: 'relative', paddingBottom: 140 }}>
-        
-        {/* Top Bar with Glassmorphism (Positioned Sticky inside scroll area) */}
-        <div style={{ 
-          position: 'sticky', top: 0, zIndex: 50, 
-          background: 'rgba(22, 27, 34, 0.75)', 
-          backdropFilter: 'blur(16px)', 
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: `1px solid ${P.border}`, 
-          padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 10 
+      {/* Scrollable content sits behind sticky header */}
+      <div style={{ flex:1, overflowY:'auto', position:'relative', paddingBottom:130 }}>
+
+        {/* ── Topbar ──────────────────────────────────────────────────────────── */}
+        <div style={{
+          position:   'sticky', top:0, zIndex:50,
+          background: 'rgba(17,17,17,0.82)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${P.border}`,
+          padding:    '0 20px',
+          height:     54,
+          display:    'flex',
+          alignItems: 'center',
+          gap:        10,
         }}>
+          {/* Back */}
           <button
             onClick={() => navigate('/organizer/events')}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: P.sub, cursor: 'pointer', fontSize: 13, padding: '4px 8px', borderRadius: 6, fontFamily: 'inherit', transition: 'color 0.15s' }}
+            style={{ display:'flex', alignItems:'center', gap:4, background:'none', border:'none', color:P.sub, cursor:'pointer', fontSize:13, padding:'4px 8px', borderRadius:6, fontFamily:'inherit', transition:'color 0.15s' }}
             onMouseEnter={e => e.currentTarget.style.color = P.text}
             onMouseLeave={e => e.currentTarget.style.color = P.sub}
           >
             {icons.back}
             Events
           </button>
-          <span style={{ color: P.muted, fontSize: 13 }}>/</span>
-          <span style={{ color: P.text, fontSize: 15, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ color:P.muted, fontSize:14, userSelect:'none' }}>/</span>
+
+          {/* Event title */}
+          <span style={{ fontSize:14, fontWeight:600, color:P.text, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>
             {event.title}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: statusColor + '20', color: statusColor, border: `1px solid ${statusColor}40`, letterSpacing: '0.05em' }}>
-              {event.status?.toUpperCase() || 'PLANNING'}
+
+          {/* Status badge */}
+          <span style={{
+            padding:    '3px 10px',
+            borderRadius: 99,
+            fontSize:   11, fontWeight:700,
+            background: statusColor + '1a',
+            color:      statusColor,
+            border:     `1px solid ${statusColor}33`,
+            letterSpacing: '0.05em',
+            flexShrink: 0,
+          }}>
+            {(event.status || 'planning').toUpperCase()}
+          </span>
+
+          {/* Date */}
+          {event.date && (
+            <span style={{ display:'flex', alignItems:'center', gap:5, color:P.muted, fontSize:12, flexShrink:0, marginLeft:4 }}>
+              {icons.calendar}
+              {new Date(event.date).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}
             </span>
-            {event.date && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: P.sub, fontSize: 12, marginLeft: 8 }}>
-                {icons.calendar} {new Date(event.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            )}
-            <button
-              onClick={() => setShowSettings(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.06)', border: `1px solid ${P.border}`, borderRadius: 8, color: P.sub, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: '6px 12px', fontFamily: 'inherit', transition: 'all 0.15s', marginLeft: 8 }}
-              onMouseEnter={e => { e.currentTarget.style.color = P.text; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = P.sub; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-            >
-              {icons.settings} Settings
-            </button>
-          </div>
+          )}
+
+          {/* Settings */}
+          <button
+            onClick={() => setShowSettings(true)}
+            style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.05)', border:`1px solid ${P.border}`, borderRadius:8, color:P.sub, fontSize:12, fontWeight:600, cursor:'pointer', padding:'6px 12px', fontFamily:'inherit', transition:'all 0.15s', marginLeft:8, flexShrink:0 }}
+            onMouseEnter={e => { e.currentTarget.style.color = P.text; e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = P.sub;  e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+          >
+            {icons.settings}
+            Settings
+          </button>
         </div>
 
-        {/* Tab content wrapped with Fade In transition */}
-        <div>
-          <div style={{ display: activeTab === 'overview' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
-            <TabOverview event={event} onEventUpdate={setEvent} />
-          </div>
-          <div style={{ display: activeTab === 'guests' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
-            <TabGuests eventId={eventId} />
-          </div>
-          <div style={{ display: activeTab === 'day-of' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
-            <TabDayOf eventId={eventId} event={event} />
-          </div>
-          <div style={{ display: activeTab === 'messages' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
-            <TabMessages eventId={eventId} />
-          </div>
-          <div style={{ display: activeTab === 'feedback' ? 'block' : 'none', animation: 'tabFadeIn 0.35s ease forwards' }}>
-            <TabFeedback eventId={eventId} event={event} />
-          </div>
-          {activeTab === 'budget' && (
-            <div style={{ animation: 'tabFadeIn 0.35s ease forwards' }}>
-               <BudgetManagement />
-            </div>
+        {/* ── Tab panels ──────────────────────────────────────────────────────── */}
+        <div style={{ minHeight: 'calc(100vh - 54px - 130px)' }}>
+          {activeTab === 'overview' && (
+            <div className="tab-panel"><TabOverview event={event} onEventUpdate={setEvent} /></div>
           )}
-          {!['overview', 'guests', 'day-of', 'messages', 'budget', 'feedback'].includes(activeTab) && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, flexDirection: 'column', gap: 12, animation: 'tabFadeIn 0.3s ease' }}>
-              <p style={{ fontSize: 36, margin: 0 }}>🚧</p>
-              <p style={{ color: P.sub, fontSize: 14 }}>{TABS.find(t => t.id === activeTab)?.label} — coming soon</p>
+          {activeTab === 'guests' && (
+            <div className="tab-panel"><TabGuests eventId={eventId} /></div>
+          )}
+          {activeTab === 'day-of' && (
+            <div className="tab-panel"><TabDayOf eventId={eventId} event={event} /></div>
+          )}
+          {activeTab === 'messages' && (
+            <div className="tab-panel"><TabMessages eventId={eventId} /></div>
+          )}
+          {activeTab === 'feedback' && (
+            <div className="tab-panel"><TabFeedback eventId={eventId} event={event} /></div>
+          )}
+          {activeTab === 'budget' && (
+            <div className="tab-panel"><BudgetManagement /></div>
+          )}
+          {!['overview','guests','day-of','messages','feedback','budget'].includes(activeTab) && (
+            <div className="tab-panel" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:400, flexDirection:'column', gap:12 }}>
+              <span style={{ fontSize:36 }}>🚧</span>
+              <p style={{ color:P.sub, fontSize:14, margin:0 }}>
+                {TABS.find(t => t.id === activeTab)?.label} — coming soon
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Floating macOS Dock Nav with class "dock-container" for mobile queries */}
-      <div style={{ 
-        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
-        maxWidth: '95vw' // Ensures dock never breaks viewport width on mobile
+      {/* ── macOS-style floating dock ────────────────────────────────────────── */}
+      <div style={{
+        position:  'fixed',
+        bottom:    22,
+        left:      '50%',
+        transform: 'translateX(-50%)',
+        zIndex:    100,
+        maxWidth:  '95vw',
       }}>
-        <div className="dock-container" style={{ 
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, 
-          background: 'rgba(22, 27, 34, 0.75)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-          border: `1px solid ${P.border}`, borderRadius: 24, padding: '12px 20px', 
-          boxShadow: '0 12px 40px rgba(0,0,0,0.5)' 
-        }}>
-          {TABS.map(tab => (
-            <DockTab
-              key={tab.id}
-              tab={tab}
-              isActive={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-            />
+        <div
+          className="dock-row"
+          style={{
+            display:    'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            gap:        6,
+            background: 'rgba(17,17,17,0.78)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border:     `1px solid ${P.border}`,
+            borderRadius: 22,
+            padding:    '10px 16px',
+            boxShadow:  '0 16px 48px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(255,255,255,0.04) inset',
+          }}
+        >
+          {DOCK_GROUPS.map((group, gi) => (
+            <div key={gi} style={{ display:'flex', alignItems:'flex-end', gap:6 }}>
+              {gi > 0 && <DockSep />}
+              {group.map(tabId => {
+                const tab = TABS.find(t => t.id === tabId);
+                if (!tab) return null;
+                return (
+                  <DockBtn
+                    key={tabId}
+                    tab={tab}
+                    isActive={activeTab === tabId}
+                    onClick={() => setActiveTab(tabId)}
+                  />
+                );
+              })}
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Settings Modal Extracted Component */}
+      {/* ── Settings modal ───────────────────────────────────────────────────── */}
       {showSettings && (
         <SettingsModal
           event={event}

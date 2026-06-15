@@ -1,23 +1,13 @@
 import { useState } from 'react';
-import { updateEvent } from '../services/serviceEvent';
-import { EVENT_TYPES } from '../utils/constants'; 
-import { P, icons, STATUS_OPTIONS } from '../utils/theme.jsx';
+import { updateEvent }   from '../services/serviceEvent';
+import { EVENT_TYPES }   from '../utils/constants';
+import { P, icons, STATUS_OPTIONS } from '../utils/theme';
 
-// Move static label style config outside to clear component scoping issues
-const flbl = { 
-  display: 'block', 
-  fontSize: 11, 
-  fontWeight: 600, 
-  color: P.sub, 
-  marginBottom: 6, 
-  textTransform: 'uppercase', 
-  letterSpacing: '0.06em' 
-};
-
-// Clean reusable field container component outside of render
 const Field = ({ label, children }) => (
-  <div style={{ marginBottom: 16, flex: 1, minWidth: 0 }}>
-    <label style={flbl}>{label}</label>
+  <div style={{ marginBottom:16, flex:1, minWidth:0 }}>
+    <label style={{ display:'block', fontSize:11, fontWeight:600, color:P.sub, marginBottom:7, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+      {label}
+    </label>
     {children}
   </div>
 );
@@ -35,10 +25,10 @@ export default function SettingsModal({ event, onSave, onClose }) {
     dressCode:         event.dressCode || '',
     status:            event.status || 'planning',
   });
-  const [saving, setSaving] = useState(false);
+  const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const set = (k,v) => setForm(p => ({...p,[k]:v}));
 
   const handleSave = async () => {
     setSaveError(null);
@@ -55,91 +45,108 @@ export default function SettingsModal({ event, onSave, onClose }) {
     }
   };
 
-  // Modern input focus design baseline
   const inp = {
-    width: '100%',
-    padding: '12px 14px',
-    borderRadius: 8,
-    border: `1px solid ${P.border}`,
-    background: P.surface, 
-    color: P.text,
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    transition: 'all 0.2s ease',
+    width:'100%', padding:'12px 14px', borderRadius:9,
+    border:`1px solid ${P.border}`, background:P.hover,
+    color:P.text, fontSize:14, outline:'none',
+    boxSizing:'border-box', fontFamily:'inherit',
+    transition:'border-color 0.15s',
   };
+  const focusBlue = e => e.target.style.borderColor = P.blue;
+  const blurBorder = e => e.target.style.borderColor = P.border;
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(8px)', padding: 20, overflowY: 'auto' }}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.80)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(10px)', padding:20, overflowY:'auto' }}
       onClick={onClose}
     >
       <div
-        style={{ background: P.panel, borderRadius: 16, padding: '32px', width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', border: `1px solid ${P.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.8)' }}
+        style={{ background:P.panel, borderRadius:16, padding:'32px', width:'100%', maxWidth:560, maxHeight:'90vh', overflowY:'auto', border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.8)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-          <div style={{ color: P.blue, background: 'rgba(68,147,248,0.1)', padding: 8, borderRadius: 10 }}>{icons.settings}</div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: P.text }}>Event Settings</h2>
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28 }}>
+          <span style={{ color:P.blue, background:P.blueGlow, padding:9, borderRadius:10, display:'flex' }}>{icons.settings}</span>
+          <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:P.text }}>Event Settings</h2>
         </div>
 
         {saveError && (
-          <div style={{ background: 'rgba(248,81,73,0.1)', color: P.red, border: `1px solid rgba(248,81,73,0.3)`, borderRadius: 8, padding: '12px 16px', fontSize: 13, marginBottom: 20 }}>
+          <div style={{ background:P.redGlow, color:P.red, border:`1px solid ${P.red}33`, borderRadius:8, padding:'12px 16px', fontSize:13, marginBottom:20 }}>
             {saveError}
           </div>
         )}
 
+        {/* Title */}
         <Field label="Event Title *">
-          <input style={inp} value={form.title} onChange={e => set('title', e.target.value)} />
+          <input style={inp} value={form.title} onChange={e => set('title',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
         </Field>
 
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        {/* Type + Status */}
+        <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
           <Field label="Event Type">
-            <select style={{ ...inp, cursor: 'pointer' }} value={form.eventType} onChange={e => set('eventType', e.target.value)}>
+            <select style={{ ...inp, cursor:'pointer' }} value={form.eventType} onChange={e => set('eventType',e.target.value)}>
               <option value="">Select type…</option>
               {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </Field>
           <Field label="Status">
-            <select style={{ ...inp, cursor: 'pointer' }} value={form.status} onChange={e => set('status', e.target.value)}>
-              {STATUS_OPTIONS.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}
+            <select style={{ ...inp, cursor:'pointer' }} value={form.status} onChange={e => set('status',e.target.value)}>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
             </select>
           </Field>
         </div>
 
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        {/* Date + Attendees */}
+        <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
           <Field label="Date">
-            <input style={inp} type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+            <input style={inp} type="date" value={form.date} onChange={e => set('date',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
           </Field>
-          <Field label="Attendees">
-            <input style={inp} type="number" min="0" value={form.expectedAttendees} onChange={e => set('expectedAttendees', e.target.value)} />
+          <Field label="Expected Attendees">
+            <input style={inp} type="number" min="0" value={form.expectedAttendees} onChange={e => set('expectedAttendees',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
           </Field>
         </div>
 
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        {/* Times */}
+        <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
           <Field label="Start Time">
-            <input style={inp} type="time" value={form.startTime} onChange={e => set('startTime', e.target.value)} />
+            <input style={inp} type="time" value={form.startTime} onChange={e => set('startTime',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
           </Field>
           <Field label="End Time">
-            <input style={inp} type="time" value={form.endTime} onChange={e => set('endTime', e.target.value)} />
+            <input style={inp} type="time" value={form.endTime} onChange={e => set('endTime',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
           </Field>
         </div>
 
-        <Field label="Venue / Location">
-          <input style={inp} value={form.location} onChange={e => set('location', e.target.value)} placeholder="e.g. The Garden Hall" />
-        </Field>
+        {/* Venue + Dress code */}
+        <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
+          <Field label="Venue / Location">
+            <input style={inp} value={form.location} onChange={e => set('location',e.target.value)} placeholder="e.g. The Garden Hall" onFocus={focusBlue} onBlur={blurBorder} />
+          </Field>
+          <Field label="Dress Code">
+            <input style={inp} value={form.dressCode} onChange={e => set('dressCode',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
+          </Field>
+        </div>
 
+        {/* Description */}
         <Field label="Description">
-          <textarea style={{ ...inp, minHeight: 100, resize: 'vertical' }} value={form.description} onChange={e => set('description', e.target.value)} />
+          <textarea style={{ ...inp, minHeight:100, resize:'vertical' }} value={form.description} onChange={e => set('description',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
         </Field>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px 0', borderRadius: 8, border: `1px solid ${P.border}`, background: 'transparent', color: P.sub, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+        {/* Buttons */}
+        <div style={{ display:'flex', gap:10, marginTop:4 }}>
+          <button
+            onClick={onClose}
+            style={{ flex:1, padding:'12px 0', borderRadius:9, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, cursor:'pointer', fontFamily:'inherit', fontSize:14, transition:'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
+            onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
+          >
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: saving ? P.muted : P.blue, color: '#fff', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-            {saving ? 'Saving...' : 'Save Changes'}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ flex:1, padding:'12px 0', borderRadius:9, border:'none', background:saving?P.muted:P.blue, color:'#fff', fontWeight:600, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', fontSize:14, transition:'background 0.15s' }}
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>

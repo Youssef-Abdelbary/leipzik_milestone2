@@ -1,55 +1,81 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
-  listGuests, addGuest, updateGuest, deleteGuest, sendInvitation,
+  listGuests, addGuest, updateGuest, deleteGuest,
+  sendInvitation,
 } from '../../services/serviceGuest';
+import { P, icons } from '../../utils/theme';
 
 const DIETARY_PRESETS = [
-  'None', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher', 'Nut Allergy', 'Dairy-Free',
+  'None','Vegetarian','Vegan','Gluten-Free','Halal','Kosher','Nut Allergy','Dairy-Free',
 ];
 
-const RSVP_STYLES = {
-  pending:   { bg: '#FFF7ED', text: '#C2410C', dot: '#F59E0B' },
-  attending: { bg: '#F0FDF4', text: '#166534', dot: '#22C55E' },
-  declined:  { bg: '#FEF2F2', text: '#991B1B', dot: '#EF4444' },
-};
+// ─── Filter tile ──────────────────────────────────────────────────────────────
+function FilterTile({ label, value, isActive, accentColor, glowColor, onClick }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        flex:       '1 1 0',
+        minWidth:   72,
+        padding:    '14px 10px',
+        borderRadius: 12,
+        border:     `1px solid ${isActive ? accentColor + '55' : hov ? accentColor + '33' : P.border}`,
+        background: isActive ? glowColor : hov ? `${glowColor}80` : P.surface,
+        cursor:     'pointer',
+        textAlign:  'center',
+        transition: 'all 0.18s ease',
+        transform:  hov && !isActive ? 'translateY(-1px)' : 'none',
+        boxShadow:  isActive ? `0 0 18px ${glowColor}, 0 0 0 1px ${accentColor}22` : 'none',
+        outline:    'none',
+        fontFamily: 'inherit',
+      }}
+    >
+      <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:800, color: isActive ? accentColor : hov ? accentColor : P.text, letterSpacing:'-0.02em', lineHeight:1 }}>{value}</p>
+      <p style={{ margin:0, fontSize:10, fontWeight:700, color: isActive ? accentColor : P.muted, textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</p>
+    </button>
+  );
+}
 
-const EMPTY_FORM = { fullname: '', email: '', phone: '', dietaryPreferences: 'None', notes: '' };
-
+// ─── Tiny toast ───────────────────────────────────────────────────────────────
 function Toast({ message, type }) {
   return (
     <div style={{
-      position: 'fixed', bottom: 28, right: 28, zIndex: 200,
-      background: type === 'success' ? '#0F172A' : '#DC2626',
-      color: '#fff', padding: '12px 20px', borderRadius: 10,
-      fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 10,
-      boxShadow: '0 8px 32px rgba(15,23,42,0.22)',
+      position:'fixed', bottom:100, right:28, zIndex:300,
+      background: type === 'success' ? P.panel : P.redGlow,
+      border: `1px solid ${type === 'success' ? P.border : P.red + '44'}`,
+      color: P.text,
+      padding:'11px 18px', borderRadius:10, fontSize:13, fontWeight:500,
+      display:'flex', alignItems:'center', gap:10,
+      boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
     }}>
-      {type === 'success' ? '✓' : '✗'} {message}
+      <span style={{ color: type === 'success' ? P.green : P.red, fontWeight:700 }}>{type === 'success' ? '✓' : '✗'}</span>
+      {message}
     </div>
   );
 }
 
+// ─── Add / Edit guest modal ───────────────────────────────────────────────────
 function GuestModal({ guest, onSave, onClose }) {
   const isEdit = Boolean(guest?._id);
   const [form, setForm] = useState(
     isEdit
-      ? { fullname: guest.fullName, email: guest.email, phone: guest.phone || '', dietaryPreferences: guest.rsvp?.dietaryPreferences?.[0] || 'None', notes: guest.rsvp?.specialRequirements || '' }
-      : EMPTY_FORM
+      ? { fullname:guest.fullName, email:guest.email, phone:guest.phone||'', dietaryPreferences:guest.rsvp?.dietaryPreferences?.[0]||'None', notes:guest.rsvp?.specialRequirements||'' }
+      : { fullname:'', email:'', phone:'', dietaryPreferences:'None', notes:'' }
   );
-  const [saving, setSaving]           = useState(false);
-  const [error, setError]             = useState(null);
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
   const handleSubmit = async () => {
     setError(null);
     const errs = {};
     if (!form.fullname.trim()) errs.fullname = 'Name is required';
-    if (!form.email.trim()) {
-      errs.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      errs.email = 'Please enter a valid email address';
-    }
-    if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
+    if (!form.email.trim())    errs.email    = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errs.email = 'Enter a valid email';
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
     setSaving(true);
     try {
@@ -62,65 +88,71 @@ function GuestModal({ guest, onSave, onClose }) {
     }
   };
 
-  const field = (label, key, type = 'text', placeholder = '') => (
-    <div key={key} style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: fieldErrors[key] ? '#EF4444' : '#374151', marginBottom: 6 }}>{label}</label>
-      <input
-        type={type}
-        value={form[key]}
-        onChange={e => { setForm(p => ({ ...p, [key]: e.target.value })); if (fieldErrors[key]) setFieldErrors(p => ({ ...p, [key]: undefined })); }}
-        placeholder={placeholder}
-        style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${fieldErrors[key] ? '#EF4444' : '#E2E8F0'}`, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-      />
-      {fieldErrors[key] && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#EF4444' }}>{fieldErrors[key]}</p>}
-    </div>
-  );
+  const inp = (key) => ({
+    width:'100%', padding:'11px 14px', borderRadius:8, boxSizing:'border-box',
+    border: `1px solid ${fieldErrors[key] ? P.red + '66' : P.border}`,
+    background:P.hover, color:P.text, fontSize:14, outline:'none', fontFamily:'inherit',
+    transition:'border-color 0.15s',
+  });
+  const lbl = (key) => ({ display:'block', fontSize:12, fontWeight:600, color:fieldErrors[key] ? P.red : P.sub, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: '32px 36px', width: '90%', maxWidth: 460, boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
-        <h2 style={{ margin: '0 0 24px', fontSize: 19, fontWeight: 700, color: '#0F172A' }}>
-          {isEdit ? 'Edit Guest' : 'Add Guest'}
-        </h2>
-        {error && (
-          <div style={{ background: '#FEF2F2', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16, border: '1px solid #FECACA' }}>
-            {error}
+    <div
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background:P.panel, borderRadius:14, padding:'32px 36px', width:'90%', maxWidth:460, border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 style={{ margin:'0 0 24px', fontSize:19, fontWeight:700, color:P.text }}>{isEdit ? 'Edit Guest' : 'Add Guest'}</h2>
+
+        {error && <div style={{ background:P.redGlow, color:P.red, padding:'10px 14px', borderRadius:8, fontSize:13, marginBottom:16, border:`1px solid ${P.red}33` }}>{error}</div>}
+
+        {[
+          { label:'Full Name *', key:'fullname', type:'text', ph:'Jane Doe' },
+          { label:'Email *',     key:'email',    type:'email', ph:'jane@example.com' },
+          { label:'Phone',       key:'phone',    type:'tel',   ph:'+20 100 000 0000' },
+        ].map(f => (
+          <div key={f.key} style={{ marginBottom:14 }}>
+            <label style={lbl(f.key)}>{f.label}</label>
+            <input
+              type={f.type} placeholder={f.ph}
+              value={form[f.key]}
+              onChange={e => { setForm(p => ({...p,[f.key]:e.target.value})); if(fieldErrors[f.key]) setFieldErrors(p=>({...p,[f.key]:undefined})); }}
+              style={inp(f.key)}
+            />
+            {fieldErrors[f.key] && <p style={{ margin:'4px 0 0', fontSize:12, color:P.red }}>{fieldErrors[f.key]}</p>}
           </div>
-        )}
-        {field('Full Name *', 'fullname', 'text', 'Jane Doe')}
-        {field('Email *',     'email',    'email', 'jane@example.com')}
-        {field('Phone',       'phone',    'tel',   '+20 100 000 0000')}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Dietary Preferences</label>
+        ))}
+
+        <div style={{ marginBottom:14 }}>
+          <label style={lbl('dietary')}>Dietary Preferences</label>
           <input
             list="dp-presets"
             value={form.dietaryPreferences}
-            onChange={e => setForm(p => ({ ...p, dietaryPreferences: e.target.value }))}
+            onChange={e => setForm(p => ({...p, dietaryPreferences:e.target.value}))}
             placeholder="None"
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+            style={inp('dietary')}
           />
-          <datalist id="dp-presets">
-            {DIETARY_PRESETS.map(d => <option key={d} value={d} />)}
-          </datalist>
+          <datalist id="dp-presets">{DIETARY_PRESETS.map(d => <option key={d} value={d}/>)}</datalist>
         </div>
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>Notes</label>
+
+        <div style={{ marginBottom:24 }}>
+          <label style={lbl('notes')}>Notes</label>
           <textarea
             value={form.notes}
-            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-            placeholder="Any additional notes..."
+            onChange={e => setForm(p => ({...p, notes:e.target.value}))}
+            placeholder="Any additional notes…"
             rows={3}
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
+            style={{ ...inp('notes'), resize:'vertical' }}
           />
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#374151', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? '#94A3B8' : '#0F172A', color: '#fff', fontWeight: 600, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer' }}
-          >
-            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Guest'}
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onClose} style={{ flex:1, padding:'11px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Cancel</button>
+          <button onClick={handleSubmit} disabled={saving} style={{ flex:1, padding:'11px 0', borderRadius:8, border:'none', background:saving?P.muted:P.blue, color:'#fff', fontWeight:600, fontSize:14, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit' }}>
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Guest'}
           </button>
         </div>
       </div>
@@ -128,55 +160,45 @@ function GuestModal({ guest, onSave, onClose }) {
   );
 }
 
-// UPDATED: shows whether email was sent alongside the copy-link option
+// ─── Invite result modal ──────────────────────────────────────────────────────
 function InviteResultModal({ result, onClose }) {
   const { rsvpUrl, emailSent, guestEmail } = result;
   const [copied, setCopied] = useState(false);
-  const copy = () => { navigator.clipboard.writeText(rsvpUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copy = () => { navigator.clipboard.writeText(rsvpUrl); setCopied(true); setTimeout(() => setCopied(false), 2200); };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: '32px 36px', width: '90%', maxWidth: 460, boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={onClose}>
+      <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', width:'90%', maxWidth:460, border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
 
-        {/* Email status banner */}
         {emailSent ? (
-          <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: '12px 14px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 18 }}>✉️</span>
+          <div style={{ background:P.greenGlow, border:`1px solid ${P.green}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
+            <span style={{ fontSize:18 }}>✉️</span>
             <div>
-              <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: '#166534' }}>Invitation email sent!</p>
-              <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>Sent to <strong>{guestEmail}</strong>. The link below is a backup in case the email went to spam.</p>
+              <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.green }}>Invitation email sent!</p>
+              <p style={{ margin:0, fontSize:12, color:P.sub }}>Sent to <strong style={{color:P.text}}>{guestEmail}</strong>. Copy the link below as backup.</p>
             </div>
           </div>
         ) : (
-          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '12px 14px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 18 }}>⚠️</span>
+          <div style={{ background:P.amberGlow, border:`1px solid ${P.amber}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
+            <span style={{ fontSize:18 }}>⚠️</span>
             <div>
-              <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: '#C2410C' }}>Email not configured</p>
-              <p style={{ margin: 0, fontSize: 12, color: '#C2410C' }}>SMTP is not set up. Please share this link manually with the guest.</p>
+              <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.amber }}>Email not configured</p>
+              <p style={{ margin:0, fontSize:12, color:P.sub }}>SMTP not set up — share this link manually.</p>
             </div>
           </div>
         )}
 
-        <h2 style={{ margin: '0 0 8px', fontSize: 19, fontWeight: 700, color: '#0F172A' }}>RSVP Link 🎟</h2>
-        <p style={{ margin: '0 0 20px', fontSize: 14, color: '#64748B', lineHeight: 1.6 }}>
-          {emailSent ? 'Copy this link as a backup or to share via WhatsApp / SMS:' : 'Share this RSVP link with the guest:'}
-        </p>
+        <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text }}>RSVP Link 🎟</h2>
+        <p style={{ margin:'0 0 16px', fontSize:14, color:P.sub }}>Share with the guest:</p>
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            readOnly
-            value={rsvpUrl}
-            style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 12, color: '#4338CA', background: '#F8FAFC', outline: 'none', fontFamily: 'monospace' }}
-          />
-          <button
-            onClick={copy}
-            style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #E2E8F0', background: copied ? '#166534' : '#fff', color: copied ? '#fff' : '#374151', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
-          >
+        <div style={{ display:'flex', gap:8 }}>
+          <input readOnly value={rsvpUrl} style={{ flex:1, padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, fontSize:12, color:P.blue, background:P.hover, outline:'none', fontFamily:'monospace' }}/>
+          <button onClick={copy} style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, background: copied?P.green:P.surface, color: copied?'#111':P.text, fontWeight:600, fontSize:13, cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}>
             {copied ? '✓ Copied' : 'Copy'}
           </button>
         </div>
 
-        <button onClick={onClose} style={{ width: '100%', marginTop: 20, padding: '10px 0', borderRadius: 8, border: 'none', background: '#0F172A', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+        <button onClick={onClose} style={{ width:'100%', marginTop:18, padding:'11px 0', borderRadius:8, border:'none', background:P.blue, color:'#fff', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>
           Done
         </button>
       </div>
@@ -184,18 +206,35 @@ function InviteResultModal({ result, onClose }) {
   );
 }
 
+// ─── Initials avatar ──────────────────────────────────────────────────────────
+function Avatar({ name, isActive }) {
+  const init = (name || '?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return (
+    <div style={{
+      width:34, height:34, borderRadius:'50%', flexShrink:0,
+      background: isActive ? P.blueGlow : P.hover,
+      color:      isActive ? P.blue     : P.sub,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:12, fontWeight:700,
+    }}>{init}</div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function TabGuests({ eventId }) {
-  const [guests, setGuests]                 = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [search, setSearch]                 = useState('');
-  const [rsvpFilter, setRsvpFilter]         = useState('all');
-  const [dietaryFilter, setDietaryFilter]   = useState('');
-  const [showModal, setShowModal]           = useState(false);
-  const [editingGuest, setEditingGuest]     = useState(null);
-  const [confirmDelete, setConfirmDelete]   = useState(null);
-  const [sendingInvites, setSendingInvites] = useState(new Set());
-  const [inviteResult, setInviteResult]     = useState(null); // { rsvpUrl, emailSent, guestEmail }
-  const [toast, setToast]                   = useState(null);
+  const [guests,       setGuests]       = useState([]);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');   // tile filter (client-side)
+  const [dietaryFilter,setDietaryFilter]= useState('');
+  const [showModal,    setShowModal]    = useState(false);
+  const [editingGuest, setEditingGuest] = useState(null);
+  const [confirmDelete,setConfirmDelete]= useState(null);
+  const [sendingInvites,setSendingInvites]= useState(new Set());
+  const [sendingAll,   setSendingAll]   = useState(false);
+  const [inviteProgress,setInviteProgress]=useState('');
+  const [inviteResult, setInviteResult] = useState(null);
+  const [toast,        setToast]        = useState(null);
   const debounceRef = useRef(null);
 
   const showToast = useCallback((message, type = 'success') => {
@@ -203,37 +242,68 @@ export default function TabGuests({ eventId }) {
     setTimeout(() => setToast(null), 3200);
   }, []);
 
-  const load = useCallback(async (searchVal, rsvpVal) => {
+  // ── Fetch (search-only — rsvp filter is client-side via tiles) ────────────
+  const load = useCallback(async (searchVal) => {
     setLoading(true);
     try {
-      const data = await listGuests(eventId, { search: searchVal, rsvp: rsvpVal });
-      setGuests(data);
+      const data = await listGuests(eventId, { search: searchVal });
+      setGuests(Array.isArray(data) ? data : []);
     } catch {
       showToast('Failed to load guests', 'error');
     } finally {
       setLoading(false);
     }
   }, [eventId, showToast]);
+  
 
+  // Re-fetch on page visibility
   useEffect(() => {
-    const timer = setTimeout(() => load('', 'all'), 0);
-    return () => clearTimeout(timer);
-  }, [load]);
+    const h = () => { if (document.visibilityState === 'visible') load(search); };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, [load, search]);
 
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') load(search, rsvpFilter);
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [load, search, rsvpFilter]);
-
+  // Debounced search
   useEffect(() => {
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => load(search, rsvpFilter), 600);
+    debounceRef.current = setTimeout(() => load(search), 600);
     return () => clearTimeout(debounceRef.current);
-  }, [search, rsvpFilter, load]);
+  }, [search, load]);
 
+  // ── Stats (from full fetched list, before client filter) ──────────────────
+  const stats = useMemo(() => ({
+    total:     guests.length,
+    attending: guests.filter(g => g.rsvp?.status === 'attending').length,
+    declined:  guests.filter(g => g.rsvp?.status === 'declined').length,
+    pending:   guests.filter(g => !g.rsvp?.status || g.rsvp.status === 'pending').length,
+    invited:   guests.filter(g => g.invitationStatus === 'sent').length,
+  }), [guests]);
+
+  // ── Client-side filter based on active tile ───────────────────────────────
+  const filtered = useMemo(() => {
+    let list = guests;
+    if (activeFilter === 'attending') list = list.filter(g => g.rsvp?.status === 'attending');
+    else if (activeFilter === 'declined') list = list.filter(g => g.rsvp?.status === 'declined');
+    else if (activeFilter === 'pending')  list = list.filter(g => !g.rsvp?.status || g.rsvp.status === 'pending');
+    else if (activeFilter === 'invited')  list = list.filter(g => g.invitationStatus === 'sent');
+
+    if (dietaryFilter.trim()) {
+      const q = dietaryFilter.toLowerCase();
+      list = list.filter(g => (g.rsvp?.dietaryPreferences?.join(', ') || '').toLowerCase().includes(q));
+    }
+    return list;
+  }, [guests, activeFilter, dietaryFilter]);
+
+  // ── Tile config ───────────────────────────────────────────────────────────
+  const tiles = [
+    { id:'all',       label:'Total',     value:stats.total,     accent:P.text,  glow:`rgba(232,232,232,0.1)` },
+    { id:'attending', label:'Attending', value:stats.attending, accent:P.green, glow:P.greenGlow },
+    { id:'declined',  label:'Declined',  value:stats.declined,  accent:P.red,   glow:P.redGlow   },
+    { id:'pending',   label:'Pending',   value:stats.pending,   accent:P.amber, glow:P.amberGlow },
+    { id:'invited',   label:'Invited',   value:stats.invited,   accent:P.blue,  glow:P.blueGlow  },
+  ];
+
+  // ── CRUD ──────────────────────────────────────────────────────────────────
   const handleSave = async (form) => {
     if (editingGuest) {
       const updated = await updateGuest(eventId, editingGuest._id, form);
@@ -245,39 +315,6 @@ export default function TabGuests({ eventId }) {
       showToast('Guest added');
     }
   };
-  const [sendingAll, setSendingAll]           = useState(false);
-const [inviteAllProgress, setInviteAllProgress] = useState('');
-
-const handleInviteAll = async () => {
-  const uninvited = guests.filter(g => g.invitationStatus !== 'sent');
-  if (uninvited.length === 0) {
-    showToast('All guests have already been invited', 'error');
-    return;
-  }
-  setSendingAll(true);
-  let sent = 0;
-  let lastResult = null;
-  for (const guest of uninvited) {
-    setInviteAllProgress(`${sent + 1}/${uninvited.length}`);
-    try {
-      const result = await sendInvitation(eventId, guest._id);
-      lastResult = result;
-      setGuests(prev => prev.map(g => g._id === guest._id
-        ? { ...g, invitationStatus: 'sent', invitationSentAt: new Date().toISOString() }
-        : g
-      ));
-      sent++;
-    } catch {
-      // continue on error
-    }
-  }
-  setSendingAll(false);
-  setInviteAllProgress('');
-  showToast(`Invitations sent to ${sent} guest(s)`);
-  if (lastResult?.rsvpUrl && sent > 0) {
-    // Show last RSVP link optionally
-  }
-};
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -291,21 +328,13 @@ const handleInviteAll = async () => {
     setConfirmDelete(null);
   };
 
-  // UPDATED: store full result object (rsvpUrl + emailSent + guestEmail)
   const handleInvite = async (guest) => {
     setSendingInvites(prev => new Set([...prev, guest._id]));
     try {
       const result = await sendInvitation(eventId, guest._id);
-      setGuests(prev => prev.map(g => g._id === guest._id
-        ? { ...g, invitationStatus: 'sent', invitationSentAt: new Date().toISOString() }
-        : g
-      ));
-      setInviteResult({
-        rsvpUrl:    result.rsvpUrl,
-        emailSent:  result.emailSent,
-        guestEmail: result.guestEmail || guest.email,
-      });
-      showToast(result.emailSent ? `Invitation email sent to ${result.guestEmail}` : 'RSVP link ready to share');
+      setGuests(prev => prev.map(g => g._id === guest._id ? { ...g, invitationStatus:'sent', invitationSentAt:new Date().toISOString() } : g));
+      setInviteResult({ rsvpUrl:result.rsvpUrl, emailSent:result.emailSent, guestEmail:result.guestEmail || guest.email });
+      showToast(result.emailSent ? `Invite sent to ${result.guestEmail}` : 'RSVP link ready');
     } catch {
       showToast('Failed to send invitation', 'error');
     } finally {
@@ -313,191 +342,219 @@ const handleInviteAll = async () => {
     }
   };
 
-  const filtered = guests.filter(g =>
-    !dietaryFilter.trim() ||
-    (g.rsvp?.dietaryPreferences?.join(', ') || '').toLowerCase().includes(dietaryFilter.toLowerCase())
-  );
+  const handleInviteAll = async () => {
+    const uninvited = guests.filter(g => g.invitationStatus !== 'sent');
+    if (!uninvited.length) { showToast('All guests already invited', 'error'); return; }
+    setSendingAll(true);
+    let sent = 0;
+    for (const g of uninvited) {
+      setInviteProgress(`${sent+1}/${uninvited.length}`);
+      try {
+        await sendInvitation(eventId, g._id);
+        setGuests(prev => prev.map(x => x._id === g._id ? { ...x, invitationStatus:'sent', invitationSentAt:new Date().toISOString() } : x));
+        sent++;
+      } catch { /* continue */ }
+    }
+    setSendingAll(false);
+    setInviteProgress('');
+    showToast(`Invitations sent to ${sent} guest(s)`);
+  };
 
-  const stats = [
-    { label: 'Total',     value: guests.length,                                                color: '#0F172A' },
-    { label: 'Attending', value: guests.filter(g => g.rsvp?.status === 'attending').length,    color: '#166534' },
-    { label: 'Declined',  value: guests.filter(g => g.rsvp?.status === 'declined').length,     color: '#991B1B' },
-    { label: 'Pending',   value: guests.filter(g => g.rsvp?.status === 'pending').length,      color: '#C2410C' },
-    { label: 'Invited',   value: guests.filter(g => g.invitationStatus === 'sent').length,     color: '#4338CA' },
-  ];
-
-  const initials = (name = '') =>
-    name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+  // ── RSVP badge ────────────────────────────────────────────────────────────
+  const rsvpBadge = (status) => {
+    const map = { attending:{ bg:P.greenGlow, text:P.green, dot:P.green }, declined:{ bg:P.redGlow, text:P.red, dot:P.red } };
+    const s = map[status] || { bg:P.amberGlow, text:P.amber, dot:P.amber };
+    return (
+      <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:700, background:s.bg, color:s.text, textTransform:'capitalize' }}>
+        <span style={{ width:5, height:5, borderRadius:'50%', background:s.dot, flexShrink:0 }}/>
+        {status || 'pending'}
+      </span>
+    );
+  };
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ maxWidth:1100, margin:'0 auto', padding:'28px 24px', fontFamily:'system-ui,-apple-system,sans-serif', color:P.text }}>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-        {stats.map(s => (
-          <div key={s.label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: '14px 20px', textAlign: 'center', minWidth: 76 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
-          </div>
+      {/* ── Filter tiles ─────────────────────────────────────────────────── */}
+      <div style={{ display:'flex', gap:10, marginBottom:24, flexWrap:'wrap' }}>
+        {tiles.map(t => (
+          <FilterTile
+            key={t.id}
+            label={t.label}
+            value={t.value}
+            isActive={activeFilter === t.id}
+            accentColor={t.accent}
+            glowColor={t.glow}
+            onClick={() => setActiveFilter(t.id)}
+          />
         ))}
       </div>
 
-      {/* Controls */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none' }}>🔍</span>
+      {/* ── Controls row ─────────────────────────────────────────────────── */}
+      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
+        {/* Search */}
+        <div style={{ flex:'1 1 220px', position:'relative' }}>
+          <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:P.muted, pointerEvents:'none', display:'flex' }}>
+            {icons.search}
+          </span>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or email..."
-            style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: 9, border: '1px solid #E2E8F0', background: '#fff', fontSize: 14, color: '#0F172A', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+            placeholder="Search by name or email…"
+            style={{ width:'100%', padding:'10px 14px 10px 40px', borderRadius:9, border:`1px solid ${P.border}`, background:P.surface, fontSize:14, color:P.text, outline:'none', boxSizing:'border-box', fontFamily:'inherit', transition:'border-color 0.15s' }}
+            onFocus={e => e.target.style.borderColor = P.blue}
+            onBlur={e => e.target.style.borderColor = P.border}
           />
         </div>
-        <div style={{ display: 'flex', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 9, overflow: 'hidden' }}>
-          {['all', 'pending', 'attending', 'declined'].map(r => (
-            <button
-              key={r}
-              onClick={() => setRsvpFilter(r)}
-              style={{ padding: '10px 14px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: rsvpFilter === r ? '#0F172A' : 'transparent', color: rsvpFilter === r ? '#fff' : '#64748B', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
-            >
-              {r.charAt(0).toUpperCase() + r.slice(1)}
-            </button>
-          ))}
-        </div>
+
+        {/* Dietary filter */}
         <input
           value={dietaryFilter}
           onChange={e => setDietaryFilter(e.target.value)}
-          placeholder="Filter dietary..."
-          style={{ padding: '10px 14px', borderRadius: 9, border: '1px solid #E2E8F0', background: '#fff', fontSize: 14, color: '#0F172A', outline: 'none', minWidth: 150, fontFamily: 'inherit' }}
+          placeholder="Filter dietary…"
+          style={{ padding:'10px 14px', borderRadius:9, border:`1px solid ${P.border}`, background:P.surface, fontSize:14, color:P.text, outline:'none', minWidth:150, fontFamily:'inherit' }}
+          onFocus={e => e.target.style.borderColor = P.blue}
+          onBlur={e => e.target.style.borderColor = P.border}
         />
-        
+
+        {/* Add guest */}
         <button
           onClick={() => { setEditingGuest(null); setShowModal(true); }}
-          style={{ padding: '10px 20px', background: '#0F172A', color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:P.blue, color:'#fff', border:'none', borderRadius:9, fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap', fontFamily:'inherit', transition:'opacity 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          + Add Guest
+          {icons.plus} Add Guest
         </button>
+
+        {/* Invite all */}
         <button
-  onClick={handleInviteAll}
-  disabled={sendingAll}
-  style={{ padding: '10px 20px', background: sendingAll ? '#94A3B8' : '#4338CA', color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: sendingAll ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
->
-  {sendingAll ? `Sending… ${inviteAllProgress}` : '✉ Invite All'}
-</button>
-        
+          onClick={handleInviteAll}
+          disabled={sendingAll}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:P.surface, color:P.text, border:`1px solid ${P.border}`, borderRadius:9, fontSize:13, fontWeight:600, cursor:sendingAll?'not-allowed':'pointer', whiteSpace:'nowrap', fontFamily:'inherit', opacity:sendingAll?0.6:1, transition:'all 0.15s' }}
+          onMouseEnter={e => { if(!sendingAll) e.currentTarget.style.borderColor = P.sub; }}
+          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
+        >
+          {icons.mail} {sendingAll ? `Sending… ${inviteProgress}` : 'Invite All'}
+        </button>
       </div>
 
-      {/* Table */}
-      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 6px rgba(15,23,42,0.06)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-              {['Guest', 'Email', 'Dietary', 'RSVP Status', 'Invited', 'Actions'].map(h => (
-                <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} style={{ padding: '48px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>Loading guests...</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: '48px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>No guests found. Add your first guest!</td></tr>
-            ) : filtered.map((guest, i) => {
-              const rs        = RSVP_STYLES[guest.rsvp?.status] || RSVP_STYLES.pending;
-              const isSending = sendingInvites.has(guest._id);
+      {/* ── Guest table ───────────────────────────────────────────────────── */}
+      <div style={{ background:P.surface, border:`1px solid ${P.border}`, borderRadius:14, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
+        {/* Table header */}
+        <div style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1.2fr 1fr 1.4fr 120px', gap:0, background:P.panel, borderBottom:`1px solid ${P.border}`, padding:'10px 18px' }}>
+          {['Guest','Email','Dietary','RSVP','Invited','Actions'].map(h => (
+            <span key={h} style={{ fontSize:10, fontWeight:700, color:P.muted, textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</span>
+          ))}
+        </div>
 
-              return (
-                <tr key={guest._id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#DBEAFE', color: '#1D4ED8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-                        {initials(guest.fullName)}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{guest.fullName}</div>
-                        {guest.phone && <div style={{ fontSize: 12, color: '#94A3B8' }}>{guest.phone}</div>}
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ fontSize: 12, color: '#64748B', fontFamily: "'SF Mono', 'Fira Code', monospace" }}>{guest.email}</span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ fontSize: 13, color: !guest.rsvp?.dietaryPreferences?.length ? '#94A3B8' : '#0F172A' }}>
-                      {guest.rsvp?.dietaryPreferences?.join(', ') || 'None'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, fontSize: 12, fontWeight: 600, background: rs.bg, color: rs.text }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: rs.dot, display: 'inline-block' }} />
-                      {(guest.rsvp?.status || 'pending').charAt(0).toUpperCase() + (guest.rsvp?.status || 'pending').slice(1)}
-                    </span>
-                    {guest.rsvp?.respondedAt && (
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                        {new Date(guest.rsvp.respondedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    {guest.invitationStatus === 'sent' ? (
-                      <div>
-                        <span style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>✓ Sent</span>
-                        {guest.invitationSentAt && (
-                          <div style={{ fontSize: 11, color: '#94A3B8' }}>
-                            {new Date(guest.invitationSentAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleInvite(guest)}
-                          disabled={isSending}
-                          style={{ marginTop: 4, fontSize: 11, color: '#4338CA', background: 'none', border: 'none', cursor: isSending ? 'not-allowed' : 'pointer', padding: 0, fontWeight: 600, fontFamily: 'inherit' }}
-                        >
-                          {isSending ? 'Sending...' : 'Resend'}
-                        </button>
-                      </div>
-                    ) : (
+        {loading ? (
+          <div style={{ padding:'52px 18px', textAlign:'center', color:P.muted, fontSize:14 }}>Loading guests…</div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding:'52px 18px', textAlign:'center' }}>
+            <p style={{ margin:0, fontSize:14, color:P.muted }}>
+              {guests.length === 0 ? 'No guests yet — add your first one!' : `No guests match "${activeFilter !== 'all' ? activeFilter : search || 'your filters'}".`}
+            </p>
+          </div>
+        ) : (
+          filtered.map((guest, i) => {
+            const isSending = sendingInvites.has(guest._id);
+            const isInvited = guest.invitationStatus === 'sent';
+            return (
+              <div
+                key={guest._id}
+                style={{
+                  display:'grid', gridTemplateColumns:'2fr 2fr 1.2fr 1fr 1.4fr 120px',
+                  alignItems:'center', gap:0,
+                  padding:'13px 18px',
+                  borderBottom: i < filtered.length - 1 ? `1px solid ${P.borderSub}` : 'none',
+                  transition:'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = P.hover}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                {/* Guest */}
+                <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+                  <Avatar name={guest.fullName} isActive={guest.checkIn?.status==='Arrived'} />
+                  <div style={{ minWidth:0 }}>
+                    <p style={{ margin:0, fontSize:14, fontWeight:600, color:P.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{guest.fullName}</p>
+                    {guest.phone && <p style={{ margin:'2px 0 0', fontSize:11, color:P.muted }}>{guest.phone}</p>}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <span style={{ fontSize:12, color:P.sub, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingRight:8 }}>{guest.email}</span>
+
+                {/* Dietary */}
+                <span style={{ fontSize:13, color: guest.rsvp?.dietaryPreferences?.length ? P.text : P.muted }}>
+                  {guest.rsvp?.dietaryPreferences?.join(', ') || 'None'}
+                </span>
+
+                {/* RSVP */}
+                <div>{rsvpBadge(guest.rsvp?.status)}</div>
+
+                {/* Invited */}
+                <div>
+                  {isInvited ? (
+                    <div>
+                      <span style={{ fontSize:12, color:P.green, fontWeight:600 }}>✓ Sent</span>
+                      {guest.invitationSentAt && (
+                        <p style={{ margin:'2px 0 0', fontSize:10, color:P.muted }}>
+                          {new Date(guest.invitationSentAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}
+                        </p>
+                      )}
                       <button
                         onClick={() => handleInvite(guest)}
                         disabled={isSending}
-                        style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #BFDBFE', background: '#EFF6FF', color: '#1D4ED8', fontWeight: 600, fontSize: 12, cursor: isSending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                        onMouseEnter={e => !isSending && Object.assign(e.currentTarget.style, { background: '#1D4ED8', color: '#fff' })}
-                        onMouseLeave={e => Object.assign(e.currentTarget.style, { background: '#EFF6FF', color: '#1D4ED8' })}
+                        style={{ marginTop:3, fontSize:11, color:P.blue, background:'none', border:'none', cursor:isSending?'not-allowed':'pointer', padding:0, fontWeight:600, fontFamily:'inherit' }}
                       >
-                        {isSending ? 'Sending...' : '✉ Send Invite'}
-                      </button>
-                    )}
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => { setEditingGuest(guest); setShowModal(true); }}
-                        style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #E2E8F0', background: '#fff', color: '#374151', fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(guest)}
-                        style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid #FECACA', background: '#FFF5F5', color: '#DC2626', fontWeight: 600, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                        onMouseEnter={e => Object.assign(e.currentTarget.style, { background: '#DC2626', color: '#fff' })}
-                        onMouseLeave={e => Object.assign(e.currentTarget.style, { background: '#FFF5F5', color: '#DC2626' })}
-                      >
-                        Remove
+                        {isSending ? 'Sending…' : 'Resend'}
                       </button>
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  ) : (
+                    <button
+                      onClick={() => handleInvite(guest)}
+                      disabled={isSending}
+                      style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:`1px solid ${P.blue}44`, background:P.blueGlow, color:P.blue, fontWeight:600, fontSize:12, cursor:isSending?'not-allowed':'pointer', fontFamily:'inherit', transition:'all 0.15s', opacity:isSending?0.6:1 }}
+                    >
+                      {icons.mail} {isSending ? '…' : 'Send'}
+                    </button>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display:'flex', gap:6 }}>
+                  <button
+                    onClick={() => { setEditingGuest(guest); setShowModal(true); }}
+                    title="Edit"
+                    style={{ width:32, height:32, borderRadius:7, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
+                    onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
+                  >
+                    {icons.edit}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(guest)}
+                    title="Remove"
+                    style={{ width:32, height:32, borderRadius:7, border:`1px solid ${P.border}`, background:'transparent', color:P.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color=P.red; e.currentTarget.style.borderColor=P.red+'55'; e.currentTarget.style.background=P.redGlow; }}
+                    onMouseLeave={e => { e.currentTarget.style.color=P.muted; e.currentTarget.style.borderColor=P.border; e.currentTarget.style.background='transparent'; }}
+                  >
+                    {icons.trash}
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      <div style={{ marginTop: 12, fontSize: 13, color: '#94A3B8' }}>
+      <p style={{ marginTop:10, fontSize:12, color:P.muted }}>
         Showing {filtered.length} of {guests.length} guest{guests.length !== 1 ? 's' : ''}
-      </div>
+        {activeFilter !== 'all' && <span> — filtered by <strong style={{color:P.text}}>{activeFilter}</strong></span>}
+      </p>
 
+      {/* ── Modals ────────────────────────────────────────────────────────── */}
       {showModal && (
         <GuestModal
           guest={editingGuest}
@@ -507,25 +564,22 @@ const handleInviteAll = async () => {
       )}
 
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(2px)' }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: '32px 36px', maxWidth: 400, width: '90%', boxShadow: '0 24px 64px rgba(15,23,42,0.18)' }}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, fontSize: 20 }}>⚠️</div>
-            <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#0F172A' }}>Remove guest?</h2>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#475569', lineHeight: 1.6 }}>
-              <strong>{confirmDelete.fullName}</strong> will be removed from the guest list. This cannot be undone.
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={() => setConfirmDelete(null)}>
+          <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', maxWidth:400, width:'90%', border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width:44, height:44, borderRadius:'50%', background:P.redGlow, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16, fontSize:20 }}>⚠️</div>
+            <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text }}>Remove guest?</h2>
+            <p style={{ margin:'0 0 24px', fontSize:14, color:P.sub, lineHeight:1.6 }}>
+              <strong style={{color:P.text}}>{confirmDelete.fullName}</strong> will be removed from the guest list. This cannot be undone.
             </p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #E2E8F0', background: '#fff', color: '#374151', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleDelete} style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Remove</button>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex:1, padding:'11px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Cancel</button>
+              <button onClick={handleDelete} style={{ flex:1, padding:'11px 0', borderRadius:8, border:'none', background:P.red, color:'#fff', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Remove</button>
             </div>
           </div>
         </div>
       )}
 
-      {inviteResult && (
-        <InviteResultModal result={inviteResult} onClose={() => setInviteResult(null)} />
-      )}
-
+      {inviteResult && <InviteResultModal result={inviteResult} onClose={() => setInviteResult(null)} />}
       {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
