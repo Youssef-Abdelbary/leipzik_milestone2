@@ -1,50 +1,78 @@
 .workflow-page {
   min-height: 100vh;
-  background-color: #111111;
-  color: white;
-  padding: 32px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  padding: 24px;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .workflow-page h1 {
-  margin: 0 0 8px;
-  font-size: 36px;
+  margin: 0 0 6px;
+  font-size: 28px;
+  color: #0f172a;
 }
 
 .workflow-page p {
-  color: #b8b8b0;
+  color: #64748b;
+}
+
+.workflow-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.view-events-button {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.view-events-button:hover {
+  background-color: #1e293b;
 }
 
 .summary-cards {
-  margin-top: 28px;
+  margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 14px;
 }
 
 .summary-card {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 16px;
-  padding: 22px;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .summary-card h3 {
-  margin: 0 0 14px;
-  font-size: 16px;
-  color: #d6d6d0;
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #475569;
 }
 
 .summary-card p {
   margin: 0;
-  color: white;
-  font-size: 32px;
+  color: #0f172a;
+  font-size: 26px;
   font-weight: 800;
 }
 
-.events-section {
-  margin-top: 36px;
+.events-section,
+.tasks-section,
+.reminders-section,
+.notifications-section {
+  margin-top: 30px;
 }
 
 .section-header {
@@ -52,26 +80,27 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .section-header h2 {
-  margin: 0 0 6px;
-  font-size: 26px;
+  margin: 0 0 5px;
+  font-size: 22px;
+  color: #0f172a;
 }
 
 .section-header p {
   margin: 0;
-  color: #b8b8b0;
+  color: #64748b;
 }
 
 .section-header input,
 .section-header select {
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #454542;
-  background-color: #1f1f1d;
-  color: white;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #0f172a;
   font-size: 14px;
   font-weight: 600;
   outline: none;
@@ -81,61 +110,81 @@
   min-width: 160px;
   cursor: pointer;
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, white 50%),
-    linear-gradient(135deg, white 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, #0f172a 50%),
+    linear-gradient(135deg, #0f172a 50%, transparent 50%);
   background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
   padding-right: 36px;
 }
 
+.section-header input:hover,
 .section-header select:hover {
-  border-color: #6b7280;
-  background-color: #252522;
+  border-color: #94a3b8;
 }
 
+.section-header input:focus,
 .section-header select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-.events-list {
+.events-list,
+.tasks-list,
+.reminders-list,
+.notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.event-card {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 14px;
-  padding: 18px;
+.event-card,
+.task-card,
+.notification-card {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
-.event-card h3 {
-  margin: 0 0 8px;
+.event-card h3,
+.task-card h3,
+.notification-card h3 {
+  margin: 0 0 6px;
+  color: #0f172a;
+  font-size: 16px;
 }
 
-.event-card p {
+.event-card p,
+.task-card p,
+.notification-card p {
   margin: 0;
-  color: #b8b8b0;
+  color: #64748b;
 }
 
-.event-info {
+.event-info,
+.task-info,
+.notification-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.event-info span {
-  background-color: #1f1f1d;
-  padding: 8px 10px;
+.event-info span,
+.task-info span,
+.notification-info span {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 7px 9px;
   border-radius: 8px;
-  color: #e5e5e5;
+  color: #334155;
+  text-transform: capitalize;
 }
 
 .event-status {
@@ -143,214 +192,127 @@
 }
 
 .empty-message {
-  color: #b8b8b0;
-}
-
-.tasks-section {
-  margin-top: 36px;
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.task-card {
-  background-color: #2d2d2a;
-  border: 1px solid #454542;
-  border-radius: 14px;
-  padding: 18px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.task-card h3 {
-  margin: 0 0 8px;
-}
-
-.task-card p {
-  margin: 0 0 8px;
-  color: #b8b8b0;
+  color: #64748b;
 }
 
 .task-category {
   font-size: 14px;
-  color: #d6d6d0;
-}
-
-.task-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.task-info span {
-  background-color: #1f1f1d;
-  padding: 8px 10px;
-  border-radius: 8px;
-  color: #e5e5e5;
-  text-transform: capitalize;
+  color: #475569;
 }
 
 .task-status.pending {
-  background-color: #92400e;
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
 }
 
 .task-status.in_progress {
-  background-color: #1d4ed8;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 .task-status.done {
-  background-color: #047857;
+  background-color: #dcfce7;
+  color: #047857;
+  border-color: #bbf7d0;
 }
 
 .task-status.not_assigned {
-  background-color: #6b7280;
-}
-
-.workflow-page h1,
-.workflow-page h2,
-.workflow-page h3 {
-  color: white;
-}
-
-.event-card h3,
-.task-card h3,
-.summary-card h3 {
-  color: white;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
 }
 
 .collapsible-title {
   cursor: pointer;
   user-select: none;
-  color: white;
+  color: #0f172a;
 }
 
 .collapsible-title:hover {
-  color: #93c5fd;
+  color: #2563eb;
 }
 
-.reminders-section {
-  margin-top: 36px;
+.reminders-section h2,
+.notifications-section h2 {
+  color: #0f172a;
+  margin-bottom: 5px;
+  font-size: 22px;
 }
 
-.reminders-section h2 {
-  color: white;
-  margin-bottom: 6px;
+.reminders-section p,
+.notifications-section p {
+  color: #64748b;
 }
 
-.reminders-section p {
-  color: #b8b8b0;
-}
-
-.reminders-list {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.reminders-list,
+.notifications-list {
+  margin-top: 14px;
 }
 
 .reminder-card {
-  background-color: #3a2a1a;
-  border: 1px solid #92400e;
-  border-radius: 14px;
-  padding: 18px;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 14px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
 }
 
 .reminder-card h3 {
-  margin: 0 0 8px;
-  color: white;
+  margin: 0 0 6px;
+  color: #9a3412;
+  font-size: 16px;
 }
 
 .reminder-card p {
   margin: 0;
-  color: #f3d6b3;
+  color: #9a3412;
 }
 
 .reminder-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .reminder-info span {
-  background-color: #1f1f1d;
-  padding: 8px 10px;
+  background-color: #ffedd5;
+  border: 1px solid #fed7aa;
+  padding: 7px 9px;
   border-radius: 8px;
-  color: #fef3c7;
+  color: #9a3412;
   text-transform: capitalize;
-}
-
-.notifications-section {
-  margin-top: 36px;
-}
-
-.notifications-section h2 {
-  color: white;
-  margin-bottom: 6px;
-}
-
-.notifications-section p {
-  color: #b8b8b0;
-}
-
-.notifications-list {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 
 .notification-card {
-  background-color: #1f2937;
-  border: 1px solid #3b82f6;
-  border-radius: 14px;
-  padding: 18px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 .notification-card h3 {
-  margin: 0 0 8px;
-  color: white;
+  color: #1e3a8a;
 }
 
 .notification-card p {
-  margin: 0;
-  color: #dbeafe;
-}
-
-.notification-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  color: #1e40af;
 }
 
 .notification-info span {
-  background-color: #111827;
-  padding: 8px 10px;
-  border-radius: 8px;
-  color: #bfdbfe;
-  text-transform: capitalize;
+  background-color: #dbeafe;
+  border-color: #bfdbfe;
+  color: #1e40af;
 }
 
 .mark-read-button {
   border: none;
   background-color: #2563eb;
   color: white;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
@@ -358,4 +320,55 @@
 
 .mark-read-button:hover {
   background-color: #1d4ed8;
+}
+
+.small-events-button {
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.small-events-button:hover {
+  background-color: #1d4ed8;
+}
+
+@media (max-width: 1100px) {
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-card,
+  .task-card,
+  .reminder-card,
+  .notification-card {
+    flex-direction: column;
+  }
+
+  .event-info,
+  .task-info,
+  .reminder-info,
+  .notification-info {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 700px) {
+  .workflow-page {
+    padding: 16px;
+  }
+
+  .workflow-header-row,
+  .section-header {
+    flex-direction: column;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
 }

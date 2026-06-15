@@ -1,5 +1,8 @@
+import crypto from 'crypto';
 import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
+import { sendInvitationEmail, sendRsvpConfirmationWithQR, isEmailConfigured } from '../utils/emailUtil.js';
+import { generateQRCodeBuffer, generateQRCodeDataURL } from '../utils/qrCodeUtil.js';
 
 async function verifyAccess(userId, eventId) {
   const event = await Event.findById(eventId).lean();
@@ -114,7 +117,28 @@ export const sendInvitation = async (req, res) => {
     if (!guest) return res.status(404).json({ message: 'Guest not found' });
 
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const rsvpUrl = `${clientUrl}/rsvp/${guest._id}`;
+    const rsvpUrl = `${clientUrl}/guest/rsvp/${guest._id}`;
+
+    let emailSent = false;
+    if (guest.email && isEmailConfigured()) {
+      try {
+        await sendInvitationEmail({
+          to:           guest.email,
+          guestName:    guest.fullName || 'Guest',
+          eventTitle:   event.title,
+          eventDate:    event.date,
+          eventTime:    event.startTime || null,
+          eventEndTime: event.endTime || null,
+          venueName:    event.locationSnapshot?.venueName !== 'TBD' ? event.locationSnapshot?.venueName : null,
+          dressCode:    event.dressCode || null,
+          agenda:       event.agenda || [],
+          rsvpUrl,
+        });
+        emailSent = true;
+      } catch (emailErr) {
+        console.error('Failed to send invitation email:', emailErr.message);
+      }
+    }
 
     await Guest.findByIdAndUpdate(guest._id, {
       invitationStatus: 'sent',
@@ -122,9 +146,10 @@ export const sendInvitation = async (req, res) => {
     });
 
     res.json({
-      message: 'RSVP link generated',
+      message:    emailSent ? 'Invitation email sent' : 'RSVP link generated (email not configured)',
       rsvpUrl,
-      emailSent: false,
+      emailSent,
+      guestEmail: guest.email || null,
     });
   } catch (err) {
     console.error(err);
@@ -132,22 +157,127 @@ export const sendInvitation = async (req, res) => {
   }
 };
 
+// ─── RSVP submission — generates QR when attending ────────────────────────────
+// Token is the guest._id (used as RSVP token in this system)
 export const submitRsvp = async (req, res) => {
   try {
-    const { rsvpStatus } = req.body;
+    const { rsvpStatus, dietaryPreferences, specialRequirements } = req.body;
     if (!['attending', 'declined'].includes(rsvpStatus))
       return res.status(400).json({ message: 'Status must be attending or declined' });
 
+    let qrCodeValue = null;
+    let qrDataURL   = null;
+
+    if (rsvpStatus === 'attending') {
+      // Generate a unique random QR code value
+      qrCodeValue = crypto.randomBytes(16).toString('hex');
+      try {
+        qrDataURL = await generateQRCodeDataURL(qrCodeValue);
+      } catch (e) {
+        console.error('QR generation failed:', e.message);
+        // Continue without QR — don't block the RSVP
+      }
+    }
+
+    const update = {
+      'rsvp.status':      rsvpStatus,
+      'rsvp.respondedAt': new Date(),
+    };
+    if (dietaryPreferences !== undefined && dietaryPreferences !== '')
+      update['rsvp.dietaryPreferences'] = [dietaryPreferences];
+    if (specialRequirements !== undefined)
+      update['rsvp.specialRequirements'] = specialRequirements;
+
+    // Store QR code on the guest record
+    if (qrCodeValue) {
+      update['qrCode.code']        = qrCodeValue;
+      update['qrCode.generatedAt'] = new Date();
+    }
+
     const guest = await Guest.findByIdAndUpdate(
       req.params.token,
-      { 'rsvp.status': rsvpStatus, 'rsvp.respondedAt': new Date() },
+      { $set: update },
       { new: true }
     ).lean();
 
     if (!guest) return res.status(404).json({ message: 'Invalid RSVP link' });
-    res.json({ message: 'RSVP recorded', rsvpStatus: guest.rsvp.status, fullname: guest.fullName });
+
+    // Fire-and-forget: send QR confirmation email asynchronously
+    if (rsvpStatus === 'attending' && qrCodeValue && guest.email && isEmailConfigured()) {
+      (async () => {
+        try {
+          const event    = await Event.findById(guest.eventId).lean();
+          const qrBuffer = await generateQRCodeBuffer(qrCodeValue);
+          await sendRsvpConfirmationWithQR({
+            to:         guest.email,
+            guestName:  guest.fullName || 'Guest',
+            eventTitle: event?.title || 'the event',
+            eventDate:  event?.date,
+            startTime:  event?.startTime,
+            venueName:  event?.locationSnapshot?.venueName,
+            dressCode:  event?.dressCode,
+            qrBuffer,
+            qrCode:     qrCodeValue,
+          });
+        } catch (e) {
+          console.error('Failed to send QR confirmation email:', e.message);
+        }
+      })();
+    }
+
+    res.json({
+      message:    'RSVP recorded',
+      rsvpStatus: guest.rsvp.status,
+      fullname:   guest.fullName,
+      qrDataURL,     // base64 data URL for immediate on-screen display
+      qrCode:     qrCodeValue,
+      emailSent:  Boolean(rsvpStatus === 'attending' && guest.email && isEmailConfigured()),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// ─── QR Check-in: staff scans a guest's QR code ──────────────────────────────
+export const checkInByQR = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code?.trim())
+      return res.status(400).json({ message: 'QR code value is required' });
+
+    const guest = await Guest.findOne({ 'qrCode.code': code.trim() }).lean();
+    if (!guest)
+      return res.status(404).json({ message: 'Invalid QR code — guest not found' });
+
+    // Already checked in — return info but don't double-stamp
+    if (guest.checkIn?.status === 'Arrived') {
+      return res.status(200).json({
+        alreadyCheckedIn: true,
+        message: `${guest.fullName} is already checked in`,
+        guest,
+      });
+    }
+
+    const updated = await Guest.findByIdAndUpdate(
+      guest._id,
+      {
+        $set: {
+          'checkIn.status':      'Arrived',
+          'checkIn.method':      'qr',
+          'checkIn.checkedInAt': new Date(),
+        },
+      },
+      { new: true }
+    ).lean();
+
+    res.json({
+      alreadyCheckedIn: false,
+      message: `✓ ${guest.fullName} checked in successfully`,
+      guest:   updated,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to check in guest' });
   }
 };

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import "./pageBudgetManagement.css";
 
-function BudgetManagement() {
-  const [events, setEvents] = useState([]);
-  const [selectedEventId, setSelectedEventId] = useState("");
+function BudgetManagement({ eventId: propEventId }) {
+  const { eventId: routeEventId } = useParams();
+  const eventId = propEventId || routeEventId;
+  const [selectedEventId, setSelectedEventId] = useState(eventId);
   const [budgetData, setBudgetData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isEditingPlannedBudget, setIsEditingPlannedBudget] = useState(false);
@@ -28,77 +30,78 @@ function BudgetManagement() {
     paymentDate: "",
   });
 
-  useEffect(() => {
-    async function loadOrganizerEvents() {
-      try {
-        const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+//   useEffect(() => {
+//     async function loadOrganizerEvents() {
+//       try {
+//         const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
-        if (!loggedInUser?._id && !loggedInUser?.id) {
-          console.warn("No logged-in user found.");
-          return;
-        }
+//         if (!loggedInUser?._id && !loggedInUser?.id) {
+//           console.warn("No logged-in user found.");
+//           return;
+//         }
 
-        const organizerId = loggedInUser._id || loggedInUser.id;
+//         const organizerId = loggedInUser._id || loggedInUser.id;
 
-        const response = await fetch(
-          `http://localhost:5001/api/workflow/events/${organizerId}`
-        );
+//         const response = await fetch(
+//           `http://localhost:5001/api/workflow/events/${organizerId}`
+//         );
 
-        const data = await response.json();
+//         const data = await response.json();
 
-        if (!response.ok) {
-          alert(data.message || "Failed to load events");
-          return;
-        }
+//         if (!response.ok) {
+//           alert(data.message || "Failed to load events");
+//           return;
+//         }
 
-        setEvents(data);
+//         setEvents(data);
 
-        if (data.length > 0) {
-          setSelectedEventId(data[0]._id);
-        }
-      } catch (error) {
-        console.error("Load events error:", error);
-        alert("Something went wrong while loading events.");
-      }
-    }
+//         if (data.length > 0) {
+//           setSelectedEventId(data[0]._id);
+//         }
+//       } catch (error) {
+//         console.error("Load events error:", error);
+//         alert("Something went wrong while loading events.");
+//       }
+//     }
 
-    loadOrganizerEvents();
-  }, []);
+//     loadOrganizerEvents();
+//   }, []);
 
   useEffect(() => {
     async function loadBudgetForEvent() {
-      if (!selectedEventId) {
+        if (!eventId) {
         setBudgetData(null);
         return;
-      }
+        }
 
-      try {
+        try {
         setLoading(true);
 
         const response = await fetch(
-          `http://localhost:5001/api/budget/event/${selectedEventId}`
+            `http://localhost:5001/api/budget/event/${eventId}`
         );
 
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.message || "Failed to load budget");
-          return;
+            alert(data.message || "Failed to load budget");
+            return;
         }
 
         setBudgetData(data);
+        setSelectedEventId(eventId);
         setPlannedTotalInput(data.plannedTotal || 0);
         setBreakdownInputs(data.plannedBreakdown || []);
-      } catch (error) {
+        } catch (error) {
         console.error("Load budget error:", error);
         alert("Something went wrong while loading budget.");
-      } finally {
+        } finally {
         setLoading(false);
-      }
+        }
     }
 
     loadBudgetForEvent();
-  }, [selectedEventId]);
+    }, [eventId]);
 
   function formatMoney(amount) {
     if (!budgetData) {
@@ -371,25 +374,10 @@ async function saveEditedExpense() {
       <div className="budget-header">
         <div>
           <h1>💰 Budget Management</h1>
-          <p>View planned budget, actual expenses, and remaining budget per event.</p>
+          <p>View planned budget, actual expenses, and remaining budget for this event.</p>
         </div>
 
-        <div className="budget-event-selector">
-          <label>Select Event</label>
-
-          <select
-            value={selectedEventId}
-            onChange={(event) => setSelectedEventId(event.target.value)}
-          >
-            <option value="">Choose an event</option>
-
-            {events.map((event) => (
-              <option key={event._id} value={event._id}>
-                {event.title}
-              </option>
-            ))}
-          </select>
-        </div>
+        
       </div>
 
       {loading && <p className="budget-loading">Loading budget...</p>}

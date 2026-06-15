@@ -30,13 +30,15 @@ function Login() {
     console.log(data);
     if (response.ok) {
       localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
       setSuccess(data.message);
       setError("");
       if (data.user.role === "organizer") {
-        navigate("/organizer/budget");
+        navigate("/organizer/workflow");
       }
       if (data.user.role === "staff") {
-        navigate("/staff/shared-layout");
+        navigate("/staff/sharedlayout");
       }
 
     } else {
@@ -74,6 +76,9 @@ function Login() {
         {error && <p className="error-message">{error}</p>}
         {success && <p className="success-message">{success}</p>}
         <button type="submit">🔐 Login</button>
+        <p className="loginText">
+          Don't have an account? <a href="/register" className="link">Sign up</a>
+        </p>
       </form>
     </div>
   );
