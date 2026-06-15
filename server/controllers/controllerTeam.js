@@ -1,4 +1,32 @@
 import mongoose from "mongoose";
+import EventLayout from "../models/EventLayout.js";
+
+
+async function removeStaffFromLayoutIfNoTasks(eventId, oldStaffId) {
+  if (!eventId || !oldStaffId) {
+    return;
+  }
+
+  const tasksCollection = mongoose.connection.db.collection("event_tasks");
+
+  const remainingTaskForOldStaff = await tasksCollection.findOne({
+    eventId: new mongoose.Types.ObjectId(eventId),
+    assignedTo: new mongoose.Types.ObjectId(oldStaffId),
+  });
+
+  if (remainingTaskForOldStaff) {
+    return;
+  }
+
+  await EventLayout.updateMany(
+    { eventId: new mongoose.Types.ObjectId(eventId) },
+    {
+      $pull: {
+        sharedWithStaff: new mongoose.Types.ObjectId(oldStaffId),
+      },
+    }
+  );
+}
 
 export function testTeamRoute(req, res) {
   res.json({ message: "Team route is working" });
@@ -85,6 +113,38 @@ export async function getEventTasks(req, res) {
   }
 }
 
+async function syncEventLayoutSharedStaff(eventId) {
+  if (!eventId) {
+    return;
+  }
+
+  const tasksCollection = mongoose.connection.db.collection("event_tasks");
+
+  const eventTasks = await tasksCollection
+    .find({
+      eventId: new mongoose.Types.ObjectId(eventId),
+      assignedTo: { $ne: null },
+    })
+    .toArray();
+
+  const staffIds = [
+    ...new Set(
+      eventTasks
+        .filter((task) => task.assignedTo)
+        .map((task) => String(task.assignedTo))
+    ),
+  ];
+
+  await EventLayout.updateMany(
+    { eventId: new mongoose.Types.ObjectId(eventId) },
+    {
+      $set: {
+        sharedWithStaff: staffIds,
+      },
+    }
+  );
+}
+
 export async function assignTaskToStaff(req, res) {
   try {
     const { taskId } = req.params;
@@ -122,6 +182,8 @@ export async function assignTaskToStaff(req, res) {
       },
       { returnDocument: "after" }
     );
+
+    await syncEventLayoutSharedStaff(existingTask.eventId);
 
     res.json({
       message: "Task assigned successfully",
