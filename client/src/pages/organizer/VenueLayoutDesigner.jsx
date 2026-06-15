@@ -124,7 +124,11 @@ function VenueLayoutDesigner() {
   }
 
   try {
-  
+    const selectedEvent = events.find((event) => event._id === selectedEventId);
+
+    const layoutTitle = selectedEvent
+      ? `${selectedEvent.title} Venue Layout`
+      : "Venue Layout";
 
     const saveResponse = await fetch("http://localhost:5001/api/layouts", {
       method: "POST",
@@ -133,7 +137,7 @@ function VenueLayoutDesigner() {
       },
       body: JSON.stringify({
         eventId: selectedEventId,
-        title: "Venue Layout",
+        title: layoutTitle,
         elements: items.map((item) => ({
           elementId: String(item.id),
           type: item.type,
@@ -262,6 +266,12 @@ function VenueLayoutDesigner() {
         return;
       }
 
+      const selectedEvent = events.find((event) => event._id === selectedEventId);
+
+      const layoutTitle = selectedEvent
+        ? `${selectedEvent.title} Venue Layout`
+        : "Venue Layout";
+
       const response = await fetch("http://localhost:5001/api/layouts", {
         method: "POST",
         headers: {
@@ -269,7 +279,7 @@ function VenueLayoutDesigner() {
         },
         body: JSON.stringify({
           eventId: selectedEventId,
-          title: "Venue Layout",
+          title: layoutTitle,
           elements: items.map((item) => ({
             elementId: String(item.id),
             type: item.type,
