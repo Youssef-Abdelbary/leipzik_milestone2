@@ -140,7 +140,10 @@ export default function TabMessages({ eventId }) {
     }
   }, [eventId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const timer = setTimeout(() => { load(); }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
   useEffect(() => {
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
