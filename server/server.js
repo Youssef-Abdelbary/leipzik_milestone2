@@ -26,7 +26,7 @@ import feedbackRoutes from './routes/routeFeedback.js';
 import loginRoute from "./routes/routeLogin.js";
 import VendorTrackingRoutes from './routes/routeVendorTracking.js';
 import teamRoutes from "./routes/routeTeam.js";
-
+import staffTasksRoutes from "./routes/routeStaffTasks.js";
 import { setServers } from "node:dns/promises";
 import invoiceRoutes from "./routes/routeInvoices.js";
 
@@ -71,6 +71,7 @@ app.use("/api/auth", loginRoute);
 app.use('/api/vendorRequests', VendorTrackingRoutes);
 app.use("/api/team", teamRoutes);
 app.use('/api/reply-venue', routeReplyVenue);
+app.use("/api/staff-tasks", staffTasksRoutes);
 
 // Connect to DB then start server
 const connectToDatabase = async () => {

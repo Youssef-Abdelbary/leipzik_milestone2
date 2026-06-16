@@ -114,85 +114,108 @@ function VenueLayoutDesigner() {
   }, [selectedEventId]);
 
   async function shareLayoutWithStaff() {
-  if (!selectedStaffId) {
-    alert("Please choose a staff member first.");
-    return;
-  }
-  if (!selectedEventId) {
-    alert("Please select an event before sharing the layout.");
-    return;
-  }
-
-  try {
-    const selectedEvent = events.find((event) => event._id === selectedEventId);
-
-    const layoutTitle = selectedEvent
-      ? `${selectedEvent.title} Venue Layout`
-      : "Venue Layout";
-
-    const saveResponse = await fetch("http://localhost:5001/api/layouts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        eventId: selectedEventId,
-        title: layoutTitle,
-        elements: items.map((item) => ({
-          elementId: String(item.id),
-          type: item.type,
-          label: item.type,
-          x: item.x,
-          y: item.y,
-          width: 100,
-          height: 50,
-          rotation: 0,
-        })),
-        canvasSize: {
-          width: 1000,
-          height: 620,
-        },
-      }),
-    });
-
-    const saveData = await saveResponse.json();
-
-    if (!saveResponse.ok) {
-      alert(saveData.message || "Failed to save layout");
+    if (!selectedEventId) {
+      alert("Please select an event before sharing the layout.");
       return;
     }
 
-    const layoutId = saveData.layout._id;
-    setCurrentLayoutId(layoutId);
+    try {
+      const selectedEvent = events.find((event) => event._id === selectedEventId);
 
-    const shareResponse = await fetch(
-      `http://localhost:5001/api/layouts/${layoutId}/share`,
-      {
-        method: "PATCH",
+      const layoutTitle = selectedEvent
+        ? `${selectedEvent.title} Venue Layout`
+        : "Venue Layout";
+
+      // 1. Save/update the layout first
+      const saveResponse = await fetch("http://localhost:5001/api/layouts", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          staffId: selectedStaffId,
+          eventId: selectedEventId,
+          title: layoutTitle,
+          elements: items.map((item) => ({
+            elementId: String(item.id),
+            type: item.type,
+            label: item.type,
+            x: item.x,
+            y: item.y,
+            width: 100,
+            height: 50,
+            rotation: 0,
+          })),
+          canvasSize: {
+            width: 1000,
+            height: 620,
+          },
         }),
+      });
+
+      const saveData = await saveResponse.json();
+
+      if (!saveResponse.ok) {
+        alert(saveData.message || "Failed to save layout");
+        return;
       }
-    );
 
-    const shareData = await shareResponse.json();
+      const layoutId = saveData.layout._id;
+      setCurrentLayoutId(layoutId);
 
-    if (!shareResponse.ok) {
-      alert(shareData.message || "Failed to share layout");
-      return;
+      // 2. Get all tasks for this event
+      const tasksResponse = await fetch(
+        `http://localhost:5001/api/team/events/${selectedEventId}/tasks`
+      );
+
+      const tasksData = await tasksResponse.json();
+
+      if (!tasksResponse.ok) {
+        alert(tasksData.message || "Failed to load event staff members");
+        return;
+      }
+
+      // 3. Extract unique staff IDs assigned to tasks in this event
+      const staffIds = [
+        ...new Set(
+          tasksData
+            .filter((task) => task.assignedTo)
+            .map((task) => String(task.assignedTo))
+        ),
+      ];
+
+      if (staffIds.length === 0) {
+        alert("No staff members are assigned to tasks in this event.");
+        return;
+      }
+
+      // 4. Share layout with all event staff members
+      const shareResponse = await fetch(
+        `http://localhost:5001/api/layouts/${layoutId}/share`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            staffIds: staffIds,
+          }),
+        }
+      );
+
+      const shareData = await shareResponse.json();
+
+      if (!shareResponse.ok) {
+        alert(shareData.message || "Failed to share layout");
+        return;
+      }
+
+      alert(`Layout shared with ${staffIds.length} staff member(s)!`);
+      setShowShareBox(false);
+    } catch (error) {
+      console.error("Share layout error:", error);
+      alert("Something went wrong while sharing the layout.");
     }
-
-    alert("Layout shared successfully!");
-    setShowShareBox(false);
-    setSelectedStaffId("");
-  } catch (error) {
-    console.error("Share layout error:", error);
-    alert("Something went wrong while sharing the layout.");
   }
-}
 
 
   function getItemIcon(type) {
@@ -387,29 +410,11 @@ function VenueLayoutDesigner() {
           <div className="layout-actions">
             <button onClick={saveLayout}>💾 Save Layout</button>
             <button onClick={clearLayout}>🧹 Clear Layout</button>
-            <button onClick={() => setShowShareBox(!showShareBox)}>📤 Share</button>
+            <button onClick={shareLayoutWithStaff}>📤 Share</button>
             <button onClick={exportAsImage}>🖼️ Export Image</button>
             <button onClick={exportAsPDF}>📄 Export PDF</button>
             <button onClick={deleteSelectedItem}>🗑️ Delete Selected</button>
           </div>
-          {showShareBox && (
-      <div className="share-box">
-        <select
-          value={selectedStaffId}
-          onChange={(event) => setSelectedStaffId(event.target.value)}
-        >
-          <option value="">👥 Choose staff member</option>
-
-          {staffMembers.map((staff) => (
-            <option key={staff._id} value={staff._id}>
-              {staff.fullName || staff.email}
-            </option>
-          ))}
-        </select>
-
-        <button onClick={shareLayoutWithStaff}>✅ Confirm Share</button>
-      </div>
-    )}
         </div>
 
         <div

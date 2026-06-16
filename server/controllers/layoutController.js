@@ -57,41 +57,37 @@ export async function saveLayout(req, res) {
 
 export async function shareLayout(req, res) {
   try {
-    const { staffId } = req.body;
     const { layoutId } = req.params;
+    const { staffIds } = req.body;
 
-    if (!staffId) {
+    if (!staffIds || !Array.isArray(staffIds)) {
       return res.status(400).json({
-        message: "Staff ID is required",
+        message: "Staff IDs array is required",
       });
     }
 
     const layout = await EventLayout.findByIdAndUpdate(
       layoutId,
       {
-        $addToSet: {
-          sharedWithStaff: staffId,
+        $set: {
+          sharedWithStaff: staffIds,
         },
       },
       { new: true }
     );
 
     if (!layout) {
-      return res.status(404).json({
-        message: "Layout not found",
-      });
+      return res.status(404).json({ message: "Layout not found" });
     }
 
     res.json({
-      message: "Layout shared successfully",
+      message: "Layout shared successfully with current event staff members",
+      sharedCount: staffIds.length,
       layout,
     });
   } catch (error) {
     console.error("Share layout error:", error);
-
-    res.status(500).json({
-      message: "Failed to share layout",
-    });
+    res.status(500).json({ message: "Failed to share layout" });
   }
 }
 
