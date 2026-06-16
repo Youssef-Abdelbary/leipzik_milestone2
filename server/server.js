@@ -20,6 +20,7 @@ import notificationRoute from "./routes/routeNotification.js";
 import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
+import routeReplyVenue from './routes/routeReplyVenue.js';
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
 import feedbackRoutes from './routes/routeFeedback.js';
 import loginRoute from "./routes/routeLogin.js";
@@ -69,6 +70,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use("/api/auth", loginRoute);
 app.use('/api/vendorRequests', VendorTrackingRoutes);
 app.use("/api/team", teamRoutes);
+app.use('/api/reply-venue', routeReplyVenue);
 app.use("/api/staff-tasks", staffTasksRoutes);
 
 // Connect to DB then start server
