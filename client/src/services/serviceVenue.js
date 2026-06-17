@@ -83,3 +83,18 @@ export async function bookDate(venueId, date) {
 export async function cancelBooking(bookingId) {
     return apiFetch(`${BASE}/bookings/${bookingId}/cancel`, { method: 'PATCH' });
 }
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export async function fetchNotifications() {
+    const res = await apiFetch(`${BASE}/notifications`);
+    return res.notifications;
+}
+
+export async function markNotificationsRead(ids = []) {
+    return apiFetch(`${BASE}/notifications/read`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+    });
+}

@@ -4,6 +4,7 @@ import cloudinary from '../config/cloudinary.js';
 import multer from 'multer';
 //import { uploadToCloudinary } from '../utils/cloudinaryUpload.js';
 import { Readable } from 'stream';
+import Notification from '../models/modelNotification.js';
 
 // ─── Multer + Cloudinary Setup ───────────────────────────────────────────────
 
@@ -224,5 +225,34 @@ export async function cancelBooking(req, res) {
         return res.status(200).json({ message: 'Booking cancelled' });
     } catch (err) {
         return res.status(500).json({ message: 'Failed to cancel booking', error: err.message });
+    }
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+export async function getNotifications(req, res) {
+    try {
+        const notifications = await Notification.find({ userId: req.user.user_id })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        return res.status(200).json({ notifications });
+    } catch (err) {
+        return res.status(500).json({ message: 'Failed to fetch notifications', error: err.message });
+    }
+}
+
+export async function markNotificationsRead(req, res) {
+    try {
+        const { ids } = req.body;            // optional array of notification _ids
+
+        const filter = { userId: req.user.user_id, status: 'unread' };
+        if (Array.isArray(ids) && ids.length > 0) filter._id = { $in: ids };
+
+        await Notification.updateMany(filter, { status: 'read' });
+
+        return res.status(200).json({ message: 'Notifications marked as read' });
+    } catch (err) {
+        return res.status(500).json({ message: 'Failed to mark notifications', error: err.message });
     }
 }

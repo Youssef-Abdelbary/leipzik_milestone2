@@ -9,6 +9,8 @@ import {
     deleteVenue,
     bookDate,
     cancelBooking,
+    getNotifications,
+    markNotificationsRead,
 } from '../controllers/controllerVenue.js';
 
 const router = express.Router();
@@ -20,6 +22,11 @@ function requireVenueOwner(req, res, next) {
     next();
 }
 
+// 1. Specific static paths go FIRST
+router.get('/notifications',                     authenticate, getNotifications);
+router.patch('/notifications/read',              authenticate, markNotificationsRead);
+
+// 2. Dynamic wildcard paths go LATER
 router.get('/',                             authenticate, requireVenueOwner, getMyVenues);
 router.get('/:id',                          authenticate, requireVenueOwner, getVenueById);
 router.post('/',                            authenticate, requireVenueOwner, upload.array('photos', 10), createVenue);
