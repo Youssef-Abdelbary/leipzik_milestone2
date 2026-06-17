@@ -1,13 +1,27 @@
 import { useEffect, useState } from "react";
 import "./pageStaffTasks.css";
+import "../components/componentTheme.css";
+
 import TabStaffDayOf from "./tabs/TabStaffDayOf";
 import StaffSharedLayout from "./StaffSharedLayout";
 
+import Dock from "../components/componentDock";
+import AppHeader from "../components/componentAppHeader";
+import { icons } from "../components/componentTheme";
+
 const STAFF_TABS = [
-  { id: "tasks", label: "✅ Tasks" },
-  { id: "layout", label: "🏛 Layout" },
-  { id: "dayof", label: "📅 Day-Of" },
+  { id: "tasks", label: "Tasks", icon: icons.overview },
+  { id: "layout", label: "Layout", icon: icons.building2 },
+  { id: "dayof", label: "Day-Of", icon: icons.dayof },
 ];
+
+function DockTabIcon({ icon }) {
+  return (
+    <div style={{ transform: "scale(1.25)", display: "flex" }}>
+      {icon}
+    </div>
+  );
+}
 
 export default function StaffTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
@@ -153,26 +167,16 @@ useEffect(() => {
     (task) => task.status === "done"
   ).length;
 
+  const dockItems = STAFF_TABS.map((tab) => ({
+    icon: <DockTabIcon icon={tab.icon} />,
+    label: tab.label,
+    active: activeTab === tab.id,
+    onClick: () => setActiveTab(tab.id),
+  }));
+
   return (
     <div className="staff-workspace-page">
-        <div className="staff-topbar">
-        <span className="staff-brand">PopEyez Staff</span>
-        <span className="staff-divider">/</span>
-        <span className="staff-current-page">Staff Dashboard</span>
-        </div>
-
-        <div className="staff-tabs">
-        {STAFF_TABS.map((tab) => (
-            <button
-            key={tab.id}
-            className={activeTab === tab.id ? "staff-tab active" : "staff-tab"}
-            onClick={() => setActiveTab(tab.id)}
-            >
-            {tab.label}
-            </button>
-        ))}
-        </div>
-
+    
         <div className="staff-tab-content">
         {activeTab === "tasks" && (
             <>
@@ -417,6 +421,7 @@ useEffect(() => {
             </div>
             )}
         </div>
+        <Dock items={dockItems} />
     </div>
     );
 }

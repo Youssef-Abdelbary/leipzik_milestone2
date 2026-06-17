@@ -1,7 +1,9 @@
-import { useState, useEffect,useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "./VenueLayoutDesigner.css";
+import "../../components/componentTheme.css";
+import { GlassPanel } from "../../components/componentTheme";
 
 function VenueLayoutDesigner() {
   const [items, setItems] = useState([]);
@@ -375,7 +377,7 @@ function VenueLayoutDesigner() {
 
   return (
     <div className="layout-page">
-      <aside className="layout-sidebar">
+      <GlassPanel className="layout-sidebar">
         <h2>Elements</h2>
 
         <button onClick={() => addItem("Table")}>🍽️ Table</button>
@@ -383,14 +385,15 @@ function VenueLayoutDesigner() {
         <button onClick={() => addItem("Stage")}>🎤 Stage</button>
         <button onClick={() => addItem("Booth")}>🏪 Booth</button>
         <button onClick={() => addItem("Entrance")}>🚪 Entrance</button>
-      </aside>
+      </GlassPanel>
 
       <main className="layout-main">
         <div className="layout-header">
           <div>
-            <h1>🏟️ Venue Layout Designer</h1>
-            <p>Drag and drop elements to design your venue layout</p>
+            <h1>Venue Layout Designer</h1>
+            <p>Drag and drop elements to design your venue layout.</p>
           </div>
+
           <div className="event-selector">
             <label>Select Event</label>
 
@@ -407,44 +410,51 @@ function VenueLayoutDesigner() {
               ))}
             </select>
           </div>
+        </div>
+
+        <GlassPanel className="layout-actions-panel">
           <div className="layout-actions">
-            <button onClick={saveLayout}>💾 Save Layout</button>
-            <button onClick={clearLayout}>🧹 Clear Layout</button>
-            <button onClick={shareLayoutWithStaff}>📤 Share</button>
-            <button onClick={exportAsImage}>🖼️ Export Image</button>
-            <button onClick={exportAsPDF}>📄 Export PDF</button>
-            <button onClick={deleteSelectedItem}>🗑️ Delete Selected</button>
+            <button onClick={saveLayout}>Save Layout</button>
+            <button onClick={clearLayout}>Clear Layout</button>
+            <button onClick={shareLayoutWithStaff}>Share</button>
+            <button onClick={exportAsImage}>Export Image</button>
+            <button onClick={exportAsPDF}>Export PDF</button>
+            <button onClick={deleteSelectedItem}>Delete Selected</button>
           </div>
-        </div>
+        </GlassPanel>
 
-        <div
-          className="floor-plan"
-          ref={floorPlanRef}
-          onMouseMove={handleMouseMove}
-          onMouseUp={stopDragging}
-          onMouseLeave={stopDragging}
-        >
-          {items.length === 0 && <p>Floor plan canvas</p>}
+        <GlassPanel className="floor-plan-panel">
+          <div
+            className="floor-plan"
+            ref={floorPlanRef}
+            onMouseMove={handleMouseMove}
+            onMouseUp={stopDragging}
+            onMouseLeave={stopDragging}
+          >
+            {items.length === 0 && (
+              <p className="floor-plan-empty">Floor plan canvas</p>
+            )}
 
-          {items.map((item) => (
-  <div
-    key={item.id}
-    className={`layout-item ${item.type.toLowerCase()} ${
-      selectedItemId === item.id ? "selected" : ""
-    }`}
-    style={{
-      left: `${item.x}px`,
-      top: `${item.y}px`,
-    }}
-    onMouseDown={(event) => startDragging(event, item)}
-    onClick={() =>
-        setSelectedItemId(selectedItemId === item.id ? null : item.id)
-    }
-  >
-    {getItemIcon(item.type)}
-  </div>
-))}
-        </div>
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className={`layout-item ${item.type.toLowerCase()} ${
+                  selectedItemId === item.id ? "selected" : ""
+                }`}
+                style={{
+                  left: `${item.x}px`,
+                  top: `${item.y}px`,
+                }}
+                onMouseDown={(event) => startDragging(event, item)}
+                onClick={() =>
+                  setSelectedItemId(selectedItemId === item.id ? null : item.id)
+                }
+              >
+                {getItemIcon(item.type)}
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
       </main>
     </div>
   );

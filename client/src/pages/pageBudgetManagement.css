@@ -1,9 +1,22 @@
 .budget-page {
-  background-color: transparent;
-  color: #0f172a;
-  padding: 24px;
+  background: transparent;
+  color: var(--opal-text);
+  padding: 32px 24px 56px;
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  animation: budgetIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes budgetIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .budget-header {
@@ -11,92 +24,82 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .budget-header h1 {
   margin: 0 0 6px;
-  font-size: 26px;
-  color: #0f172a;
+  font-size: 30px;
+  color: var(--opal-text);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  font-family: var(--font-display);
 }
 
 .budget-header p {
   margin: 0;
-  color: #64748b;
-}
-
-.budget-event-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 280px;
-}
-
-.budget-event-selector label {
-  color: #0f172a;
-  font-weight: 700;
+  color: var(--opal-sub);
   font-size: 14px;
+  line-height: 1.5;
 }
 
-.budget-event-selector select {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  background-color: white;
-  color: #0f172a;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.budget-event-selector select:hover {
-  border-color: #94a3b8;
-}
-
-.budget-event-selector select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+.budget-state-card {
+  padding: 28px !important;
 }
 
 .budget-loading,
 .budget-empty {
-  color: #64748b;
+  margin: 0;
+  color: var(--opal-sub);
+  font-size: 14px;
 }
 
 .budget-summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .budget-card {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  padding: 18px 20px !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
 }
 
-.budget-card h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: #475569;
+.budget-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 109, 255, 0.4) !important;
+  box-shadow:
+    0 0 0 1px rgba(139, 109, 255, 0.14),
+    0 8px 32px 4px rgba(139, 109, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.budget-card span {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--opal-muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
 }
 
 .budget-card p {
   margin: 0;
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--opal-text);
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
 }
 
 .positive-difference {
-  color: #16a34a !important;
+  color: var(--opal-teal) !important;
 }
 
 .negative-difference {
-  color: #dc2626 !important;
+  color: var(--opal-red) !important;
 }
 
 .budget-sections {
@@ -106,89 +109,155 @@
 }
 
 .budget-section {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 18px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  padding: 20px !important;
 }
 
-.budget-section h2 {
-  margin: 0 0 16px;
-  color: #0f172a;
-  font-size: 18px;
+.budget-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.budget-list {
+.budget-section-header h2,
+.budget-comparison-section h2 {
+  margin: 0 0 5px;
+  color: var(--opal-text);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+}
+
+.budget-section-header p {
+  margin: 0;
+  color: var(--opal-sub);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.budget-list,
+.comparison-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .budget-list-row,
-.expense-row {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
+.expense-row,
+.comparison-row {
+  background: rgba(30, 30, 41, 0.55);
+  border: 1px solid var(--opal-border);
+  border-radius: 12px;
+  padding: 13px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
   align-items: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.18s ease;
+}
+
+.budget-list-row:hover,
+.expense-row:hover,
+.comparison-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 109, 255, 0.35);
+  background: rgba(38, 38, 54, 0.74);
 }
 
 .budget-list-row span,
 .budget-list-row strong,
-.expense-row strong {
-  color: #0f172a;
+.expense-row strong,
+.comparison-row strong {
+  color: var(--opal-text);
 }
 
-.expense-row h3 {
+.expense-row h3,
+.comparison-row h3 {
   margin: 0 0 5px;
-  color: #0f172a;
+  color: var(--opal-text);
   font-size: 15px;
+  font-weight: 900;
+  font-family: var(--font-display);
 }
 
-.expense-row p {
+.expense-row p,
+.comparison-row p {
   margin: 0 0 5px;
-  color: #64748b;
+  color: var(--opal-sub);
+  font-size: 13px;
 }
 
 .expense-row small {
-  color: #94a3b8;
-}
-
-.budget-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.budget-section-header h2 {
-  margin: 0;
+  color: var(--opal-muted);
+  font-size: 12px;
 }
 
 .edit-budget-button,
 .add-breakdown-button,
 .save-budget-button,
-.remove-breakdown-button {
-  border: none;
-  border-radius: 8px;
-  padding: 8px 11px;
-  color: white;
-  font-weight: 700;
+.remove-breakdown-button,
+.edit-expense-button {
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 900;
   cursor: pointer;
-  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.edit-budget-button {
-  background-color: #2563eb;
+.edit-budget-button,
+.edit-expense-button {
+  border: 1px solid rgba(139, 109, 255, 0.45);
+  background: rgba(139, 109, 255, 0.14);
+  color: #9b7cff;
 }
 
-.edit-budget-button:hover {
-  background-color: #1d4ed8;
+.edit-budget-button:hover,
+.edit-expense-button:hover {
+  background: #8b6dff;
+  color: #ffffff;
+  border-color: #8b6dff;
+}
+
+.add-breakdown-button {
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--opal-blue);
+}
+
+.add-breakdown-button:hover {
+  background: var(--opal-blue);
+  color: #ffffff;
+  border-color: var(--opal-blue);
+}
+
+.save-budget-button {
+  border: 1px solid rgba(77, 231, 227, 0.35);
+  background: rgba(77, 231, 227, 0.1);
+  color: #4de7e3;
+}
+
+.save-budget-button:hover {
+  background: #4de7e3;
+  color: #0a0a12;
+  border-color: #4de7e3;
+}
+
+.remove-breakdown-button {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--opal-red);
+}
+
+.remove-breakdown-button:hover {
+  background: var(--opal-red);
+  color: #ffffff;
+  border-color: var(--opal-red);
 }
 
 .planned-budget-form {
@@ -198,33 +267,42 @@
 }
 
 .planned-budget-form label {
-  color: #0f172a;
-  font-weight: 700;
+  color: var(--opal-sub);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 .planned-budget-form h3 {
   margin: 10px 0 0;
-  color: #0f172a;
+  color: var(--opal-text);
+  font-size: 16px;
+  font-weight: 900;
+  font-family: var(--font-display);
 }
 
 .planned-budget-form input,
 .breakdown-edit-row input,
 .expense-form input,
 .expense-edit-form input {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background-color: white;
-  color: #0f172a;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--opal-border);
+  background: rgba(30, 30, 41, 0.55);
+  color: var(--opal-text);
   outline: none;
+  font-family: inherit;
+  font-weight: 700;
 }
 
 .planned-budget-form input:focus,
 .breakdown-edit-row input:focus,
 .expense-form input:focus,
 .expense-edit-form input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: #4de7e3;
+  box-shadow: 0 0 0 3px rgba(77, 231, 227, 0.12);
 }
 
 .breakdown-edit-row {
@@ -234,40 +312,18 @@
   align-items: center;
 }
 
-.add-breakdown-button {
-  background-color: #475569;
-}
-
-.add-breakdown-button:hover {
-  background-color: #334155;
-}
-
-.save-budget-button {
-  background-color: #047857;
-}
-
-.save-budget-button:hover {
-  background-color: #065f46;
-}
-
-.remove-breakdown-button {
-  background-color: #991b1b;
-}
-
-.remove-breakdown-button:hover {
-  background-color: #7f1d1d;
-}
-
 .planned-budget-actions {
   display: flex;
   gap: 12px;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .breakdown-total {
-  color: #2563eb;
-  font-weight: 700;
+  color: #4de7e3;
+  font-weight: 900;
   margin: 0;
+  font-size: 13px;
 }
 
 .expense-form {
@@ -283,20 +339,6 @@
   gap: 12px;
 }
 
-.edit-expense-button {
-  border: none;
-  background-color: #2563eb;
-  color: white;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.edit-expense-button:hover {
-  background-color: #1d4ed8;
-}
-
 .expense-edit-form {
   width: 100%;
   display: grid;
@@ -306,48 +348,10 @@
 }
 
 .budget-comparison-section {
-  background-color: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 18px;
+  padding: 20px !important;
   margin-top: 24px;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
-}
-
-.budget-comparison-section h2 {
-  margin: 0 0 16px;
-  color: #0f172a;
-  font-size: 18px;
-}
-
-.comparison-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comparison-row {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: center;
-}
-
-.comparison-row h3 {
-  margin: 0 0 5px;
-  color: #0f172a;
-  font-size: 15px;
-}
-
-.comparison-row p {
-  margin: 0;
-  color: #64748b;
 }
 
 .comparison-row strong {
@@ -364,5 +368,16 @@
   .expense-edit-form,
   .breakdown-edit-row {
     grid-template-columns: 1fr;
+  }
+
+  .budget-section-header,
+  .expense-row,
+  .comparison-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .expense-actions {
+    justify-content: space-between;
   }
 }
