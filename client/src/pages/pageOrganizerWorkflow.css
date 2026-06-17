@@ -372,3 +372,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+.task-event-name {
+  margin: 8px 0 0;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+}

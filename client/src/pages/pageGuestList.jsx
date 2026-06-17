@@ -14,14 +14,24 @@ export default function GuestListPage() {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    
-    getGuests()
+    const loggedInUser =
+      JSON.parse(localStorage.getItem("loggedInUser")) ||
+      JSON.parse(localStorage.getItem("user"));
+
+    const staffId = loggedInUser?._id || loggedInUser?.id;
+
+    if (!staffId) {
+      setLoading(false);
+      return;
+    }
+
+    getGuests(staffId)
       .then((data) => {
         setGuests(data.data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-    }, []);
+  }, []);
 
   const handleCheckInChange = (guestId, newStatus) => {
     updateGuestCheckIn(guestId, newStatus, "qr")

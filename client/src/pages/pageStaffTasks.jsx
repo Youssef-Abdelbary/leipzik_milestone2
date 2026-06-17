@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import "./pageStaffTasks.css";
+import TabStaffDayOf from "./tabs/TabStaffDayOf";
 import StaffSharedLayout from "./StaffSharedLayout";
 
 const STAFF_TABS = [
   { id: "tasks", label: "✅ Tasks" },
   { id: "layout", label: "🏛 Layout" },
-  { id: "guests", label: "🎟 Guests" },
-  { id: "vendors", label: "🚚 Vendors" },
+  { id: "dayof", label: "📅 Day-Of" },
   { id: "dashboard", label: "📊 Dashboard" },
   { id: "profile", label: "👤 Profile" },
 ];
@@ -404,8 +404,9 @@ useEffect(() => {
         {activeTab === "layout" && (
             <StaffSharedLayout />
             )}
+        {activeTab === "dayof" && <TabStaffDayOf />}
 
-            {!["tasks", "layout"].includes(activeTab) && (
+            {!["tasks", "layout","dayof"].includes(activeTab) && (
             <div className="staff-coming-soon">
                 <p>🚧</p>
                 <h2>
