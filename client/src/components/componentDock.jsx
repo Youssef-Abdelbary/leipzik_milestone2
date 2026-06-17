@@ -90,6 +90,7 @@ export default function Dock({
 
   return (
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
+      <div className="dock-scroll-container">
       <motion.div
         onMouseMove={({ pageX }) => { isHovered.set(1); mouseX.set(pageX); }}
         onMouseLeave={() => { isHovered.set(0); mouseX.set(Infinity); }}
@@ -115,6 +116,7 @@ export default function Dock({
           </DockItem>
         ))}
       </motion.div>
+      </div>
     </motion.div>
   );
 }

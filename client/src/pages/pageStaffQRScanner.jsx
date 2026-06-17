@@ -121,8 +121,9 @@ export default function StaffQRScanner() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--opal-bg)', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--opal-bg)', fontFamily: 'var(--font-body)', color: 'var(--opal-text)', animation: 'pageIn 0.3s ease' }}>
       <style>{`
+        @keyframes pageIn    { from { opacity:0 } to { opacity:1 } }
         @keyframes slideDown { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:translateY(0); } }
         @keyframes cardIn    { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
         @keyframes spin      { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
@@ -140,7 +141,7 @@ export default function StaffQRScanner() {
         }
       />
 
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 24px', animation: 'cardIn 0.32s ease 0.05s both' }}>
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: P.text, letterSpacing: '-0.03em', display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-display)', lineHeight: 1.1 }}>
             <span style={{ color: P.teal, background: P.tealGlow, padding: 8, borderRadius: 10, display: 'flex' }}>{icons.qr}</span>

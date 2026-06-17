@@ -309,6 +309,7 @@ export default function RsvpPage() {
 }
 
 const animations = `
+  @keyframes pageIn  { from { opacity:0 } to { opacity:1 } }
   @keyframes cardIn  { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
   @keyframes sparkle { from { opacity:0; transform:scale(1.6) rotate(-20deg); } to { opacity:1; transform:scale(2.4) rotate(0deg); } }
   @keyframes spin    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
@@ -320,6 +321,7 @@ const s = {
     background: 'var(--opal-bg)',
     fontFamily: 'var(--font-body)',
     color: 'var(--opal-text)',
+    animation: 'pageIn 0.3s ease',
   },
   pageInner: {
     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,

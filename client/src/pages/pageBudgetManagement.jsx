@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { apiFetch } from "../utils/apiFetch";
 import "./pageBudgetManagement.css";
 
 function BudgetManagement({ eventId: propEventId }) {
@@ -77,16 +78,7 @@ function BudgetManagement({ eventId: propEventId }) {
         try {
         setLoading(true);
 
-        const response = await fetch(
-            `http://localhost:5001/api/budget/event/${eventId}`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            alert(data.message || "Failed to load budget");
-            return;
-        }
+        const data = await apiFetch(`/budget/event/${eventId}`);
 
         setBudgetData(data);
         setSelectedEventId(eventId);
@@ -94,7 +86,7 @@ function BudgetManagement({ eventId: propEventId }) {
         setBreakdownInputs(data.plannedBreakdown || []);
         } catch (error) {
         console.error("Load budget error:", error);
-        alert("Something went wrong while loading budget.");
+        alert(error.message || "Something went wrong while loading budget.");
         } finally {
         setLoading(false);
         }
@@ -162,33 +154,16 @@ function BudgetManagement({ eventId: propEventId }) {
                 0
             );
 
-        const response = await fetch(
-        `http://localhost:5001/api/budget/event/${selectedEventId}/planned`,
-        {
+        await apiFetch(`/budget/event/${selectedEventId}/planned`, {
             method: "PATCH",
-            headers: {
-            "Content-Type": "application/json",
-            },
             body: JSON.stringify({
             plannedTotal: finalPlannedTotal,
             currency: budgetData?.currency || "EGP",
             plannedBreakdown: cleanedBreakdown,
             }),
-        }
-        );
+        });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-        alert(data.message || "Failed to save planned budget");
-        return;
-        }
-
-        const refreshedResponse = await fetch(
-        `http://localhost:5001/api/budget/event/${selectedEventId}`
-        );
-
-        const refreshedData = await refreshedResponse.json();
+        const refreshedData = await apiFetch(`/budget/event/${selectedEventId}`);
 
         setBudgetData(refreshedData);
         setPlannedTotalInput(refreshedData.plannedTotal || 0);
@@ -198,7 +173,7 @@ function BudgetManagement({ eventId: propEventId }) {
         alert("Planned budget saved successfully.");
     } catch (error) {
         console.error("Save planned budget error:", error);
-        alert("Something went wrong while saving planned budget.");
+        alert(error.message || "Something went wrong while saving planned budget.");
     }
     }
 
@@ -225,13 +200,8 @@ function BudgetManagement({ eventId: propEventId }) {
         return;
         }
 
-        const response = await fetch(
-        `http://localhost:5001/api/budget/event/${selectedEventId}/expenses`,
-        {
+        await apiFetch(`/budget/event/${selectedEventId}/expenses`, {
             method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            },
             body: JSON.stringify({
             category: expenseForm.category,
             description: expenseForm.description,
@@ -239,21 +209,9 @@ function BudgetManagement({ eventId: propEventId }) {
             currency: budgetData?.currency || "EGP",
             paymentDate: expenseForm.paymentDate,
             }),
-        }
-        );
+        });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-        alert(data.message || "Failed to save actual expense");
-        return;
-        }
-
-        const refreshedResponse = await fetch(
-        `http://localhost:5001/api/budget/event/${selectedEventId}`
-        );
-
-        const refreshedData = await refreshedResponse.json();
+        const refreshedData = await apiFetch(`/budget/event/${selectedEventId}`);
 
         setBudgetData(refreshedData);
         setPlannedTotalInput(refreshedData.plannedTotal || 0);
@@ -271,7 +229,7 @@ function BudgetManagement({ eventId: propEventId }) {
         alert("Actual expense saved successfully.");
     } catch (error) {
         console.error("Save actual expense error:", error);
-        alert("Something went wrong while saving the actual expense.");
+        alert(error.message || "Something went wrong while saving the actual expense.");
     }
     }
 
@@ -321,35 +279,18 @@ async function saveEditedExpense() {
       return;
     }
 
-    const response = await fetch(
-      `http://localhost:5001/api/budget/expenses/${editingExpenseId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category: editExpenseForm.category,
-          description: editExpenseForm.description,
-          amount: Number(editExpenseForm.amount),
-          currency: budgetData?.currency || "EGP",
-          paymentDate: editExpenseForm.paymentDate,
-        }),
-      }
-    );
+    await apiFetch(`/budget/expenses/${editingExpenseId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        category: editExpenseForm.category,
+        description: editExpenseForm.description,
+        amount: Number(editExpenseForm.amount),
+        currency: budgetData?.currency || "EGP",
+        paymentDate: editExpenseForm.paymentDate,
+      }),
+    });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to update expense");
-      return;
-    }
-
-    const refreshedResponse = await fetch(
-      `http://localhost:5001/api/budget/event/${selectedEventId}`
-    );
-
-    const refreshedData = await refreshedResponse.json();
+    const refreshedData = await apiFetch(`/budget/event/${selectedEventId}`);
 
     setBudgetData(refreshedData);
     setEditingExpenseId(null);
@@ -364,7 +305,7 @@ async function saveEditedExpense() {
     alert("Expense updated successfully.");
   } catch (error) {
     console.error("Update expense error:", error);
-    alert("Something went wrong while updating the expense.");
+    alert(error.message || "Something went wrong while updating the expense.");
   }
 }
 

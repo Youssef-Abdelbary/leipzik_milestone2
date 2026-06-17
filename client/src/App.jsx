@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Register from "./pages/pageRegister";
 import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
@@ -21,10 +21,10 @@ import BudgetManagement from "./pages/pageBudgetManagement";
 import PageReplyVenue from './pages/pageReplyVenue.jsx';
 import FeedbackPage from './pages/pageFeedback';
 import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
-import InvoiceVendorPage from "./pages/pageInvoicesVendor";
 import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
 import StaffTasks from "./pages/pageStaffTasks";
+import VendorDashboard from "./pages/pageVendorDashboard";
 
 function getCurrentUserId() {
   try {
@@ -65,11 +65,12 @@ function App() {
         <Route path="/organizer/reply" element={<PageReplyVenue />} />
         <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
         <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
-        <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
+        <Route path="/vendor/invoices" element={<Navigate to="/vendor/dashboard?tab=invoices" replace />} />
         <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
         <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
 
         <Route path="/staff/dashboard" element={<StaffTasks />} />
+        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
       </Routes>
     </BrowserRouter>
   );

@@ -30,6 +30,7 @@ import staffTasksRoutes from "./routes/routeStaffTasks.js";
 import { setServers } from "node:dns/promises";
 import invoiceRoutes from "./routes/routeInvoices.js";
 import staffDayOfRoutes from "./routes/routeStaffDayOf.js";
+import eventReportRoutes from "./routes/routeEventReport.js";
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use("/api/team", teamRoutes);
 app.use('/api/reply-venue', routeReplyVenue);
 app.use("/api/staff-tasks", staffTasksRoutes);
 app.use("/api/staff-dayof", staffDayOfRoutes);
+app.use("/api/events/:eventId", eventReportRoutes);
 // Connect to DB then start server
 const connectToDatabase = async () => {
   try {

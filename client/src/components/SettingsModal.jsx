@@ -6,10 +6,11 @@ import { P, icons, STATUS_OPTIONS, GlassPanel } from './componentTheme';
 import { OpalSelect }    from './componentMenus';
 import MiniCalendarFree  from './componentMiniCalendarFree';
 
-const Field = ({ label, children }) => (
+const Field = ({ label, children, required }) => (
   <div style={{ marginBottom:16, flex:1, minWidth:0 }}>
     <label style={{ display:'block', fontSize:11, fontWeight:600, color:P.sub, marginBottom:7, textTransform:'uppercase', letterSpacing:'0.06em' }}>
       {label}
+      {required && <span style={{ color: P.red, marginLeft: 2 }}>*</span>}
     </label>
     {children}
   </div>
@@ -40,6 +41,11 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
   const handleSave = async () => {
     setSaveError(null);
     if (!form.title?.trim()) { setSaveError('Title is required'); return; }
+    if (createMode) {
+      if (!form.eventType) { setSaveError('Event type is required'); return; }
+      if (!form.date)      { setSaveError('Date is required'); return; }
+      if (!form.startTime) { setSaveError('Start time is required'); return; }
+    }
     if (isMarkingComplete && !confirmComplete) {
       setConfirmComplete(true);
       return;
@@ -122,13 +128,13 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
         )}
 
         {/* Title */}
-        <Field label="Event Title *">
+        <Field label="Event Title" required>
           <input style={inp} value={form.title} onChange={e => set('title',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} placeholder="e.g. Annual Gala 2026" />
         </Field>
 
         {/* Type + Status */}
         <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
-          <Field label="Event Type">
+          <Field label="Event Type" required={createMode}>
             <OpalSelect
               value={form.eventType}
               onChange={v => set('eventType', v)}
@@ -157,7 +163,7 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
 
         {/* Date (MiniCalendar) + Attendees */}
         <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
-          <Field label="Date">
+          <Field label="Date" required={createMode}>
             <div style={{ position:'relative' }}>
               <button
                 type="button"
@@ -185,7 +191,7 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
 
         {/* Times */}
         <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
-          <Field label="Start Time">
+          <Field label="Start Time" required={createMode}>
             <input style={inp} type="time" value={form.startTime} onChange={e => set('startTime',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
           </Field>
           <Field label="End Time">

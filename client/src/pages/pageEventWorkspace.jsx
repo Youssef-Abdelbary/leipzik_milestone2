@@ -7,6 +7,8 @@ import TabOverview      from './tabs/TabOverview';
 import TabDayOf         from './tabs/TabDayOf';
 import TabMessages      from './tabs/TabMessages';
 import TabFeedback      from './tabs/TabFeedback';
+import TabVendors       from './tabs/TabVendors';
+import TabTeam          from './tabs/TabTeam';
 import BudgetManagement from './pageBudgetManagement';
 import SettingsModal    from '../components/SettingsModal';
 import Dock             from '../components/componentDock';
@@ -49,6 +51,7 @@ export default function EventWorkspace() {
   const [showSettings, setShowSettings]= useState(false);
 
   const switchTab = (tabId) => {
+    if (tabId === activeTab) return;
     setActiveTab(tabId);
     setVisitedTabs(prev => new Set([...prev, tabId]));
   };
@@ -114,8 +117,10 @@ export default function EventWorkspace() {
       overflow:   'hidden',
     }}>
       <style>{`
-        @keyframes tabIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-        .tab-panel { animation: tabIn 0.28s ease forwards; }
+        @keyframes tabIn   { from { opacity:0; transform:translateY(14px) scale(0.994); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes tabFade { from { opacity:0; } to { opacity:1; } }
+        @keyframes skpulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .tab-panel { animation: tabIn 0.3s cubic-bezier(0.22,1,0.36,1) forwards; }
       `}</style>
 
       {/* ── AppHeader — outside the scroll container so it's always visible ── */}
@@ -159,36 +164,46 @@ export default function EventWorkspace() {
       <div style={{ flex: 1, overflowY: 'auto', position: 'relative', paddingBottom: 130 }}>
         <div style={{ minHeight: 'calc(100vh - 54px - 130px)' }}>
           {visitedTabs.has('overview') && (
-            <div className={activeTab === 'overview' ? 'tab-panel' : ''} style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }} className={activeTab === 'overview' ? 'tab-panel' : ''}>
               <TabOverview event={event} onEventUpdate={setEvent} />
             </div>
           )}
           {visitedTabs.has('guests') && (
-            <div style={{ display: activeTab === 'guests' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'guests' ? 'block' : 'none' }} className={activeTab === 'guests' ? 'tab-panel' : ''}>
               <TabGuests eventId={eventId} />
             </div>
           )}
           {visitedTabs.has('day-of') && (
-            <div style={{ display: activeTab === 'day-of' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'day-of' ? 'block' : 'none' }} className={activeTab === 'day-of' ? 'tab-panel' : ''}>
               <TabDayOf eventId={eventId} event={event} />
             </div>
           )}
           {visitedTabs.has('messages') && (
-            <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }} className={activeTab === 'messages' ? 'tab-panel' : ''}>
               <TabMessages eventId={eventId} />
             </div>
           )}
           {visitedTabs.has('feedback') && (
-            <div style={{ display: activeTab === 'feedback' ? 'block' : 'none' }}>
+            <div style={{ display: activeTab === 'feedback' ? 'block' : 'none' }} className={activeTab === 'feedback' ? 'tab-panel' : ''}>
               <TabFeedback eventId={eventId} event={event} />
             </div>
           )}
           {visitedTabs.has('budget') && (
-            <div style={{ display: activeTab === 'budget' ? 'block' : 'none' }}>
-              <BudgetManagement />
+            <div style={{ display: activeTab === 'budget' ? 'block' : 'none' }} className={activeTab === 'budget' ? 'tab-panel' : ''}>
+              <BudgetManagement eventId={eventId} />
             </div>
           )}
-          {!['overview','guests','day-of','messages','feedback','budget'].includes(activeTab) && (
+          {visitedTabs.has('vendors') && (
+            <div style={{ display: activeTab === 'vendors' ? 'block' : 'none' }} className={activeTab === 'vendors' ? 'tab-panel' : ''}>
+              <TabVendors eventId={eventId} organizerId={event?.organizerId} />
+            </div>
+          )}
+          {visitedTabs.has('team') && (
+            <div style={{ display: activeTab === 'team' ? 'block' : 'none' }} className={activeTab === 'team' ? 'tab-panel' : ''}>
+              <TabTeam eventId={eventId} />
+            </div>
+          )}
+          {!['overview','guests','day-of','messages','feedback','budget','vendors','team'].includes(activeTab) && (
             <div className="tab-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, flexDirection: 'column', gap: 12 }}>
               <div style={{ color: P.muted, display: 'flex', transform: 'scale(1.8)', marginBottom: 4 }}>{icons.wrench}</div>
               <p style={{ color: P.sub, fontSize: 14, margin: 0 }}>

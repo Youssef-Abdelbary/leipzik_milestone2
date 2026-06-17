@@ -253,6 +253,7 @@ export default function TabGuests({ eventId }) {
   const [inviteProgress,setInviteProgress]=useState('');
   const [inviteResult, setInviteResult] = useState(null);
   const [toast,        setToast]        = useState(null);
+  const [showAllInvitedToast, setShowAllInvitedToast] = useState(false);
   const debounceRef = useRef(null);
 
   const showToast = useCallback((message, type = 'success') => {
@@ -283,6 +284,12 @@ export default function TabGuests({ eventId }) {
     debounceRef.current = setTimeout(() => load(search), 600);
     return () => clearTimeout(debounceRef.current);
   }, [search, load]);
+
+  useEffect(() => {
+    if (!showAllInvitedToast) return;
+    const t = setTimeout(() => setShowAllInvitedToast(false), 3000);
+    return () => clearTimeout(t);
+  }, [showAllInvitedToast]);
 
   const stats = useMemo(() => ({
     total:     guests.length,
@@ -353,7 +360,10 @@ export default function TabGuests({ eventId }) {
 
   const handleInviteAll = async () => {
     const uninvited = guests.filter(g => g.invitationStatus !== 'sent');
-    if (!uninvited.length) { showToast('All guests already invited', 'error'); return; }
+    if (!uninvited.length) {
+      setShowAllInvitedToast(true);
+      return;
+    }
     setSendingAll(true);
     let sent = 0;
     for (const g of uninvited) {
@@ -384,38 +394,44 @@ export default function TabGuests({ eventId }) {
   };
 
   return (
-    <div style={{ maxWidth:1100, margin:'0 auto', padding:'28px 24px', fontFamily:'var(--font-body)', color:P.text }}>
+    <div style={{ height:'calc(100vh - 54px)', overflow:'hidden', display:'flex', flexDirection:'column', marginBottom:'-130px', fontFamily:'var(--font-body)', color:P.text }}>
+      <style>{`@keyframes cardIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }`}</style>
+      {/* Inner centering wrapper */}
+      <div style={{ maxWidth:1100, margin:'0 auto', padding:'0 24px', width:'100%', boxSizing:'border-box', display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
 
-      {/* Section header */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
-        <div>
-          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em', display:'flex', alignItems:'center', gap:10, fontFamily:'var(--font-display)' }}>
-            <span style={{ color:P.blue, background:P.blueGlow, padding:7, borderRadius:9, display:'flex' }}>{icons.guests}</span>
-            Guest List
-          </h2>
-          <p style={{ margin:'5px 0 0 46px', fontSize:13, color:P.sub }}>
-            {guests.length} guest{guests.length !== 1 ? 's' : ''} · {stats.attending} attending · {stats.declined} declined
-          </p>
+      {/* Header — section title, filters, controls */}
+      <div style={{ flexShrink:0, paddingTop:28 }}>
+
+        {/* Section header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+          <div>
+            <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em', display:'flex', alignItems:'center', gap:10, fontFamily:'var(--font-display)' }}>
+              <span style={{ color:P.blue, background:P.blueGlow, padding:7, borderRadius:9, display:'flex' }}>{icons.guests}</span>
+              Guest List
+            </h2>
+            <p style={{ margin:'5px 0 0 46px', fontSize:13, color:P.sub }}>
+              {guests.length} guest{guests.length !== 1 ? 's' : ''} · {stats.attending} attending · {stats.declined} declined
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Filter tiles */}
-      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
-        {tiles.map(t => (
-          <FilterTile
-            key={t.id}
-            label={t.label}
-            value={t.value}
-            isActive={activeFilter === t.id}
-            accentColor={t.accent}
-            glowColor={t.glow}
-            onClick={() => setActiveFilter(t.id)}
-          />
-        ))}
-      </div>
+        {/* Filter tiles */}
+        <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
+          {tiles.map(t => (
+            <FilterTile
+              key={t.id}
+              label={t.label}
+              value={t.value}
+              isActive={activeFilter === t.id}
+              accentColor={t.accent}
+              glowColor={t.glow}
+              onClick={() => setActiveFilter(t.id)}
+            />
+          ))}
+        </div>
 
-      {/* Controls row */}
-      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
+        {/* Controls row */}
+        <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
         <div style={{ flex:'1 1 220px', position:'relative' }}>
           <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:P.muted, pointerEvents:'none', display:'flex' }}>
             {icons.search}
@@ -457,10 +473,14 @@ export default function TabGuests({ eventId }) {
         >
           {icons.mail} {sendingAll ? `Sending… ${inviteProgress}` : 'Invite All'}
         </button>
-      </div>
+        </div>
+      </div>{/* end fixed header */}
 
-      {/* Guest table */}
-      <GlassPanel style={{ overflow:'hidden', boxShadow:'0 4px 24px rgba(0,0,0,0.3)' }}>
+      {/* Scrollable guest list */}
+      <div style={{ flex:1, overflowY:'auto' }}>
+
+        {/* Guest table */}
+        <GlassPanel style={{ overflow:'hidden', boxShadow:'0 4px 24px rgba(0,0,0,0.3)' }}>
         <div style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1.2fr 1fr 1.4fr 120px', gap:0, background:'rgba(10,10,18,0.7)', borderBottom:`1px solid ${P.border}`, padding:'11px 18px', borderRadius:'16px 16px 0 0' }}>
           {['Guest','Email','Dietary','RSVP','Invited','Actions'].map(h => (
             <span key={h} style={{ fontSize:11, fontWeight:700, color:P.sub, textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</span>
@@ -562,10 +582,12 @@ export default function TabGuests({ eventId }) {
         )}
       </GlassPanel>
 
-      <p style={{ marginTop:10, fontSize:12, color:P.sub }}>
-        Showing <strong style={{ color:P.text }}>{filtered.length}</strong> of <strong style={{ color:P.text }}>{guests.length}</strong> guest{guests.length !== 1 ? 's' : ''}
-        {activeFilter !== 'all' && <span> — filtered by <strong style={{ color:P.blue }}>{activeFilter}</strong></span>}
-      </p>
+        <p style={{ marginTop:10, fontSize:12, color:P.sub }}>
+          Showing <strong style={{ color:P.text }}>{filtered.length}</strong> of <strong style={{ color:P.text }}>{guests.length}</strong> guest{guests.length !== 1 ? 's' : ''}
+          {activeFilter !== 'all' && <span> — filtered by <strong style={{ color:P.blue }}>{activeFilter}</strong></span>}
+        </p>
+
+      </div>{/* end scrollable list */}
 
       {/* Modals */}
       {showModal && (
@@ -595,6 +617,30 @@ export default function TabGuests({ eventId }) {
 
       {inviteResult && <InviteResultModal result={inviteResult} onClose={() => setInviteResult(null)} />}
       {toast && <Toast message={toast.message} type={toast.type} />}
+
+      {showAllInvitedToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 50,
+          right: 24,
+          left: 'auto',
+          zIndex: 1000,
+          background: 'rgba(62,207,184,0.15)',
+          border: '1px solid rgba(62,207,184,0.4)',
+          borderRadius: 12,
+          padding: '14px 18px',
+          color: '#3ecfb8',
+          fontSize: 13,
+          fontWeight: 600,
+          maxWidth: 320,
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+          animation: 'cardIn 0.3s ease both',
+        }}>
+          ✓ All guests have already been invited
+        </div>
+      )}
+      </div>
     </div>
   );
 }
