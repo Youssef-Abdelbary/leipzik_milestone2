@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { updateEvent, createEvent } from '../services/serviceEvent';
 import { EVENT_TYPES }   from '../utils/constants';
-import { P, icons, STATUS_OPTIONS } from '../utils/theme';
+import { P, icons, STATUS_OPTIONS, GlassPanel } from './componentTheme';
+import { OpalSelect }    from './componentMenus';
+import MiniCalendarFree  from './componentMiniCalendarFree';
 
 const Field = ({ label, children }) => (
   <div style={{ marginBottom:16, flex:1, minWidth:0 }}>
@@ -29,6 +31,7 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
   const [saving,          setSaving]          = useState(false);
   const [saveError,       setSaveError]       = useState(null);
   const [confirmComplete, setConfirmComplete] = useState(false);
+  const [showCalendar,    setShowCalendar]    = useState(false);
 
   const set = (k,v) => setForm(p => ({...p,[k]:v}));
 
@@ -58,13 +61,33 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
 
   const inp = {
     width:'100%', padding:'12px 14px', borderRadius:9,
-    border:`1px solid ${P.border}`, background:P.hover,
+    border:`1px solid ${P.border}`, background:'rgba(30,30,41,0.7)',
     color:P.text, fontSize:14, outline:'none',
     boxSizing:'border-box', fontFamily:'inherit',
     transition:'border-color 0.15s',
   };
   const focusBlue  = e => e.target.style.borderColor = P.blue;
   const blurBorder = e => e.target.style.borderColor = P.border;
+
+  const eventTypeOptions = [
+    { value:'', label:'Select type…' },
+    ...EVENT_TYPES.map(t => ({ value:t.value, label:t.label })),
+  ];
+  const statusOptions = STATUS_OPTIONS.map(s => ({
+    value:s, label: s.charAt(0).toUpperCase()+s.slice(1),
+  }));
+
+  // MiniCalendar — works with single date: wrap in array, pass back first element
+  const calDates = form.date ? [form.date] : [];
+  const handleCalChange = (dates) => {
+    const newest = dates.filter(d => d !== form.date);
+    set('date', newest[0] ?? dates[0] ?? '');
+    setShowCalendar(false);
+  };
+
+  const displayDate = form.date
+    ? new Date(form.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'long', year:'numeric' })
+    : 'Choose a date…';
 
   return createPortal(
     <div
@@ -77,8 +100,8 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
           to   { opacity:1; transform:scale(1)    translateY(0);     }
         }
       `}</style>
-      <div
-        style={{ background:P.panel, borderRadius:16, padding:'32px', width:'100%', maxWidth:560, maxHeight:'90vh', overflowY:'auto', border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.8)', animation:'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+      <GlassPanel
+        style={{ padding:'32px', width:'100%', maxWidth:560, maxHeight:'90vh', overflowY:'auto', boxShadow:'0 20px 48px rgba(0,0,0,0.8)', animation:'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both', position:'relative' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -86,7 +109,7 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
           <span style={{ color:P.blue, background:P.blueGlow, padding:9, borderRadius:10, display:'flex' }}>
             {createMode ? icons.plus : icons.settings}
           </span>
-          <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:P.text }}>
+          <h2 style={{ margin:0, fontSize:20, fontWeight:700, color:P.text, fontFamily:'var(--font-display)' }}>
             {createMode ? 'Create Event' : 'Event Settings'}
           </h2>
         </div>
@@ -106,10 +129,11 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
         {/* Type + Status */}
         <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
           <Field label="Event Type">
-            <select style={{ ...inp, cursor:'pointer' }} value={form.eventType} onChange={e => set('eventType',e.target.value)}>
-              <option value="">Select type…</option>
-              {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
+            <OpalSelect
+              value={form.eventType}
+              onChange={v => set('eventType', v)}
+              options={eventTypeOptions}
+            />
           </Field>
 
           {createMode ? (
@@ -122,17 +146,37 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
             </Field>
           ) : (
             <Field label="Status">
-              <select style={{ ...inp, cursor:'pointer' }} value={form.status} onChange={e => set('status',e.target.value)}>
-                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
-              </select>
+              <OpalSelect
+                value={form.status}
+                onChange={v => set('status', v)}
+                options={statusOptions}
+              />
             </Field>
           )}
         </div>
 
-        {/* Date + Attendees */}
+        {/* Date (MiniCalendar) + Attendees */}
         <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
           <Field label="Date">
-            <input style={inp} type="date" value={form.date} onChange={e => set('date',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
+            <div style={{ position:'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowCalendar(v => !v)}
+                style={{ ...inp, display:'flex', alignItems:'center', gap:8, cursor:'pointer', textAlign:'left' }}
+                onFocus={focusBlue} onBlur={blurBorder}
+              >
+                <span style={{ color:P.blue, display:'flex', flexShrink:0 }}>{icons.calendar}</span>
+                <span style={{ color:form.date ? P.text : P.muted, fontSize:14 }}>{displayDate}</span>
+              </button>
+              {showCalendar && (
+                <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:300 }} onClick={e => e.stopPropagation()}>
+                  <MiniCalendarFree
+                    selectedDates={calDates}
+                    onChange={handleCalChange}
+                  />
+                </div>
+              )}
+            </div>
           </Field>
           <Field label="Expected Attendees">
             <input style={inp} type="number" min="0" value={form.expectedAttendees} onChange={e => set('expectedAttendees',e.target.value)} onFocus={focusBlue} onBlur={blurBorder} />
@@ -166,7 +210,7 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
 
         {/* Completion confirmation prompt */}
         {confirmComplete && (
-          <div style={{ background:'rgba(251,191,36,0.1)', border:`1px solid ${P.amber}44`, borderRadius:10, padding:'16px 18px', marginBottom:16, animation:'modalIn 0.2s ease both' }}>
+          <div style={{ background:'rgba(245,179,74,0.08)', border:`1px solid ${P.amber}44`, borderRadius:10, padding:'16px 18px', marginBottom:16, animation:'modalIn 0.2s ease both' }}>
             <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
               <span style={{ color:P.amber, flexShrink:0, marginTop:1 }}>{icons.warning}</span>
               <div>
@@ -179,14 +223,16 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
             <div style={{ display:'flex', gap:8, marginTop:14 }}>
               <button
                 onClick={() => setConfirmComplete(false)}
-                style={{ flex:1, padding:'10px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, cursor:'pointer', fontFamily:'inherit', fontSize:13 }}
+                style={{ flex:1, padding:'10px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, cursor:'pointer', fontFamily:'inherit', fontSize:13, transition:'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
+                onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
               >
                 Go Back
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                style={{ flex:2, padding:'10px 0', borderRadius:8, border:'none', background:saving?P.muted:P.amber, color:'#111', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', fontSize:13, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+                style={{ flex:2, padding:'10px 0', borderRadius:8, border:'none', background:saving?P.muted:P.amber, color:'#111', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', fontSize:13, display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.15s' }}
               >
                 {saving ? 'Saving…' : <>{icons.checkCircle} Confirm &amp; Send Emails</>}
               </button>
@@ -207,12 +253,14 @@ export default function SettingsModal({ event, onSave, onClose, createMode = fal
           <button
             onClick={handleSave}
             disabled={saving}
-            style={{ flex:1, padding:'12px 0', borderRadius:9, border:'none', background:saving?P.muted:P.blue, color:'#fff', fontWeight:600, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', fontSize:14, transition:'background 0.15s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+            style={{ flex:1, padding:'12px 0', borderRadius:9, border:'none', background:saving?P.muted:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:'#0a0a0f', fontWeight:700, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', fontSize:14, transition:'opacity 0.15s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+            onMouseEnter={e => { if (!saving) e.currentTarget.style.opacity='0.88'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity='1'; }}
           >
             {saving ? 'Saving…' : createMode ? 'Create Event' : 'Save Changes'}
           </button>
         </div>
-      </div>
+      </GlassPanel>
     </div>,
     document.body
   );

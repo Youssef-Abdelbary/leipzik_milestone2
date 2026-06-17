@@ -4,7 +4,9 @@
   position: sticky;
   top: 0;
   z-index: 150;
-  padding: 14px 24px;
+  padding: 10px 20px;
+  /* Ensure sticky works even when parent has overflow:auto */
+  will-change: transform;
 }
 
 .app-header__glass {
@@ -27,7 +29,32 @@
 .app-header__brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+}
+
+/* ─── Back button ── */
+.app-header__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--opal-sub);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.app-header__back:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--opal-text);
+}
+.app-header__back:active {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .app-header__wordmark {
