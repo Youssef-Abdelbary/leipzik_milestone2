@@ -102,6 +102,7 @@ function VenueLayoutDesigner() {
           type: element.type,
           x: element.x,
           y: element.y,
+          rotation: element.rotation || 0,
         }));
 
         setItems(loadedItems);
@@ -145,7 +146,7 @@ function VenueLayoutDesigner() {
             y: item.y,
             width: 100,
             height: 50,
-            rotation: 0,
+            rotation: item.rotation || 0,
           })),
           canvasSize: {
             width: 1000,
@@ -234,6 +235,7 @@ function VenueLayoutDesigner() {
       type: type,
       x: 100 + items.length * 20,
       y: 100 + items.length * 20,
+      rotation: 0,
     };
 
     setItems([...items, newItem]);
@@ -284,6 +286,27 @@ function VenueLayoutDesigner() {
     setItems(items.filter((item) => item.id !== selectedItemId));
     setSelectedItemId(null);
     }
+
+  function rotateSelectedItem(direction) {
+    if (selectedItemId === null) {
+      alert("Please select an item first.");
+      return;
+    }
+
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === selectedItemId
+          ? {
+              ...item,
+              rotation:
+                direction === "right"
+                  ? (item.rotation || 0) + 15
+                  : (item.rotation || 0) - 15,
+            }
+          : item
+      )
+    );
+  }
   async function saveLayout() {
     try {
       if (!selectedEventId) {
@@ -313,7 +336,7 @@ function VenueLayoutDesigner() {
             y: item.y,
             width: 100,
             height: 50,
-            rotation: 0,
+            rotation: item.rotation || 0,
           })),
           canvasSize: {
             width: 1000,
@@ -419,6 +442,8 @@ function VenueLayoutDesigner() {
             <button onClick={shareLayoutWithStaff}>Share</button>
             <button onClick={exportAsImage}>Export Image</button>
             <button onClick={exportAsPDF}>Export PDF</button>
+            <button onClick={() => rotateSelectedItem("left")}>Rotate Left</button>
+            <button onClick={() => rotateSelectedItem("right")}>Rotate Right</button>
             <button onClick={deleteSelectedItem}>Delete Selected</button>
           </div>
         </GlassPanel>
@@ -444,6 +469,7 @@ function VenueLayoutDesigner() {
                 style={{
                   left: `${item.x}px`,
                   top: `${item.y}px`,
+                  transform: `rotate(${item.rotation || 0}deg)`,
                 }}
                 onMouseDown={(event) => startDragging(event, item)}
                 onClick={() =>
