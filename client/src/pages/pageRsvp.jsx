@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { P, icons } from '../utils/theme';
 
 const DIETARY_PRESETS = [
   'None', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher', 'Nut Allergy', 'Dairy-Free',
@@ -19,7 +18,7 @@ export default function RsvpPage() {
   const [eventInfo, setEventInfo]     = useState(null);
   const [error, setError]             = useState(null);
   const [submitting, setSubmitting]   = useState(false);
-  const [result, setResult]           = useState(null);
+  const [result, setResult]           = useState(null); // { chosen, fullname, qrDataURL, qrCode }
   const [dietary, setDietary]         = useState('None');
   const [specialReqs, setSpecialReqs] = useState('');
 
@@ -57,58 +56,42 @@ export default function RsvpPage() {
     }
   };
 
-  const inp = {
-    width: '100%', padding: '11px 14px', borderRadius: 9,
-    border: `1px solid ${P.border}`, background: P.hover,
-    color: P.text, fontSize: 14, outline: 'none',
-    boxSizing: 'border-box', fontFamily: 'inherit',
-    transition: 'border-color 0.15s',
-  };
-
   if (loading) return (
-    <div style={s.page}>
-      <style>{animations}</style>
-      <div style={{ ...s.card, textAlign: 'center' }}>
-        <div style={{ width: 40, height: 40, border: `3px solid ${P.border}`, borderTopColor: P.blue, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-      </div>
-    </div>
+    <div style={s.page}><div style={s.card}><p style={{ color: '#94A3B8' }}>Loading…</p></div></div>
   );
 
-  // ─── Success: Attending with QR ──────────────────────────────────────────────
+  // ─── Success: Attending with QR ──────────────────────────────────────────
   if (result && result.chosen === 'attending') return (
     <div style={s.page}>
-      <style>{animations}</style>
-      <div style={{ ...s.card, maxWidth: 520, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ color: P.amber, display: 'flex', justifyContent: 'center', transform: 'scale(2.4)', marginBottom: 28, animation: 'sparkle 0.6s ease both 0.2s' }}>
-          {icons.sparkles}
-        </div>
-        <h1 style={s.title}>You&apos;re going!</h1>
+      <div style={{ ...s.card, maxWidth: 520 }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+        <h1 style={s.title}>You're going!</h1>
         <p style={s.sub}>
           {result.fullname ? `Thanks for confirming, ${result.fullname.split(' ')[0]}!` : 'Thanks for confirming!'}
-          {' '}See you at <strong style={{ color: P.text }}>{eventInfo?.eventTitle || 'the event'}</strong>.
+          {' '}See you at <strong>{eventInfo?.eventTitle || 'the event'}</strong>.
         </p>
 
         {result.qrDataURL && (
           <div style={{
-            background: P.surface,
-            border: `1px solid ${P.border}`,
+            background: '#F8FAFC',
+            border: '1px solid #E2E8F0',
             borderRadius: 16,
             padding: '28px 24px',
             margin: '24px 0 20px',
             textAlign: 'center',
-            animation: 'cardIn 0.4s ease both 0.15s',
           }}>
-            <p style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: P.text }}>
+            <p style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
               Your Check-in QR Code
             </p>
+
+            {/* QR code displayed prominently in the center */}
             <div style={{
               display: 'inline-block',
               padding: 12,
-              background: '#ffffff',
+              background: '#fff',
               borderRadius: 12,
-              boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${P.border}`,
+              boxShadow: '0 4px 20px rgba(15,23,42,0.1)',
               marginBottom: 16,
-              animation: 'cardIn 0.5s ease both 0.3s',
             }}>
               <img
                 src={result.qrDataURL}
@@ -116,38 +99,41 @@ export default function RsvpPage() {
                 style={{ width: 220, height: 220, display: 'block', borderRadius: 6 }}
               />
             </div>
-            <p style={{ margin: '0 0 8px', fontSize: 13, color: P.sub, lineHeight: 1.6 }}>
+
+            <p style={{ margin: '0 0 8px', fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
               Show this QR code at the entrance for instant check-in.
             </p>
-            <p style={{ margin: 0, fontSize: 11, color: P.muted, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
+            <p style={{ margin: 0, fontSize: 11, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: '0.05em' }}>
               {result.qrCode}
             </p>
-            <div style={{ margin: '14px 0 0', padding: '10px 14px', background: P.blueGlow, border: `1px solid ${P.blue}33`, borderRadius: 8, fontSize: 12, color: P.blue, display: 'flex', alignItems: 'center', gap: 8 }}>
-              {icons.mail} A copy with this QR code has been sent to your email.
+            <div style={{
+              margin: '14px 0 0',
+              padding: '10px 14px',
+              background: '#EFF6FF',
+              borderRadius: 8,
+              fontSize: 12,
+              color: '#1D4ED8',
+            }}>
+              📧 A copy with this QR code has been sent to your email.
             </div>
           </div>
         )}
 
         <button
           onClick={() => window.print()}
-          style={{ ...s.btn, background: P.surface, color: P.text, border: `1px solid ${P.border}`, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = P.sub}
-          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
+          style={{ ...s.btn, background: '#F8FAFC', color: '#374151', border: '1px solid #E2E8F0', marginBottom: 10 }}
         >
-          {icons.printer} Save / Print QR Code
+          🖨 Save / Print QR Code
         </button>
       </div>
     </div>
   );
 
-  // ─── Success: Declined ────────────────────────────────────────────────────────
+  // ─── Success: Declined ───────────────────────────────────────────────────
   if (result && result.chosen === 'declined') return (
     <div style={s.page}>
-      <style>{animations}</style>
-      <div style={{ ...s.card, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ color: P.muted, display: 'flex', justifyContent: 'center', transform: 'scale(2.4)', marginBottom: 28 }}>
-          {icons.frown}
-        </div>
+      <div style={s.card}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>😢</div>
         <h1 style={s.title}>See you next time!</h1>
         <p style={s.sub}>
           {result.fullname ? `We're sorry you can't make it, ${result.fullname.split(' ')[0]}.` : "We're sorry you can't make it."}
@@ -159,19 +145,16 @@ export default function RsvpPage() {
 
   return (
     <div style={s.page}>
-      <style>{animations}</style>
-      <div style={{ ...s.card, animation: 'cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ color: P.blue, display: 'flex', justifyContent: 'center', transform: 'scale(2.2)', marginBottom: 20 }}>
-          {icons.ticket}
-        </div>
-        <h1 style={s.title}>You&apos;re Invited!</h1>
+      <div style={s.card}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🎟</div>
+        <h1 style={s.title}>You're Invited!</h1>
 
         {eventInfo && (
-          <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
-            <p style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700, color: P.text }}>{eventInfo.eventTitle}</p>
+          <div style={s.eventBox}>
+            <p style={s.eventTitle}>{eventInfo.eventTitle}</p>
             {eventInfo.date && (
               <div style={s.detailRow}>
-                <span style={{ color: P.blue, display: 'flex', flexShrink: 0 }}>{icons.calendar}</span>
+                <span style={s.detailIcon}>📅</span>
                 <div>
                   <p style={s.detailLabel}>Date &amp; Time</p>
                   <p style={s.detailVal}>
@@ -184,7 +167,7 @@ export default function RsvpPage() {
             )}
             {eventInfo.venueName && eventInfo.venueName !== 'TBD' && (
               <div style={s.detailRow}>
-                <span style={{ color: P.teal, display: 'flex', flexShrink: 0 }}>{icons.mapPin}</span>
+                <span style={s.detailIcon}>📍</span>
                 <div>
                   <p style={s.detailLabel}>Venue</p>
                   <p style={s.detailVal}>{eventInfo.venueName}</p>
@@ -193,7 +176,7 @@ export default function RsvpPage() {
             )}
             {eventInfo.dressCode && (
               <div style={s.detailRow}>
-                <span style={{ color: P.purple, display: 'flex', flexShrink: 0 }}>{icons.tag}</span>
+                <span style={s.detailIcon}>👔</span>
                 <div>
                   <p style={s.detailLabel}>Dress Code</p>
                   <p style={s.detailVal}>{eventInfo.dressCode}</p>
@@ -201,14 +184,14 @@ export default function RsvpPage() {
               </div>
             )}
             {Array.isArray(eventInfo.agenda) && eventInfo.agenda.length > 0 && (
-              <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${P.border}` }}>
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #E2E8F0' }}>
                 <p style={{ ...s.detailLabel, marginBottom: 8 }}>Agenda</p>
                 {eventInfo.agenda.map((a, i) => (
                   <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: P.blue, fontWeight: 600, minWidth: 48 }}>{a.time}</span>
+                    <span style={{ fontSize: 13, color: '#4338CA', fontWeight: 600, minWidth: 48 }}>{a.time}</span>
                     <div>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: P.text }}>{a.title}</p>
-                      {a.description && <p style={{ margin: '2px 0 0', fontSize: 12, color: P.sub }}>{a.description}</p>}
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{a.title}</p>
+                      {a.description && <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>{a.description}</p>}
                     </div>
                   </div>
                 ))}
@@ -218,99 +201,73 @@ export default function RsvpPage() {
         )}
 
         {error && (
-          <div style={{ background: P.redGlow, color: P.red, padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 20, border: `1px solid ${P.red}33`, display: 'flex', alignItems: 'center', gap: 8 }}>
-            {icons.warning} {error}
+          <div style={{ background: '#FEF2F2', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 20, border: '1px solid #FECACA' }}>
+            {error}
           </div>
         )}
 
-        <div style={{ marginTop: 16 }}>
+        <div style={s.section}>
           <p style={s.sectionLabel}>Will you be attending?</p>
           <button
             onClick={() => handleSubmit('attending')}
             disabled={submitting}
-            style={{ ...s.btn, background: P.green, color: '#111', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            onMouseEnter={e => { if (!submitting) e.currentTarget.style.opacity = '0.88'; }}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+            style={{ ...s.btn, background: '#166534', color: '#fff', marginBottom: 10 }}
           >
-            {icons.check} Yes, I&apos;ll be there!
+            ✓ Yes, I'll be there!
           </button>
           <button
             onClick={() => handleSubmit('declined')}
             disabled={submitting}
-            style={{ ...s.btn, background: 'transparent', color: P.sub, border: `1px solid ${P.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-            onMouseEnter={e => { if (!submitting) { e.currentTarget.style.borderColor = P.red + '66'; e.currentTarget.style.color = P.red; } }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = P.border; e.currentTarget.style.color = P.sub; }}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+            style={{ ...s.btn, background: '#fff', color: '#374151', border: '1px solid #E2E8F0' }}
           >
-            {icons.x} Sorry, I can&apos;t make it
+            ✗ Sorry, I can't make it
           </button>
         </div>
 
-        <div style={{ marginTop: 20, paddingTop: 20, borderTop: `1px solid ${P.borderSub}` }}>
+        <div style={{ ...s.section, borderTop: '1px solid #F1F5F9', paddingTop: 20, marginTop: 8 }}>
           <p style={s.sectionLabel}>Dietary Preferences (optional)</p>
           <input
             list="dietary-options"
             value={dietary}
             onChange={e => setDietary(e.target.value)}
             placeholder="e.g. Vegetarian, Vegan, Halal…"
-            style={inp}
-            onFocus={e => e.target.style.borderColor = P.blue}
-            onBlur={e => e.target.style.borderColor = P.border}
+            style={s.input}
           />
           <datalist id="dietary-options">
             {DIETARY_PRESETS.map(d => <option key={d} value={d} />)}
           </datalist>
         </div>
 
-        <div style={{ marginTop: 16 }}>
+        <div style={s.section}>
           <p style={s.sectionLabel}>Special Requirements (optional)</p>
           <textarea
             value={specialReqs}
             onChange={e => setSpecialReqs(e.target.value)}
             placeholder="Wheelchair access, allergies, etc."
             rows={3}
-            style={{ ...inp, resize: 'vertical' }}
-            onFocus={e => e.target.style.borderColor = P.blue}
-            onBlur={e => e.target.style.borderColor = P.border}
+            style={{ ...s.input, resize: 'vertical' }}
           />
         </div>
 
-        {submitting && (
-          <p style={{ color: P.muted, fontSize: 13, marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <span style={{ display: 'inline-block', width: 14, height: 14, border: `2px solid ${P.border}`, borderTopColor: P.blue, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            Submitting…
-          </p>
-        )}
+        {submitting && <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 12 }}>Submitting…</p>}
       </div>
     </div>
   );
 }
 
-const animations = `
-  @keyframes cardIn  { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
-  @keyframes sparkle { from { opacity:0; transform:scale(1.6) rotate(-20deg); } to { opacity:1; transform:scale(2.4) rotate(0deg); } }
-  @keyframes spin    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-`;
-
 const s = {
-  page: {
-    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: P.bg, padding: 24,
-    fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif",
-    color: P.text,
-  },
-  card: {
-    background: P.panel, borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 500,
-    textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', border: `1px solid ${P.border}`,
-  },
-  title:       { fontSize: 26, fontWeight: 800, color: P.text, margin: '0 0 8px', letterSpacing: '-0.02em' },
-  sub:         { fontSize: 15, color: P.sub, margin: '0 0 20px', lineHeight: 1.6 },
+  page:        { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', padding: 24, fontFamily: 'system-ui, -apple-system, sans-serif' },
+  card:        { background: '#fff', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 500, textAlign: 'center', boxShadow: '0 8px 32px rgba(15,23,42,0.10)', border: '1px solid #E2E8F0' },
+  title:       { fontSize: 26, fontWeight: 800, color: '#0F172A', margin: '0 0 8px', letterSpacing: '-0.02em' },
+  sub:         { fontSize: 15, color: '#64748B', margin: '0 0 20px', lineHeight: 1.6 },
+  eventBox:    { background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' },
+  eventTitle:  { margin: '0 0 12px', fontSize: 18, fontWeight: 700, color: '#0F172A' },
   detailRow:   { display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' },
-  detailLabel: { margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.07em' },
-  detailVal:   { margin: 0, fontSize: 14, fontWeight: 600, color: P.text },
-  sectionLabel:{ fontSize: 14, fontWeight: 700, color: P.text, margin: '0 0 10px', textAlign: 'left' },
-  btn:         { width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)' },
+  detailIcon:  { fontSize: 16, marginTop: 2 },
+  detailLabel: { margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em' },
+  detailVal:   { margin: 0, fontSize: 14, fontWeight: 600, color: '#0F172A' },
+  section:     { marginTop: 16 },
+  sectionLabel:{ fontSize: 14, fontWeight: 700, color: '#374151', margin: '0 0 10px', textAlign: 'left' },
+  btn:         { display: 'block', width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 0 },
+  input:       { width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
 };
