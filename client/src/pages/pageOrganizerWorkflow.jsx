@@ -87,7 +87,11 @@ function OrganizerWorkflow() {
     });
 
     const now = new Date();
+    function getTaskEvent(task) {
+      const taskEventId = task.eventId?._id || task.eventId;
 
+      return events.find((event) => event._id === taskEventId);
+    }
     const reminderTasks = tasks.filter((task) => {
         if (task.status === "done") {
             return false;
@@ -239,29 +243,37 @@ function OrganizerWorkflow() {
                 <p className="empty-message">No tasks found for this status.</p>
                 )}
 
-                {filteredTasks.map((task) => (
-                <div className="task-card" key={task._id}>
-                    <div>
-                    <h3>{task.title}</h3>
-                    <p>{task.description}</p>
-                    <p className="task-category">📌 {task.category}</p>
-                    </div>
+                {filteredTasks.map((task) => {
+  const taskEvent = getTaskEvent(task);
 
-                    <div className="task-info">
-                    <span className={`task-status ${task.status}`}>
-                        {task.status.replace("_", " ")}
-                    </span>
+  return (
+    <div className="task-card" key={task._id}>
+      <div>
+        <h3>{task.title}</h3>
+        <p>{task.description}</p>
+        <p className="task-category">📌 {task.category}</p>
 
-                    <span>🔥 {task.priority}</span>
+        <p className="task-event-name">
+          🗓️ Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
+        </p>
+      </div>
 
-                    <span>
-                        📅 {new Date(task.dueDate).toLocaleDateString()}
-                    </span>
+      <div className="task-info">
+        <span className={`task-status ${task.status}`}>
+          {task.status.replace("_", " ")}
+        </span>
 
-                    <span>📊 {task.progressPercent}%</span>
-                    </div>
-                </div>
-                ))}
+        <span>🔥 {task.priority}</span>
+
+        <span>
+          📅 {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
+        </span>
+
+        <span>📊 {task.progressPercent || 0}%</span>
+      </div>
+    </div>
+  );
+})}
             </div>
             )}
             <div className="reminders-section">
@@ -273,12 +285,19 @@ function OrganizerWorkflow() {
                     <p className="empty-message">No due task reminders right now.</p>
                     )}
 
-                    {reminderTasks.map((task) => (
-                    <div className="reminder-card" key={task._id}>
-                        <div>
-                        <h3>⚠️ {task.title}</h3>
-                        <p>{task.description}</p>
-                        </div>
+                    {reminderTasks.map((task) => {
+  const taskEvent = getTaskEvent(task);
+
+  return (
+    <div className="reminder-card" key={task._id}>
+      <div>
+        <h3>⚠️ {task.title}</h3>
+        <p>{task.description}</p>
+
+        <p className="task-event-name">
+          🗓️ Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
+        </p>
+      </div>
 
                         <div className="reminder-info">
                         <span>📅 Due: {new Date(task.dueDate).toLocaleDateString()}</span>
@@ -289,7 +308,8 @@ function OrganizerWorkflow() {
                         <span>🔥 {task.priority}</span>
                         </div>
                     </div>
-                    ))}
+  );
+})}
                 </div>
                 </div>
                 <div className="notifications-section">
