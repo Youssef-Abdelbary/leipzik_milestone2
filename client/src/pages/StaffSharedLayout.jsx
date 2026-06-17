@@ -5,6 +5,7 @@ function StaffSharedLayout() {
   const [layouts, setLayouts] = useState([]);
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [message, setMessage] = useState("Loading shared layouts...");
+
   function getItemIcon(type) {
     if (type === "Table") return "🍽️";
     if (type === "Chair") return "🪑";
@@ -12,19 +13,24 @@ function StaffSharedLayout() {
     if (type === "Booth") return "🏪";
     if (type === "Entrance") return "🚪";
     return "📍";
-    }
+  }
+
   useEffect(() => {
     async function loadSharedLayouts() {
       try {
-        const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+        const loggedInUser =
+          JSON.parse(localStorage.getItem("loggedInUser")) ||
+          JSON.parse(localStorage.getItem("user"));
 
         if (!loggedInUser) {
           setMessage("No logged-in user found.");
           return;
         }
 
+        const staffId = loggedInUser._id || loggedInUser.id;
+
         const response = await fetch(
-          `http://localhost:5001/api/layouts/shared/${loggedInUser.id}`
+          `http://localhost:5001/api/layouts/shared/${staffId}`
         );
 
         const data = await response.json();
@@ -52,14 +58,9 @@ function StaffSharedLayout() {
   }, []);
 
   return (
-    <div className="staff-layout-page">
-      <div className="staff-layout-header">
-        <div>
-          <h1>📍 Shared Venue Layout</h1>
-          <p>👀 Read-only layout shared by the organizer.</p>
-        </div>
-
-        {layouts.length > 1 && (
+    <div className="shared-layout-tab">
+      {layouts.length > 0 && (
+        <div className="shared-layout-controls">
           <select
             value={selectedLayout?._id || ""}
             onChange={(event) => {
@@ -75,8 +76,8 @@ function StaffSharedLayout() {
               </option>
             ))}
           </select>
-        )}
-      </div>
+        </div>
+      )}
 
       {message && <p className="staff-message">{message}</p>}
 

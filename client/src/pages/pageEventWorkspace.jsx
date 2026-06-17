@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEvent } from '../services/serviceEvent';
+import { getEvent, updateEvent } from '../services/serviceEvent';
+import TabGuests   from './tabs/TabGuests';
+import TabOverview from './tabs/TabOverview';
+import TabDayOf    from './tabs/TabDayOf';
+import TabMessages from './tabs/TabMessages';
+import TabVendors from './tabs/TabVendors';
+import { EVENT_TYPES } from '../utils/constants';
+import BudgetManagement from "./pageBudgetManagement";
+import TabFeedback from './tabs/TabFeedback';
+import TabTeam from './tabs/TabTeam';
 
 import TabGuests        from './tabs/TabGuests';
 import TabOverview      from './tabs/TabOverview';
@@ -259,10 +268,45 @@ export default function EventWorkspace() {
           </button>
           <span style={{ color:P.muted, fontSize:14, userSelect:'none' }}>/</span>
 
-          {/* Event title */}
-          <span style={{ fontSize:14, fontWeight:600, color:P.text, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>
-            {event.title}
-          </span>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
+          <TabOverview event={event} onEventUpdate={setEvent} />
+        </div>
+        
+        <div style={{ display: activeTab === 'guests' ? 'block' : 'none' }}>
+          <TabGuests eventId={eventId} />
+        </div>
+        
+        <div style={{ display: activeTab === 'day-of' ? 'block' : 'none' }}>
+          <TabDayOf eventId={eventId} event={event} />
+        </div>
+        
+        <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
+          <TabMessages eventId={eventId} />
+        </div>
+
+        <div style={{ display: activeTab === 'team' ? 'block' : 'none' }}>
+          <TabTeam eventId={eventId} />
+        </div>
+
+        <div style={{ display: activeTab === 'vendors' ? 'block' : 'none' }}>
+          <TabVendors eventId={eventId} organizerId={event.organizerId?._id || event.organizerId} />
+        </div>
+
+        <div style={{ display: activeTab === 'budget' ? 'block' : 'none' }}>
+          <BudgetManagement eventId={eventId} />
+        </div>
+        
+
+        {!['overview', 'guests', 'day-of', 'messages', 'vendors','budget', 'team'].includes(activeTab) && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontSize: 36, marginBottom: 10 }}>🚧</p>
+              <p style={{ color: '#94A3B8', fontSize: 15 }}>{TABS.find(t => t.id === activeTab)?.label?.replace(/^\S+\s/, '')} — coming soon</p>           
+            </div>
+          </div>
+        )}
+      </div>
 
           {/* Status badge */}
           <span style={{
