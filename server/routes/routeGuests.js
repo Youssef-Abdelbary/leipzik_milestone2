@@ -1,7 +1,12 @@
 import express from "express";
-import { getGuests, updateGuestCheckIn } from "../controllers/controllerGuests.js";
+import {
+  getGuests,
+  getGuestsForStaff,
+  getGuestsForStaffEvent,
+  updateGuestCheckIn,
+} from "../controllers/controllerGuests.js";
 import { authenticate } from "../middleware/authMiddleware.js";
-import {log } from "../utils/logger.js";
+import { log } from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -10,5 +15,7 @@ const router = express.Router();
 
 router.get("/", getGuests);
 router.patch("/:id/checkin", updateGuestCheckIn);
+router.get("/staff/:staffId", getGuestsForStaff);
+router.get("/staff/:staffId/event/:eventId", getGuestsForStaffEvent);
 
 export default router;
