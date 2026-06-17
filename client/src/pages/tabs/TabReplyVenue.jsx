@@ -6,11 +6,13 @@ import {
     sendBookingMessage,
     sendCounterProposal,
     matchCounterProposal,
-} from '../../services/serviceReplyVenue.js';
-import CalendarAvailability from '../../components/componentCalendar.jsx';
-import MiniCalendar from '../../components/componentMiniCalendar.jsx';
-import { P, icons, GlassPanel } from '../../components/componentTheme';
-import '../../components/componentTheme.css';
+//    applyVenueToEvent,
+} from '../services/serviceReplyVenue.js';
+import AppHeader from '../components/componentAppHeader.jsx';
+import Dock from '../components/componentDock.jsx';
+import CalendarAvailability from '../components/componentCalendar.jsx';
+import MiniCalendar from '../components/componentMiniCalendar.jsx';
+import '../components/componentTheme.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // ─── Decode user_id from stored JWT ──────────────────────────────────────────
@@ -414,10 +416,11 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
 }
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
-function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
-    const [tab,        setTab]        = useState('details');
-    const [applying,   setApplying]   = useState(false);
-    const [applyError, setApplyError] = useState(null);
+
+const DOCK_HEIGHT = 120;
+
+function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvailability }) {
+    const [tab, setTab] = useState('details');
 
     useEffect(() => {
         setTab('details');
@@ -445,19 +448,6 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
             : '—' },
     ];
 
-    const handleApplyToEvent = async () => {
-        if (!eventId || applying || booking.appliedToEvent) return;
-        setApplying(true);
-        setApplyError(null);
-        try {
-            onBookingUpdate(booking._id, { appliedToEvent: true });
-        } catch (err) {
-            setApplyError(err?.message || 'Failed to apply venue to event');
-        } finally {
-            setApplying(false);
-        }
-    };
-
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Panel header */}
@@ -472,23 +462,9 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
                             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>{booking.eventType}</p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {booking.status === 'approved' && eventId && (
-                            booking.appliedToEvent ? (
-                                <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                                    padding: '5px 12px', borderRadius: 8,
-                                    background: 'var(--opal-teal-dim)', border: '1px solid rgba(79,209,197,0.28)',
-                                    color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
-                                }}>✓ Applied to Event</span>
-                            ) : (
-                                <Btn label={applying ? 'Applying…' : '✓ Apply to Event'} color="var(--opal-teal)" onClick={handleApplyToEvent} disabled={applying} style={{ padding: '6px 14px', fontSize: 12 }} />
-                            )
-                        )}
-                        <Badge status={booking.status} />
-                    </div>
+                    <Badge status={booking.status} />
                 </div>
-                {applyError && <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--opal-red)' }}>{applyError}</p>}
+
                 <div style={{ display: 'flex', gap: 0 }}>
                     {['details', 'messages'].map(t => (
                         <button key={t} onClick={() => setTab(t)} style={{
@@ -512,8 +488,12 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 
             {/* Details tab */}
             {tab === 'details' && (
-                <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden', flexShrink: 0 }}>
+                <div style={{
+                    flex: 1, overflowY: 'auto',
+                    padding: `20px 24px ${DOCK_HEIGHT + 16}px`,
+                    display: 'flex', flexDirection: 'column', gap: 16,
+                }}>
+                    <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden' }}>
                         {fields.map(({ label, value }, i) => (
                             <div key={label} style={{
                                 padding: '14px 18px',
@@ -526,7 +506,8 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
                         ))}
                     </GlassCard>
 
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexShrink: 0 }}>
+                    {/* Calendar — fix: pass fetchVenueAvailability directly from prop */}
+                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                         <div style={{ flexShrink: 0 }}>
                             <CalendarAvailability
                                 venueId={venueId}
@@ -565,9 +546,7 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function PageReplyVenue({ onNavigate }) {
     const currentUserId = getUserIdFromToken();
-    const navigate      = useNavigate();
-    const { eventId }   = useParams();
-
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
     const [filter,   setFilter]   = useState('All');
@@ -774,16 +753,15 @@ export default function PageReplyVenue({ onNavigate }) {
                         </div>
                     </div>
 
-                    {/* Detail panel */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-                        <DetailPanel
-                            booking={selected}
-                            currentUserId={currentUserId}
-                            onBookingUpdate={handleBookingUpdate}
-                            eventId={eventId}
-                        />
-                    </div>
-                </GlassPanel>
+                {/* Detail panel */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <DetailPanel
+                        booking={selected}
+                        currentUserId={currentUserId}
+                        onBookingUpdate={handleBookingUpdate}
+                        fetchVenueAvailability={fetchVenueAvailability}
+                    />
+                </div>
             </div>
         </div>
     );
