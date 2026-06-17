@@ -31,7 +31,7 @@ export async function sendFeedbackRequestEmail({ to, guestName, eventTitle, feed
           <span style="color:#475569;font-size:13px;margin-left:8px;">/ Post-Event Feedback</span>
         </div>
         <div style="padding:32px 28px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:16px;">⭐</div>
+          <div style="width:56px;height:56px;background:#fbbf2422;border:2px solid #fbbf2444;border-radius:50%;display:inline-block;margin-bottom:16px;"></div>
           <p style="margin:0 0 6px;font-size:15px;color:#64748B;">Hi ${firstName},</p>
           <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;">How was the event?</h1>
           <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#0F172A;">${eventTitle}</p>
@@ -155,7 +155,7 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
           <span style="color:#475569;font-size:13px;margin-left:8px;">/ Invitation</span>
         </div>
         <div style="padding:32px 28px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:16px;">🎟</div>
+          <div style="width:56px;height:56px;background:#5b9cf622;border:2px solid #5b9cf644;border-radius:12px;display:inline-block;margin-bottom:16px;"></div>
           <p style="margin:0 0 6px;font-size:15px;color:#64748B;">Hello ${firstName},</p>
           <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#0F172A;">You're Invited!</h1>
           <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#0F172A;">${eventTitle}</p>
@@ -163,7 +163,7 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
           <div style="background:#F8FAFC;border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:left;">
             ${formattedDate ? `
             <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;">
-              <span style="font-size:16px;">📅</span>
+              <div style="width:8px;height:8px;border-radius:50%;background:#5b9cf6;margin-top:5px;flex-shrink:0;"></div>
               <div>
                 <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Date &amp; Time</p>
                 <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${formattedDate}${eventTime ? ` at ${eventTime}` : ''}${eventEndTime ? ` – ${eventEndTime}` : ''}</p>
@@ -172,7 +172,7 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
 
             ${venueName && venueName !== 'TBD' ? `
             <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;">
-              <span style="font-size:16px;">📍</span>
+              <div style="width:8px;height:8px;border-radius:50%;background:#2dd4bf;margin-top:5px;flex-shrink:0;"></div>
               <div>
                 <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Venue</p>
                 <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${venueName}</p>
@@ -181,7 +181,7 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
 
             ${dressCode ? `
             <div style="display:flex;gap:12px;align-items:flex-start;">
-              <span style="font-size:16px;">👔</span>
+              <div style="width:8px;height:8px;border-radius:50%;background:#c084fc;margin-top:5px;flex-shrink:0;"></div>
               <div>
                 <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Dress Code</p>
                 <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${dressCode}</p>
@@ -245,12 +245,12 @@ export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, ev
           <span style="color:#475569;font-size:13px;margin-left:8px;">/ You're confirmed!</span>
         </div>
         <div style="padding:32px 28px;text-align:center;">
-          <div style="font-size:52px;margin-bottom:16px;">🎉</div>
+          <div style="width:64px;height:64px;background:#4ade8022;border:2px solid #4ade8044;border-radius:50%;display:inline-block;margin-bottom:16px;"></div>
           <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#0F172A;">You're going!</h1>
           <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0F172A;">${eventTitle}</p>
           ${formattedDate ? `<p style="margin:0 0 24px;font-size:14px;color:#64748B;">${formattedDate}${startTime ? ` at ${startTime}` : ''}</p>` : '<p style="margin:0 0 24px;"></p>'}
-          ${venueName && venueName !== 'TBD' ? `<p style="margin:-16px 0 24px;font-size:13px;color:#64748B;">📍 ${venueName}</p>` : ''}
-          ${dressCode ? `<p style="margin:-12px 0 20px;font-size:13px;color:#64748B;">👔 ${dressCode}</p>` : ''}
+          ${venueName && venueName !== 'TBD' ? `<p style="margin:-16px 0 24px;font-size:13px;color:#64748B;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#2dd4bf;vertical-align:middle;margin-right:5px;"></span>${venueName}</p>` : ''}
+          ${dressCode ? `<p style="margin:-12px 0 20px;font-size:13px;color:#64748B;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#c084fc;vertical-align:middle;margin-right:5px;"></span>${dressCode}</p>` : ''}
 
           <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:28px 24px;margin-bottom:24px;display:inline-block;">
             <p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#0F172A;">Your Check-in QR Code</p>
@@ -276,7 +276,7 @@ export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, ev
   await transporter.sendMail({
     from: `"PopEyez Events" <${process.env.SMTP_USER}>`,
     to,
-    subject: `🎉 You're confirmed for ${eventTitle} — your QR code inside`,
+    subject: `You're confirmed for ${eventTitle} — your QR code inside`,
     text: `Hi ${firstName},\n\nYou're confirmed for ${eventTitle}!\n\nShow your check-in code at the entrance: ${qrCode}\n\n— PopEyez Events`,
     html,
     attachments: [
