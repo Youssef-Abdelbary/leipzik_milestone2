@@ -7,12 +7,13 @@ import {
   deactivateVenue,
 } from "../services/serviceVenue";
 import {
-  VscHome, VscMail, VscCalendar,
+  VscHome, VscMail, VscCalendar, VscBell, VscPerson,
 } from 'react-icons/vsc';
 import { getConfirmedBookings } from "../services/serviceBookingCalendar";
 import MiniCalendar from "../components/componentMiniCalendar.jsx";
 import { OpalSelect } from "../components/componentMenus.jsx";
 import Dock from "../components/componentDock.jsx";
+import AppHeader from "../components/componentAppHeader.jsx";
 import { useNavigate } from "react-router-dom";
 import "../components/componentTheme.css";
 
@@ -829,12 +830,23 @@ export default function PageOwnerDashboard() {
 
   const dockItems = [
     { icon: <VscMail size={26} />, label: "Requests", onClick: () => navigate("/venueowner/venueresponse") },
+    { icon: <VscBell size={26} />, label: "Notifications", onClick: () => navigate("/notificationsview") },
     { icon: <VscHome size={26} />, label: "Home", active: true, onClick: () => navigate("/venueowner/venues") },
     { icon: <VscCalendar size={26} />, label: "Reports", onClick: () => navigate("/venueowner/venuereports") },
+    { icon: <VscPerson size={26} />, label: "Owner Profile", onClick: () => navigate("/pageProfile") },
   ];
 
   return (
     <div style={css.page}>
+      <AppHeader
+        crumb="Venue Owner"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ecfb8', display: 'inline-block', boxShadow: '0 0 6px rgba(62,207,184,0.4)' }} />
+            Venue Owner Portal
+          </div>
+        }
+      />
       <div style={css.content}>
         {/* ── Confirmed Bookings ── */}
         <section style={{ marginBottom: 28 }}>

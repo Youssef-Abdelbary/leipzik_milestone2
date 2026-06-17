@@ -1,27 +1,27 @@
-
 .dock-outer {
   position: fixed;
   bottom: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 200;
   margin: 0;
   display: flex;
-  max-width: calc(100% - 32px);
+  max-width: 100%;
   align-items: flex-end;
   justify-content: center;
   pointer-events: none;
+  overflow-x: auto;
+  padding: 0 10px;
 }
 
 .dock-panel {
   pointer-events: auto;
-  position: absolute;
+  position: relative;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: flex-end;
-  width: fit-content;
+  width: max-content;
+  min-width: 100%;
   gap: 1rem;
   border-radius: 26px;
   background: rgba(21, 21, 29, 0.55);
@@ -105,6 +105,30 @@
 }
 
 @media (max-width: 640px) {
-  .dock-outer { bottom: 10px; }
-  .dock-panel { gap: 0.4rem; border-radius: 18px; padding: 0 0.4rem 0.4rem; }
+  .dock-outer {
+    bottom: 10px;
+    padding: 0 8px;
+  }
+
+  .dock-panel {
+    gap: 0.35rem;
+    border-radius: 18px;
+    padding: 0 0.4rem 0.4rem;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dock-item {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: auto !important;
+    height: auto !important;
+    flex: 1 1 0;
+  }
+
+  .dock-label {
+    top: -1.8rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
 }

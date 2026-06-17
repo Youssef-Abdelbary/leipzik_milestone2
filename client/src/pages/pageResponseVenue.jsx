@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    VscHome, VscMail, VscCalendar,
+    VscHome, VscMail, VscCalendar, VscBell, VscPerson,
 } from 'react-icons/vsc';
 import {
     fetchBookingRequests,
@@ -10,8 +10,8 @@ import {
     sendMessage,
     fetchVenueAvailability,
 } from '../services/serviceResponseVenue.js';
-import AppHeader from '../components/componentAppHeader.jsx';
 import Dock from '../components/componentDock.jsx';
+import AppHeader from '../components/componentAppHeader.jsx';
 import CalendarAvailability from '../components/componentCalendar.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import '../components/componentTheme.css';
@@ -33,10 +33,10 @@ function getUserIdFromToken() {
 
 // ─── Status tokens (mapped onto the Opal palette) ─────────────────────────
 const STATUS = {
-    Pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)' },
-    Approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)' },
-    Declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)' },
-    Countered: { bg: 'var(--opal-violet-dim)',border: 'rgba(124,92,252,0.28)', text: 'var(--opal-violet)' },
+    Pending: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)', text: 'var(--opal-amber)' },
+    Approved: { bg: 'var(--opal-teal-dim)', border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)' },
+    Declined: { bg: 'var(--opal-red-dim)', border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)' },
+    Countered: { bg: 'var(--opal-violet-dim)', border: 'rgba(124,92,252,0.28)', text: 'var(--opal-violet)' },
 };
 
 // ─── Tiny helpers ───────────────────────────────────────────────────────────
@@ -180,7 +180,7 @@ function MessageThread({ booking, currentUserId, defaultIsCP = false }) {
     const [calOpen, setCalOpen] = useState(false);   // popover open/close
     const [sending, setSending] = useState(false);
     const bottomRef = useRef(null);
-    const pollRef   = useRef(null);
+    const pollRef = useRef(null);
     const calBtnRef = useRef(null);                   // anchor for popover position
 
     // Re-seed isCP whenever the prop changes
@@ -378,13 +378,15 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
     const isPending = booking.status === 'Pending';
 
     const fields = [
-        { label: 'Venue',      value: booking.venueName ?? booking.venueId?.name },
+        { label: 'Venue', value: booking.venueName ?? booking.venueId?.name },
         { label: 'Event Type', value: booking.eventType },
-        { label: 'Date',       value: fmtDate(booking.eventDate) },
-        { label: 'Attendees',  value: booking.expectedAttendees?.toLocaleString() },
-        { label: 'Budget',     value: booking.proposedPrice?.amount
-            ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
-            : '—' },
+        { label: 'Date', value: fmtDate(booking.eventDate) },
+        { label: 'Attendees', value: booking.expectedAttendees?.toLocaleString() },
+        {
+            label: 'Budget', value: booking.proposedPrice?.amount
+                ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
+                : '—'
+        },
     ];
 
     const venueId = booking.venueId?._id ?? booking.venueId;
@@ -484,10 +486,10 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
                     {/* Pending / Countered actions */}
                     {(booking.status === 'Pending' || booking.status === 'Countered') && (
                         <GlassCard style={{ display: 'flex', gap: 10, padding: '16px 18px' }}>
-                            <Btn label="✓ Approve" color="var(--opal-teal)"   onClick={() => onApprove(booking._id)} style={{ flex: 1 }} />
-                            <Btn label="✕ Decline" color="var(--opal-red)"    textColor="#0a0a0f" onClick={() => onDecline(booking._id)} style={{ flex: 1 }} />
+                            <Btn label="✓ Approve" color="var(--opal-teal)" onClick={() => onApprove(booking._id)} style={{ flex: 1 }} />
+                            <Btn label="✕ Decline" color="var(--opal-red)" textColor="#0a0a0f" onClick={() => onDecline(booking._id)} style={{ flex: 1 }} />
                             {/* ← Now calls handleCounter instead of setTab directly */}
-                            <Btn label="↩ Counter" color="var(--opal-amber)"  textColor="#0a0a0f" onClick={handleCounter} style={{ flex: 1 }} />
+                            <Btn label="↩ Counter" color="var(--opal-amber)" textColor="#0a0a0f" onClick={handleCounter} style={{ flex: 1 }} />
                         </GlassCard>
                     )}
                 </div>
@@ -514,8 +516,8 @@ export default function PageResponseVenue() {
     const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [filter, setFilter]     = useState('All');
-    const [loading, setLoading]   = useState(true);
+    const [filter, setFilter] = useState('All');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchBookingRequests()
@@ -537,24 +539,26 @@ export default function PageResponseVenue() {
 
     const tabs = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
-        All:      bookings.length,
-        Pending:  bookings.filter(b => b.status === 'Pending').length,
+        All: bookings.length,
+        Pending: bookings.filter(b => b.status === 'Pending').length,
         Approved: bookings.filter(b => b.status === 'Approved').length,
         Declined: bookings.filter(b => b.status === 'Declined').length,
     };
     const filtered = filter === 'All' ? bookings : bookings.filter(b => b.status === filter);
 
     const stats = [
-        { label: 'Total',    value: counts.All,      color: 'var(--opal-violet)' },
-        { label: 'Pending',  value: counts.Pending,  color: 'var(--opal-amber)' },
+        { label: 'Total', value: counts.All, color: 'var(--opal-violet)' },
+        { label: 'Pending', value: counts.Pending, color: 'var(--opal-amber)' },
         { label: 'Approved', value: counts.Approved, color: 'var(--opal-teal)' },
         { label: 'Declined', value: counts.Declined, color: 'var(--opal-red)' },
     ];
 
     const dockItems = [
-        { icon: <VscMail size={26} />,     active: true, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
-        { icon: <VscHome size={26} />,     label: 'Home',     onClick: () => navigate('/venueowner/venues') },
-        { icon: <VscCalendar size={26} />, label: 'Reports',  onClick: () => navigate('/venueowner/venuereports') },
+        { icon: <VscMail size={26} />, label: "Requests", onClick: () => navigate("/venueowner/venueresponse") },
+        { icon: <VscBell size={26} />, label: "Notifications", onClick: () => navigate("/notificationsview") },
+        { icon: <VscHome size={26} />, label: "Home", active: true, onClick: () => navigate("/venueowner/venues") },
+        { icon: <VscCalendar size={26} />, label: "Reports", onClick: () => navigate("/venueowner/venuereports") },
+        { icon: <VscPerson size={26} />, label: "Owner Profile", onClick: () => navigate("/pageProfile") },
     ];
 
     return (
@@ -563,8 +567,15 @@ export default function PageResponseVenue() {
             fontFamily: 'var(--font-body)',
             color: 'var(--opal-text)',
         }}>
-            <AppHeader crumb="Booking Requests" right={<Avatar name="Venue Manager" size={32} />} />
-
+            <AppHeader
+                crumb="Venue Responses"
+                right={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ecfb8', display: 'inline-block', boxShadow: '0 0 6px rgba(62,207,184,0.4)' }} />
+                        Venue Owner Portal
+                    </div>
+                }
+            />
             <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
                 {/* Sidebar */}
                 <div style={{ width: 300, borderRight: '1px solid var(--opal-border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
