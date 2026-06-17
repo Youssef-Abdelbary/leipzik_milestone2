@@ -151,6 +151,7 @@ function StaffSharedLayout() {
                   style={{
                     left: `${item.x}px`,
                     top: `${item.y}px`,
+                    transform: `rotate(${item.rotation || 0}deg)`,
                   }}
                   title={item.label || item.type}
                 >
