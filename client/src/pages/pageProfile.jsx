@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Profile.css";
 
 const roleLabels = {
@@ -9,12 +10,30 @@ const roleLabels = {
     guest: "Guest",
 };
 
+const commonSections = [
+    {
+        title: "Notifications",
+        description: "View your latest notifications and updates.",
+        link: "/notificationsview",
+    },
+];
+
 const roleSections = {
     organizer: [
         {
             title: "My Events",
-            description: "View and manage your created events.",
+            description: "Create, view, and manage your events.",
             link: "/organizer/events",
+        },
+        {
+            title: "Register Others",
+            description: "Register guests or other users for events.",
+            link: "/organizer/registerothers",
+        },
+        {
+            title: "Deactivate Users",
+            description: "Manage user access and deactivate accounts.",
+            link: "/organizer/deactivate",
         },
         {
             title: "Browse Venues",
@@ -22,21 +41,46 @@ const roleSections = {
             link: "/organizer/browsevenues",
         },
         {
+            title: "Venue Layout Designer",
+            description: "Design or manage venue layouts.",
+            link: "/organizer/venuelayout",
+        },
+        {
+            title: "Browse Vendors",
+            description: "Find vendors for your events.",
+            link: "/organizer/browsevendors",
+        },
+        {
+            title: "Organizer Workflow",
+            description: "Track your event planning workflow.",
+            link: "/organizer/workflow",
+        },
+        {
             title: "Budget Management",
-            description: "Track your event budget and expenses.",
+            description: "Track event budget, costs, and expenses.",
             link: "/organizer/budget",
         },
         {
-            title: "Invoices",
-            description: "View your organizer invoices.",
+            title: "Venue Replies",
+            description: "View and reply to venue-related responses.",
+            link: "/organizer/reply",
+        },
+        {
+            title: "Organizer Invoices",
+            description: "View invoices related to your events.",
             link: "/organizer/invoices",
+        },
+        {
+            title: "Vendor Tracking",
+            description: "Track vendor progress and assignments.",
+            link: "/organizer/vendortracking",
         },
     ],
 
     vendor: [
         {
             title: "Vendor Invoices",
-            description: "View invoices related to your services.",
+            description: "View invoices related to your vendor services.",
             link: "/vendor/invoices",
         },
         {
@@ -49,7 +93,7 @@ const roleSections = {
     venue_owner: [
         {
             title: "My Venues",
-            description: "Manage your venues.",
+            description: "Manage your venues and venue details.",
             link: "/venueowner/venues",
         },
         {
@@ -58,45 +102,62 @@ const roleSections = {
             link: "/venueowner/venueresponse",
         },
         {
-            title: "Booking Calendar",
-            description: "View venue bookings.",
-            link: "/venueowner/bookingcalendar",
+            title: "Venue Reports",
+            description: "View reports and performance information.",
+            link: "/venueowner/venuereports",
         },
         {
-            title: "Venue Reports",
-            description: "View reports for your venues.",
-            link: "/venueowner/venuereports",
+            title: "Booking Calendar",
+            description: "View and manage venue bookings.",
+            link: "/venueowner/bookingcalendar",
         },
     ],
 
     staff: [
         {
-            title: "Guest List",
-            description: "Manage guests and attendance.",
-            link: "/staff/guestlist",
+            title: "Staff Dashboard",
+            description: "View your assigned tasks and staff tools.",
+            link: "/staff/dashboard",
         },
         {
-            title: "Staff Layout",
-            description: "Open staff shared tools.",
+            title: "Shared Staff Layout",
+            description: "Open the shared staff workspace.",
             link: "/staff/sharedlayout",
+        },
+        {
+            title: "QR Scanner",
+            description: "Scan guest QR codes for event check-in.",
+            link: "/staff/qr-scanner",
         },
     ],
 
     guest: [
         {
             title: "My Invitations",
-            description: "View RSVP and invitation details later.",
+            description: "View invitation and RSVP details when available.",
             link: "#",
         },
         {
-            title: "Guest Profile",
-            description: "Edit your guest details later.",
+            title: "Feedback",
+            description: "Submit feedback when you receive a feedback link.",
             link: "#",
         },
     ],
 };
 
 const Profile = () => {
+
+
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("loggedInUser");
+
+        navigate("/login");
+    };
+
     const storedUser = localStorage.getItem("loggedInUser");
 
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
@@ -121,7 +182,10 @@ const Profile = () => {
         );
     }
 
-    const options = roleSections[user.role] || [];
+    const options = [
+        ...commonSections,
+        ...(roleSections[user.role] || []),
+    ];
 
     const handleEditClick = () => {
         setIsEditing(true);
@@ -197,6 +261,20 @@ const Profile = () => {
 
     return (
         <div className="profile-page">
+            <section className="profile-hero">
+                <div className="profile-hero__content">
+                    <div className="profile-hero__eyebrow">Profile</div>
+                    <h1 className="profile-hero__title">{user.fullname}</h1>
+                    <p className="profile-hero__subtitle">
+                        Manage your account, view your role tools, and keep your profile in sync with the rest of the dashboard.
+                    </p>
+                </div>
+
+                <button className="profile-logout-btn" onClick={handleLogout}>
+                    Logout
+                </button>
+            </section>
+
             <section className="profile-card">
                 <div className="profile-header">
                     <div className="profile-avatar">
@@ -313,14 +391,17 @@ const Profile = () => {
                 ) : (
                     <div className="role-options-grid">
                         {options.map((option) => (
-                            <a
-                                key={option.title}
-                                href={option.link}
-                                className="role-option-card"
-                            >
-                                <h3>{option.title}</h3>
-                                <p>{option.description}</p>
-                            </a>
+                            option.link.startsWith("/") ? (
+                                <Link key={option.title} to={option.link} className="role-option-card">
+                                    <h3>{option.title}</h3>
+                                    <p>{option.description}</p>
+                                </Link>
+                            ) : (
+                                <a key={option.title} href={option.link} className="role-option-card">
+                                    <h3>{option.title}</h3>
+                                    <p>{option.description}</p>
+                                </a>
+                            )
                         ))}
                     </div>
                 )}
