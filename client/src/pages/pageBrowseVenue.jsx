@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { requestVenueBooking, searchVenues } from "../services/serviceBrowseVenue";
+import AppHeader from "../components/componentAppHeader.jsx";
+import MiniCalendar from "../components/componentMiniCalendar.jsx";
+import { OpalSelect, OpalMultiSelect } from "../components/componentMenus.jsx";
+import '../components/componentTheme.css';
 
 const AMENITY_ICONS = {
   Parking: "P",
@@ -21,7 +26,6 @@ function toDateKey(dateStr) {
 function formatPrice(pricing = {}) {
   const amount = Number(pricing.basePrice ?? pricing.amount ?? 0);
   const currency = pricing.currency ?? "EGP";
-
   return `${amount.toLocaleString()} ${currency}`;
 }
 
@@ -29,6 +33,41 @@ function isVenueAvailableOn(venue, dateStr) {
   if (!dateStr || !venue.bookedDates?.length) return true;
   const key = toDateKey(dateStr);
   return !venue.bookedDates.some((b) => toDateKey(b.date) === key);
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+
+function Avatar({ name = "?", size = 36 }) {
+  const initials = (name || "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: size / 2.8,
+      background: "linear-gradient(135deg, var(--opal-violet) 0%, var(--opal-teal) 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.33, fontWeight: 700, color: "#0a0a0f", flexShrink: 0,
+      letterSpacing: -0.3, fontFamily: "var(--font-display)",
+    }}>
+      {initials}
+    </div>
+  );
+}
+
+// ─── Shared glass surface ─────────────────────────────────────────────────────
+
+function GlassCard({ children, style = {}, ...rest }) {
+  return (
+    <div {...rest} style={{
+      background: "rgba(30,30,41,0.55)",
+      backdropFilter: "blur(18px) saturate(140%)",
+      WebkitBackdropFilter: "blur(18px) saturate(140%)",
+      border: "1px solid var(--opal-border)",
+      borderRadius: 16,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
 }
 
 function AmenityPill({ label }) {
@@ -46,7 +85,7 @@ function VenueCard({ venue, onViewDetails }) {
   const unit = venue.pricing?.pricingUnit?.replace("per_", "") ?? "event";
 
   return (
-    <div
+    <GlassCard
       style={{ ...css.card, ...(hovered ? css.cardHovered : {}) }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -99,77 +138,20 @@ function VenueCard({ venue, onViewDetails }) {
           )}
         </div>
 
-        <button style={css.viewBtn} onClick={() => onViewDetails(venue)}>
+        <button
+          style={css.viewBtn}
+          onClick={() => onViewDetails(venue)}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+        >
           View Details
         </button>
       </div>
-    </div>
+    </GlassCard>
   );
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-function BookingCalendar({ bookedDates = [], selectedDates, onToggleDate }) {
-  const today = new Date();
-  const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
-  const bookedKeys = new Set(bookedDates.map((b) => toDateKey(b.date)));
-  const selectedKeys = new Set(selectedDates);
-  const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
-  const firstDay = new Date(view.year, view.month, 1).getDay();
-  const cells = [];
-
-  for (let i = 0; i < firstDay; i += 1) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
-
-  const prevMonth = () => setView((v) => (v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 }));
-  const nextMonth = () => setView((v) => (v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 }));
-
-  return (
-    <div style={css.miniCal}>
-      <div style={css.miniCalHeader}>
-        <button type="button" style={css.calNavBtn} onClick={prevMonth}>{"<"}</button>
-        <span style={css.calMonthLabel}>{MONTHS[view.month]} {view.year}</span>
-        <button type="button" style={css.calNavBtn} onClick={nextMonth}>{">"}</button>
-      </div>
-      <div style={css.calGrid7}>
-        {DAYS.map((d) => <div key={d} style={css.calDayHead}>{d}</div>)}
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} />;
-
-          const key = `${view.year}-${String(view.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const booked = bookedKeys.has(key);
-          const selected = selectedKeys.has(key);
-          const dateObj = new Date(view.year, view.month, day);
-          const isPast = dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          const disabled = booked || isPast;
-
-          return (
-            <button
-              key={key}
-              type="button"
-              disabled={disabled}
-              onClick={() => onToggleDate(key)}
-              style={{
-                ...css.calDay,
-                background: booked ? "#FF3B30" : selected ? "#007AFF" : "transparent",
-                color: booked || selected ? "#fff" : isPast ? "#C7C7CC" : "#1C1C1E",
-                cursor: disabled ? "not-allowed" : "pointer",
-                fontWeight: booked || selected ? 600 : 400,
-              }}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
-      <div style={css.calLegendRow}>
-        <span style={css.calLegendItem}><span style={{ ...css.calLegendDot, background: "#FF3B30" }} /> Booked</span>
-        <span style={css.calLegendItem}><span style={{ ...css.calLegendDot, background: "#007AFF" }} /> Selected</span>
-      </div>
-    </div>
-  );
-}
+// ─── Detail Modal ─────────────────────────────────────────────────────────────
 
 function DetailModal({ venue, onClose, onBookingSent }) {
   const [form, setForm] = useState({
@@ -190,24 +172,16 @@ function DetailModal({ venue, onClose, onBookingSent }) {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleDate = (key) => {
+  const handleDatesChange = (dates) => {
     setError("");
-    setSelectedDates((prev) => (
-      prev.includes(key) ? prev.filter((d) => d !== key) : [...prev, key].sort()
-    ));
+    setSelectedDates(dates);
   };
 
   const submitBooking = async (event) => {
     event.preventDefault();
-
-    if (selectedDates.length === 0) {
-      setError("Select at least one date.");
-      return;
-    }
-
+    if (selectedDates.length === 0) { setError("Select at least one date."); return; }
     setSubmitting(true);
     setError("");
-
     try {
       await requestVenueBooking(venue._id, {
         eventType: form.eventType,
@@ -228,15 +202,15 @@ function DetailModal({ venue, onClose, onBookingSent }) {
 
   return (
     <div style={css.overlay} onClick={onClose}>
-      <div style={css.detailModal} onClick={(e) => e.stopPropagation()}>
+      <GlassCard style={css.detailModal} onClick={(e) => e.stopPropagation()}>
         <div style={css.detailImgWrap}>
           {photoUrl ? (
             <img src={photoUrl} alt={venue.name} style={css.detailImg} />
           ) : (
-            <div style={{ ...css.detailImg, background: "#F2F2F7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>Venue</div>
+            <div style={{ ...css.detailImg, background: "var(--opal-surface)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--opal-muted)" }}>Venue</div>
           )}
           <div style={css.detailImgOverlay} />
-          <button style={css.detailCloseBtn} onClick={onClose}>x</button>
+          <button style={css.detailCloseBtn} onClick={onClose}>×</button>
           <div style={css.detailHeroContent}>
             <p style={css.detailHeroArea}>{[venue.location?.area, venue.location?.city].filter(Boolean).join(" - ")}</p>
             <h2 style={css.detailHeroName}>{venue.name}</h2>
@@ -248,7 +222,7 @@ function DetailModal({ venue, onClose, onBookingSent }) {
         </div>
 
         <div style={css.detailBody}>
-          <div style={css.detailStatsRow}>
+          <GlassCard style={css.detailStatsRow}>
             <div style={css.detailStat}>
               <span style={css.detailStatVal}>{Number(venue.capacity ?? 0).toLocaleString()}</span>
               <span style={css.detailStatLabel}>Max guests</span>
@@ -263,7 +237,7 @@ function DetailModal({ venue, onClose, onBookingSent }) {
               <span style={css.detailStatVal}>{venue.amenities?.length ?? 0}</span>
               <span style={css.detailStatLabel}>amenities</span>
             </div>
-          </div>
+          </GlassCard>
 
           <div style={css.detailSection}>
             <p style={css.detailSectionLabel}>About this venue</p>
@@ -280,18 +254,17 @@ function DetailModal({ venue, onClose, onBookingSent }) {
           <div style={css.detailSection}>
             <p style={css.detailSectionLabel}>Amenities</p>
             <div style={css.detailAmenitiesGrid}>
-              {(venue.amenities ?? []).map((a) => (
-                <AmenityPill key={a} label={a} />
-              ))}
+              {(venue.amenities ?? []).map((a) => <AmenityPill key={a} label={a} />)}
             </div>
           </div>
 
           <form style={css.bookingForm} onSubmit={submitBooking}>
             <p style={css.detailSectionLabel}>Select date(s) for your event</p>
-            <BookingCalendar
-              bookedDates={venue.bookedDates}
+
+            <MiniCalendar
               selectedDates={selectedDates}
-              onToggleDate={toggleDate}
+              onChange={handleDatesChange}
+              disabledDates={venue.bookedDates?.map((b) => b.date) ?? []}
             />
 
             {selectedDates.length > 0 && (
@@ -299,27 +272,29 @@ function DetailModal({ venue, onClose, onBookingSent }) {
                 {selectedDates.map((d) => (
                   <span key={d} style={css.selectedDateChip}>
                     {new Date(`${d}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    <button type="button" style={css.selectedDateChipRemove} onClick={() => toggleDate(d)}>x</button>
+                    <button
+                      type="button"
+                      style={css.selectedDateChipRemove}
+                      onClick={() => setSelectedDates((prev) => prev.filter((x) => x !== d))}
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
               </div>
             )}
 
             <p style={{ ...css.detailSectionLabel, marginTop: 20 }}>Request booking</p>
+
             <div style={css.formGrid}>
-              <label style={css.formLabel}>
-                Event type
-                <select
-                  style={css.formInput}
-                  value={form.eventType}
-                  onChange={(e) => updateField("eventType", e.target.value)}
-                  required
-                >
-                  {EVENT_TYPES.map((type) => (
-                    <option key={type} value={type}>{type.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
+              <OpalSelect
+                label="Event type"
+                value={form.eventType}
+                onChange={(v) => updateField("eventType", v)}
+                options={EVENT_TYPES.map((t) => ({ value: t, label: t.replaceAll("_", " ") }))}
+                accent="violet"
+              />
+
               <label style={css.formLabel}>
                 Expected attendees
                 <input
@@ -331,6 +306,7 @@ function DetailModal({ venue, onClose, onBookingSent }) {
                   required
                 />
               </label>
+
               <label style={css.formLabel}>
                 Proposed amount
                 <input
@@ -342,15 +318,16 @@ function DetailModal({ venue, onClose, onBookingSent }) {
                   placeholder={String(venue.pricing?.basePrice ?? "")}
                 />
               </label>
-              <label style={css.formLabel}>
-                Currency
-                <input
-                  style={css.formInput}
-                  value={form.proposedCurrency}
-                  onChange={(e) => updateField("proposedCurrency", e.target.value)}
-                />
-              </label>
+
+              <OpalSelect
+                label="Currency"
+                value={form.proposedCurrency}
+                onChange={(v) => updateField("proposedCurrency", v)}
+                options={["EGP", "USD", "EUR", "GBP", "SAR", "AED"]}
+                accent="teal"
+              />
             </div>
+
             <label style={css.formLabel}>
               Special requirements
               <textarea
@@ -359,26 +336,106 @@ function DetailModal({ venue, onClose, onBookingSent }) {
                 onChange={(e) => updateField("specialRequirements", e.target.value)}
               />
             </label>
+
             {error && <p style={css.formError}>{error}</p>}
             <div style={css.detailCTA}>
               <button type="submit" style={css.submitBookingBtn} disabled={submitting}>
-                {submitting ? "Sending..." : "Send Booking Request"}
+                {submitting ? "Sending…" : "Send Booking Request"}
               </button>
             </div>
           </form>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }
 
+// ─── Date filter popover ──────────────────────────────────────────────────────
+
+function DateFilterPopover({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const label = value
+    ? new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", {
+        day: "numeric", month: "short", year: "numeric",
+      })
+    : "Any date";
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          display: "flex", alignItems: "center", gap: 7,
+          padding: "9px 14px",
+          border: value ? "1px solid rgba(124,92,252,0.45)" : "1px solid var(--opal-border)",
+          borderRadius: 10,
+          fontSize: 13,
+          color: value ? "var(--opal-text)" : "var(--opal-muted)",
+          background: value ? "var(--opal-violet-dim)" : "var(--opal-surface)",
+          cursor: "pointer",
+          fontFamily: "var(--font-body)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0, color: value ? "var(--opal-violet)" : "var(--opal-muted)" }}>
+          <rect x="1" y="2" width="11" height="10" rx="2" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M1 5h11" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M4 1v2M9 1v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+        {label}
+        {value && (
+          <span
+            onClick={(e) => { e.stopPropagation(); onChange(""); }}
+            style={{ marginLeft: 2, opacity: 0.6, fontSize: 15, lineHeight: 1, cursor: "pointer" }}
+          >
+            ×
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute",
+          top: "calc(100% + 8px)",
+          left: 0,
+          zIndex: 600,
+        }}>
+          <MiniCalendar
+            selectedDates={value ? [value] : []}
+            onChange={(dates) => {
+              // single-select: pick whichever date was just added, or clear
+              const next = dates.find((d) => d !== value) ?? "";
+              onChange(next);
+              setOpen(false);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function VenueDiscovery() {
+  const navigate = useNavigate();
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [minCapacity, setMinCapacity] = useState("");
   const [amenityFilter, setAmenityFilter] = useState([]);
   const [sortBy, setSortBy] = useState("default");
   const [detailVenue, setDetailVenue] = useState(null);
@@ -394,43 +451,26 @@ export default function VenueDiscovery() {
 
   const loadVenues = useCallback(async (searchText) => {
     const normalizedSearch = searchText.trim();
-
-    if (lastFetchedQuery.current === normalizedSearch) {
-      return;
-    }
-
+    if (lastFetchedQuery.current === normalizedSearch) return;
     lastFetchedQuery.current = normalizedSearch;
     const currentRequestId = requestId.current + 1;
     requestId.current = currentRequestId;
     setLoading(true);
-
     try {
       const data = await searchVenues(normalizedSearch);
-
-      if (requestId.current === currentRequestId) {
-        setVenues(Array.isArray(data) ? data : []);
-      }
+      if (requestId.current === currentRequestId) setVenues(Array.isArray(data) ? data : []);
     } catch {
-      if (requestId.current === currentRequestId) {
-        showToast("Failed to load venues.", "error");
-      }
+      if (requestId.current === currentRequestId) showToast("Failed to load venues.", "error");
     } finally {
-      if (requestId.current === currentRequestId) {
-        setLoading(false);
-      }
+      if (requestId.current === currentRequestId) setLoading(false);
     }
   }, [showToast]);
 
-  useEffect(() => {
-    loadVenues("");
-  }, [loadVenues]);
+  useEffect(() => { loadVenues(""); }, [loadVenues]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      loadVenues(search);
-    }, 800);
-
-    return () => clearTimeout(timeoutId);
+    const id = setTimeout(() => loadVenues(search), 800);
+    return () => clearTimeout(id);
   }, [search, loadVenues]);
 
   const locationSuggestions = useMemo(() => {
@@ -450,103 +490,88 @@ export default function VenueDiscovery() {
     return Array.from(set).sort();
   }, [venues]);
 
-  const toggleAmenityFilter = (a) => {
-    setAmenityFilter((prev) => (
-      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
-    ));
-  };
-
   const filtered = useMemo(() => {
     let list = venues.filter((v) => v.isActive !== false);
-
     if (locationSearch.trim()) {
       const q = locationSearch.trim().toLowerCase();
       list = list.filter((v) => {
-        const loc = [v.location?.area, v.location?.city, v.location?.address]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        const loc = [v.location?.area, v.location?.city, v.location?.address].filter(Boolean).join(" ").toLowerCase();
         return loc.includes(q);
       });
     }
-    if (dateFilter) {
-      list = list.filter((v) => isVenueAvailableOn(v, dateFilter));
-    }
-    if (minCapacity) {
-      list = list.filter((v) => Number(v.capacity ?? 0) >= parseInt(minCapacity, 10));
-    }
-    if (amenityFilter.length) {
-      list = list.filter((v) => amenityFilter.every((a) => (v.amenities ?? []).includes(a)));
-    }
-
+    if (dateFilter) list = list.filter((v) => isVenueAvailableOn(v, dateFilter));
+    if (amenityFilter.length) list = list.filter((v) => amenityFilter.every((a) => (v.amenities ?? []).includes(a)));
     if (sortBy === "price_asc") list = [...list].sort((a, b) => (a.pricing?.basePrice ?? 0) - (b.pricing?.basePrice ?? 0));
     if (sortBy === "price_desc") list = [...list].sort((a, b) => (b.pricing?.basePrice ?? 0) - (a.pricing?.basePrice ?? 0));
     if (sortBy === "capacity") list = [...list].sort((a, b) => (b.capacity ?? 0) - (a.capacity ?? 0));
-
     return list;
-  }, [venues, locationSearch, dateFilter, minCapacity, amenityFilter, sortBy]);
+  }, [venues, locationSearch, dateFilter, amenityFilter, sortBy]);
 
-  const activeFilterCount = [
-    locationSearch.trim(),
-    dateFilter,
-    minCapacity,
-    amenityFilter.length > 0,
-  ].filter(Boolean).length;
+  const activeFilterCount = [locationSearch.trim(), dateFilter, amenityFilter.length > 0].filter(Boolean).length;
+
+  const SORT_OPTIONS = [
+    { value: "default",    label: "Default" },
+    { value: "price_asc",  label: "Price: Low → High" },
+    { value: "price_desc", label: "Price: High → Low" },
+    { value: "capacity",   label: "Capacity" },
+  ];
 
   return (
     <div style={css.page}>
-      {toast && <div style={{ ...css.toast, ...(toast.type === "error" ? css.toastError : {}) }}>{toast.message}</div>}
-
-      <header style={css.header}>
-        <div style={css.headerInner}>
-          <div style={css.headerLeft}>
-            <div style={css.logoMark}>P</div>
-            <div>
-              <h1 style={css.siteName}>PopEyez</h1>
-              <p style={css.siteTagline}>Find your perfect venue</p>
-            </div>
-          </div>
+      {toast && (
+        <div style={{ ...css.toast, ...(toast.type === "error" ? css.toastError : {}) }}>
+          {toast.message}
         </div>
-      </header>
+      )}
 
+      <AppHeader
+        crumb="Discover Venues"
+        right={<Avatar name="Account" size={32} />}
+      />
+
+      {/* ── Search bar ── */}
       <div style={css.searchBar}>
-        <div style={css.searchBarInner}>
+            <div style={css.searchBarInner}>
+            {/* Name search */}
+            <div style={css.backBtnWrap}>
+                <button
+                    style={css.backBtn}
+                        onClick={() => navigate('/organizer/reply')}
+                        >
+                    ←
+                </button>
+            </div>
           <div style={css.searchFieldWrap}>
-            <span style={css.searchFieldIcon}>?</span>
+            <span style={css.searchFieldIcon}>⌕</span>
             <input
               style={css.searchField}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search venues"
             />
-            {search && <button style={css.clearBtn} onClick={() => setSearch("")}>x</button>}
+            {search && <button style={css.clearBtn} onClick={() => setSearch("")}>×</button>}
           </div>
 
+          {/* Location search */}
           <div style={css.searchFieldWrap}>
-            <span style={css.searchFieldIcon}>Loc</span>
+            <span style={css.searchFieldIcon}>◎</span>
             <input
               style={css.searchField}
               value={locationSearch}
               onChange={(e) => setLocationSearch(e.target.value)}
-              placeholder="Search location (area, city)"
+              placeholder="Area or city"
               list="location-suggestions"
             />
-            {locationSearch && <button style={css.clearBtn} onClick={() => setLocationSearch("")}>x</button>}
+            {locationSearch && <button style={css.clearBtn} onClick={() => setLocationSearch("")}>×</button>}
             <datalist id="location-suggestions">
               {locationSuggestions.map((l) => <option key={l} value={l} />)}
             </datalist>
           </div>
 
-          <div style={css.selectWrap}>
-            <span style={css.selectIcon}>Date</span>
-            <input
-              type="date"
-              style={{ ...css.selectField, colorScheme: "light" }}
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            />
-          </div>
+          {/* Date filter — MiniCalendar popover */}
+          <DateFilterPopover value={dateFilter} onChange={setDateFilter} />
 
+          {/* More filters toggle */}
           <button
             style={{ ...css.moreFiltersBtn, ...(filtersExpanded || activeFilterCount > 1 ? css.moreFiltersBtnActive : {}) }}
             onClick={() => setFiltersExpanded((v) => !v)}
@@ -554,81 +579,69 @@ export default function VenueDiscovery() {
             Filters {activeFilterCount > 0 && <span style={css.filterCountBadge}>{activeFilterCount}</span>}
           </button>
 
-          <div style={css.selectWrap}>
-            <select style={{ ...css.selectField, minWidth: 130, paddingLeft: 10 }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="default">Sort: Default</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="capacity">Capacity</option>
-            </select>
-          </div>
+          {/* Sort */}
+          <OpalSelect
+            value={sortBy}
+            onChange={setSortBy}
+            options={SORT_OPTIONS}
+            style={{ minWidth: 180 }}
+            accent="violet"
+          />
         </div>
 
+        {/* Expanded filters */}
         {filtersExpanded && (
           <div style={css.expandedFilters}>
-            <div style={css.expandedFilterGroup}>
-            </div>
             {amenityOptions.length > 0 && (
-              <div style={css.expandedFilterGroup}>
-                <label style={css.expandedFilterLabel}>Must-have Amenities</label>
-                <div style={css.expandedAmenityRow}>
-                  {amenityOptions.map((a) => (
-                    <button
-                      key={a}
-                      onClick={() => toggleAmenityFilter(a)}
-                      style={{
-                        ...css.amenityFilterChip,
-                        ...(amenityFilter.includes(a) ? css.amenityFilterChipActive : {}),
-                      }}
-                    >
-                      {a}
-                    </button>
-                  ))}
-                </div>
+              <div style={{ flex: 1, minWidth: 260 }}>
+                <OpalMultiSelect
+                  label="Must-have amenities"
+                  value={amenityFilter}
+                  onChange={setAmenityFilter}
+                  options={amenityOptions}
+                  placeholder="Any amenities"
+                  accent="violet"
+                />
               </div>
             )}
+
             {activeFilterCount > 0 && (
               <button
                 style={css.clearAllBtn}
-                onClick={() => {
-                  setLocationSearch("");
-                  setDateFilter("");
-                  setMinCapacity("");
-                  setAmenityFilter([]);
-                }}
+                onClick={() => { setLocationSearch(""); setDateFilter(""); setAmenityFilter([]); }}
               >
-                Clear all filters
+                Clear all
               </button>
             )}
           </div>
         )}
       </div>
 
+      {/* ── Results count ── */}
       <div style={css.resultsHeader}>
         <p style={css.resultsCount}>
-          {loading ? "Loading venues..." : (
+          {loading ? "Loading venues…" : (
             <>
               <strong>{filtered.length}</strong> venue{filtered.length !== 1 ? "s" : ""} found
-              {dateFilter && <span style={css.resultsDateTag}> - available on {new Date(`${dateFilter}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
+              {dateFilter && (
+                <span style={css.resultsDateTag}>
+                  {" "}— available on {new Date(`${dateFilter}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              )}
             </>
           )}
         </p>
       </div>
 
+      {/* ── Grid / empty state ── */}
       {!loading && filtered.length === 0 ? (
         <div style={css.emptyState}>
-          <p style={css.emptyStateIcon}>No venues</p>
+          <p style={css.emptyStateIcon}>⌀</p>
           <p style={css.emptyStateTitle}>No venues match your criteria</p>
           <p style={css.emptyStateHint}>Try adjusting your filters or choosing a different date.</p>
           <button
             style={css.emptyStateClear}
-            onClick={() => {
-              setSearch("");
-              setLocationSearch("");
-              setDateFilter("");
-              setMinCapacity("");
-              setAmenityFilter([]);
-            }}
+            onClick={() => { setSearch(""); setLocationSearch(""); setDateFilter(""); setAmenityFilter([]); }}
           >
             Clear all filters
           </button>
@@ -636,11 +649,7 @@ export default function VenueDiscovery() {
       ) : (
         <div style={css.grid}>
           {filtered.map((v) => (
-            <VenueCard
-              key={v._id}
-              venue={v}
-              onViewDetails={setDetailVenue}
-            />
+            <VenueCard key={v._id} venue={v} onViewDetails={setDetailVenue} />
           ))}
         </div>
       )}
@@ -656,11 +665,14 @@ export default function VenueDiscovery() {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const css = {
   page: {
     minHeight: "100vh",
-    background: "#F2F2F7",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif",
+    background: "var(--opal-bg)",
+    fontFamily: "var(--font-body)",
+    color: "var(--opal-text)",
     WebkitFontSmoothing: "antialiased",
   },
   toast: {
@@ -668,77 +680,66 @@ const css = {
     top: 18,
     right: 18,
     zIndex: 900,
-    background: "#1C1C1E",
-    color: "#fff",
+    background: "var(--opal-surface)",
+    border: "1px solid var(--opal-border)",
+    color: "var(--opal-text)",
     borderRadius: 10,
     padding: "10px 14px",
     fontSize: 13,
-    boxShadow: "0 8px 26px rgba(0,0,0,0.18)",
+    boxShadow: "0 8px 26px rgba(0,0,0,0.35)",
   },
-  toastError: { background: "#FF3B30" },
-  header: {
-    background: "rgba(255,255,255,0.85)",
+  toastError: {
+    background: "var(--opal-red-dim)",
+    border: "1px solid rgba(255,92,102,0.28)",
+    color: "var(--opal-red)",
+  },
+  backBtnWrap: { padding: "0" },
+  backBtn: {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "9px 14px", border: "1px solid var(--opal-border)",
+    borderRadius: 10, fontSize: 13, fontWeight: 600,
+    color: "var(--opal-text)", background: "var(--opal-surface)",
+    cursor: "pointer", fontFamily: "var(--font-body)",
+  },
+  searchBar: {
+    background: "rgba(21,21,29,0.6)",
     backdropFilter: "blur(20px)",
     WebkitBackdropFilter: "blur(20px)",
-    borderBottom: "0.5px solid rgba(0,0,0,0.1)",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-  headerInner: {
-    maxWidth: 1280,
-    margin: "0 auto",
-    padding: "12px 24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 12 },
-  logoMark: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    background: "linear-gradient(135deg, #007AFF 0%, #5856D6 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: 700,
-    boxShadow: "0 2px 8px rgba(0,122,255,0.3)",
-  },
-  siteName: { fontSize: 18, fontWeight: 700, color: "#1C1C1E", margin: 0 },
-  siteTagline: { fontSize: 11, color: "#8E8E93", margin: 0, marginTop: 1 },
-  searchBar: {
-    background: "rgba(255,255,255,0.9)",
-    backdropFilter: "blur(20px)",
-    borderBottom: "0.5px solid rgba(0,0,0,0.08)",
+    borderBottom: "1px solid var(--opal-border)",
     padding: "16px 24px",
+    position: "relative",
+    zIndex: 10,
   },
   searchBarInner: {
-    maxWidth: 1280,
-    margin: "0 auto",
+    width: "100%",
     display: "flex",
     gap: 10,
     alignItems: "center",
     flexWrap: "wrap",
   },
   searchFieldWrap: {
-    flex: "1 1 240px",
+    flex: "1 1 220px",
     position: "relative",
     display: "flex",
     alignItems: "center",
   },
-  searchFieldIcon: { position: "absolute", left: 12, fontSize: 14, pointerEvents: "none" },
+  searchFieldIcon: {
+    position: "absolute",
+    left: 12,
+    fontSize: 14,
+    pointerEvents: "none",
+    color: "var(--opal-muted)",
+  },
   searchField: {
     width: "100%",
     padding: "9px 36px",
-    border: "1px solid #E5E5EA",
+    border: "1px solid var(--opal-border)",
     borderRadius: 10,
     fontSize: 14,
-    background: "#F2F2F7",
+    background: "var(--opal-surface)",
     outline: "none",
-    color: "#1C1C1E",
+    color: "var(--opal-text)",
+    fontFamily: "var(--font-body)",
     boxSizing: "border-box",
   },
   clearBtn: {
@@ -746,112 +747,71 @@ const css = {
     right: 10,
     background: "none",
     border: "none",
-    color: "#8E8E93",
+    color: "var(--opal-muted)",
     fontSize: 16,
     cursor: "pointer",
-  },
-  selectWrap: { position: "relative", display: "flex", alignItems: "center" },
-  selectIcon: { position: "absolute", left: 10, fontSize: 10, color: "#8E8E93", pointerEvents: "none" },
-  selectField: {
-    padding: "9px 10px 9px 42px",
-    border: "1px solid #E5E5EA",
-    borderRadius: 10,
-    fontSize: 14,
-    background: "#F2F2F7",
-    color: "#1C1C1E",
-    outline: "none",
-    cursor: "pointer",
-    appearance: "none",
-    WebkitAppearance: "none",
-    fontFamily: "inherit",
   },
   moreFiltersBtn: {
     display: "flex",
     alignItems: "center",
     gap: 6,
     padding: "9px 14px",
-    border: "1px solid #E5E5EA",
+    border: "1px solid var(--opal-border)",
     borderRadius: 10,
     fontSize: 14,
-    color: "#1C1C1E",
-    background: "#F2F2F7",
+    color: "var(--opal-text)",
+    background: "var(--opal-surface)",
     cursor: "pointer",
-    fontFamily: "inherit",
-    position: "relative",
+    fontFamily: "var(--font-body)",
   },
-  moreFiltersBtnActive: { background: "#007AFF", color: "#fff", borderColor: "#007AFF" },
+  moreFiltersBtnActive: {
+    background: "var(--opal-violet)",
+    color: "#0a0a0f",
+    borderColor: "var(--opal-violet)",
+  },
   filterCountBadge: {
-    background: "#fff",
-    color: "#007AFF",
+    background: "#0a0a0f",
+    color: "var(--opal-violet)",
     fontSize: 11,
     fontWeight: 700,
     borderRadius: 10,
     padding: "1px 6px",
-    marginLeft: 2,
   },
   expandedFilters: {
-    maxWidth: 1280,
-    margin: "14px auto 0",
+    width: "100%",
+    margin: "14px 0 0",
     display: "flex",
-    gap: 24,
-    alignItems: "flex-start",
+    gap: 16,
+    alignItems: "flex-end",
     flexWrap: "wrap",
     paddingTop: 14,
-    borderTop: "0.5px solid #E5E5EA",
+    borderTop: "1px solid var(--opal-border)",
   },
-  expandedFilterGroup: { display: "flex", flexDirection: "column", gap: 8 },
-  expandedFilterLabel: { fontSize: 12, fontWeight: 600, color: "#8E8E93", textTransform: "uppercase" },
-  expandedFilterInput: {
-    padding: "8px 12px",
-    border: "1px solid #E5E5EA",
-    borderRadius: 8,
-    fontSize: 14,
-    background: "#F2F2F7",
-    color: "#1C1C1E",
-    outline: "none",
-    width: 120,
-    fontFamily: "inherit",
-  },
-  expandedAmenityRow: { display: "flex", flexWrap: "wrap", gap: 6 },
-  amenityFilterChip: {
-    padding: "6px 12px",
-    border: "1px solid #E5E5EA",
-    borderRadius: 20,
-    fontSize: 13,
-    cursor: "pointer",
-    background: "#F2F2F7",
-    color: "#1C1C1E",
-    fontFamily: "inherit",
-  },
-  amenityFilterChipActive: { background: "#007AFF", color: "#fff", borderColor: "#007AFF" },
   clearAllBtn: {
-    padding: "8px 16px",
-    border: "1px solid #FF3B30",
-    borderRadius: 8,
+    padding: "9px 16px",
+    border: "1px solid rgba(255,92,102,0.28)",
+    borderRadius: 10,
     fontSize: 13,
-    color: "#FF3B30",
+    color: "var(--opal-red)",
     background: "transparent",
     cursor: "pointer",
-    fontFamily: "inherit",
+    fontFamily: "var(--font-body)",
     alignSelf: "flex-end",
+    height: 40,
   },
-  resultsHeader: { maxWidth: 1280, margin: "0 auto", padding: "14px 24px 0" },
-  resultsCount: { fontSize: 13, color: "#8E8E93", margin: 0 },
-  resultsDateTag: { color: "#007AFF" },
+  resultsHeader: { width: "100%", padding: "14px 24px 0", boxSizing: "border-box" },
+  resultsCount: { fontSize: 13, color: "var(--opal-muted)", margin: 0 },
+  resultsDateTag: { color: "var(--opal-violet)" },
   grid: {
-    maxWidth: 1280,
-    margin: "0 auto",
+    width: "100%",
     padding: "16px 24px 40px",
+    boxSizing: "border-box",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(600px, 1fr))",
     gap: 20,
   },
   card: {
-    background: "#fff",
-    borderRadius: 18,
     overflow: "hidden",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)",
-    border: "0.5px solid rgba(0,0,0,0.06)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
     display: "flex",
     flexDirection: "column",
@@ -859,239 +819,164 @@ const css = {
   },
   cardHovered: {
     transform: "translateY(-3px)",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06)",
+    boxShadow: "0 4px 24px rgba(124,92,252,0.18), inset 0 1px 0 rgba(255,255,255,0.04)",
   },
   cardImgWrap: { position: "relative", height: 200, overflow: "hidden", flexShrink: 0 },
   cardImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   cardImgPlaceholder: {
     width: "100%",
     height: "100%",
-    background: "#E5E5EA",
+    background: "var(--opal-surface)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     fontSize: 16,
-    color: "#636366",
+    color: "var(--opal-muted)",
   },
   priceBadge: {
     position: "absolute",
     bottom: 12,
     left: 12,
-    background: "rgba(28,28,30,0.8)",
+    background: "rgba(10,10,15,0.7)",
     backdropFilter: "blur(8px)",
-    color: "#fff",
+    border: "1px solid var(--opal-border)",
+    color: "var(--opal-text)",
     fontSize: 13,
     fontWeight: 600,
     padding: "5px 10px",
     borderRadius: 8,
   },
-  priceBadgeUnit: { fontWeight: 300, fontSize: 11 },
+  priceBadgeUnit: { fontWeight: 300, fontSize: 11, color: "var(--opal-sub)" },
   cardBody: { padding: "16px 18px 18px", display: "flex", flexDirection: "column", flex: 1 },
-  cardLocation: { fontSize: 11, color: "#8E8E93", marginBottom: 4 },
-  cardName: { fontSize: 17, fontWeight: 600, color: "#1C1C1E", margin: "0 0 6px" },
+  cardLocation: { fontSize: 11, color: "var(--opal-muted)", marginBottom: 4 },
+  cardName: {
+    fontSize: 17, fontWeight: 700, color: "var(--opal-text)", margin: "0 0 6px",
+    fontFamily: "var(--font-display)", letterSpacing: -0.2,
+  },
   cardDesc: {
-    fontSize: 13,
-    color: "#636366",
-    lineHeight: 1.5,
-    marginBottom: 14,
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-    flexGrow: 1,
+    fontSize: 13, color: "var(--opal-sub)", lineHeight: 1.5, marginBottom: 14,
+    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+    overflow: "hidden", flexGrow: 1,
   },
   statsRow: { display: "flex", alignItems: "center", marginBottom: 12 },
   stat: { display: "flex", alignItems: "baseline", gap: 3, flex: 1, justifyContent: "center" },
-  statVal: { fontSize: 14, fontWeight: 600, color: "#1C1C1E" },
-  statLabel: { fontSize: 11, color: "#8E8E93" },
-  statDivider: { width: 1, height: 20, background: "#E5E5EA" },
+  statVal: { fontSize: 14, fontWeight: 700, color: "var(--opal-text)", fontVariantNumeric: "tabular-nums" },
+  statLabel: { fontSize: 11, color: "var(--opal-muted)" },
+  statDivider: { width: 1, height: 20, background: "var(--opal-border)" },
   pillsRow: { display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 14 },
   amenityPill: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 4,
-    padding: "3px 9px",
-    borderRadius: 20,
-    background: "#F2F2F7",
-    color: "#3C3C43",
-    fontSize: 11,
-    fontWeight: 500,
+    display: "inline-flex", alignItems: "center", gap: 4,
+    padding: "3px 9px", borderRadius: 20,
+    background: "var(--opal-surface)", border: "1px solid var(--opal-border)",
+    color: "var(--opal-sub)", fontSize: 11, fontWeight: 500,
   },
   amenityIcon: {
-    width: 14,
-    height: 14,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-    background: "#E5E5EA",
-    fontSize: 8,
-    color: "#636366",
+    width: 14, height: 14, display: "inline-flex", alignItems: "center", justifyContent: "center",
+    borderRadius: "50%", background: "var(--opal-violet-dim)", fontSize: 8, color: "var(--opal-violet)",
   },
   moreAmenities: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "3px 9px",
-    borderRadius: 20,
-    background: "#F2F2F7",
-    color: "#007AFF",
-    fontSize: 11,
-    fontWeight: 600,
+    display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 20,
+    background: "var(--opal-violet-dim)", color: "var(--opal-violet)", fontSize: 11, fontWeight: 600,
   },
   viewBtn: {
-    width: "100%",
-    padding: "10px 0",
-    background: "linear-gradient(135deg, #007AFF 0%, #5856D6 100%)",
-    color: "#fff",
-    border: "none",
-    borderRadius: 10,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: "inherit",
+    width: "100%", padding: "10px 0",
+    background: "linear-gradient(135deg, var(--opal-violet) 0%, var(--opal-teal) 100%)",
+    color: "#0a0a0f", border: "none", borderRadius: 10,
+    fontSize: 14, fontWeight: 700, cursor: "pointer",
+    fontFamily: "var(--font-body)", transition: "opacity 0.15s",
   },
   emptyState: { textAlign: "center", padding: "80px 24px" },
-  emptyStateIcon: { fontSize: 20, margin: 0, color: "#8E8E93" },
-  emptyStateTitle: { fontSize: 20, fontWeight: 600, color: "#1C1C1E", margin: "12px 0 6px" },
-  emptyStateHint: { fontSize: 14, color: "#8E8E93", marginBottom: 20 },
+  emptyStateIcon: { fontSize: 40, margin: 0, color: "var(--opal-muted)" },
+  emptyStateTitle: {
+    fontSize: 20, fontWeight: 700, color: "var(--opal-text)",
+    margin: "12px 0 6px", fontFamily: "var(--font-display)",
+  },
+  emptyStateHint: { fontSize: 14, color: "var(--opal-sub)", marginBottom: 20 },
   emptyStateClear: {
-    padding: "10px 24px",
-    background: "#007AFF",
-    color: "#fff",
-    border: "none",
-    borderRadius: 10,
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: "pointer",
+    padding: "10px 24px", background: "var(--opal-violet)", color: "#0a0a0f",
+    border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700,
+    cursor: "pointer", fontFamily: "var(--font-body)",
   },
   overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.5)",
-    backdropFilter: "blur(4px)",
-    zIndex: 500,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
+    position: "fixed", inset: 0,
+    background: "rgba(10,10,15,0.6)", backdropFilter: "blur(4px)",
+    zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
   },
   detailModal: {
-    background: "#fff",
-    borderRadius: 22,
-    width: "100%",
-    maxWidth: 620,
-    maxHeight: "90vh",
-    overflowY: "auto",
-    boxShadow: "0 30px 80px rgba(0,0,0,0.25)",
+    width: "100%", maxWidth: 620, maxHeight: "90vh", overflowY: "auto",
+    boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
   },
   detailImgWrap: { position: "relative", height: 280 },
-  detailImg: { width: "100%", height: "100%", objectFit: "cover", display: "block", borderRadius: "22px 22px 0 0" },
+  detailImg: { width: "100%", height: "100%", objectFit: "cover", display: "block", borderRadius: "16px 16px 0 0" },
   detailImgOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)",
-    borderRadius: "22px 22px 0 0",
+    position: "absolute", inset: 0,
+    background: "linear-gradient(to top, rgba(10,10,15,0.75) 0%, transparent 60%)",
+    borderRadius: "16px 16px 0 0",
   },
   detailCloseBtn: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
-    background: "rgba(0,0,0,0.5)",
-    backdropFilter: "blur(8px)",
-    border: "none",
-    color: "#fff",
-    fontSize: 18,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    position: "absolute", top: 14, right: 14,
+    width: 32, height: 32, borderRadius: "50%",
+    background: "rgba(10,10,15,0.6)", backdropFilter: "blur(8px)",
+    border: "1px solid var(--opal-border)", color: "var(--opal-text)",
+    fontSize: 18, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
   },
   detailHeroContent: { position: "absolute", bottom: 16, left: 20, right: 20 },
-  detailHeroArea: { color: "rgba(255,255,255,0.8)", fontSize: 12, margin: "0 0 4px", fontWeight: 500 },
-  detailHeroName: { color: "#fff", fontSize: 22, fontWeight: 700, margin: "0 0 4px" },
-  detailHeroPrice: { color: "#fff", fontSize: 18, fontWeight: 600, margin: 0 },
+  detailHeroArea: { color: "rgba(232,230,240,0.8)", fontSize: 12, margin: "0 0 4px", fontWeight: 500 },
+  detailHeroName: {
+    color: "var(--opal-text)", fontSize: 22, fontWeight: 700,
+    margin: "0 0 4px", fontFamily: "var(--font-display)", letterSpacing: -0.3,
+  },
+  detailHeroPrice: { color: "var(--opal-text)", fontSize: 18, fontWeight: 600, margin: 0 },
   detailBody: { padding: "20px 24px 28px" },
-  detailStatsRow: { display: "flex", background: "#F2F2F7", borderRadius: 14, padding: "14px 0", marginBottom: 20 },
+  detailStatsRow: { display: "flex", padding: "14px 0", marginBottom: 20 },
   detailStat: { flex: 1, textAlign: "center" },
-  detailStatVal: { display: "block", fontSize: 20, fontWeight: 700, color: "#1C1C1E" },
-  detailStatLabel: { display: "block", fontSize: 11, color: "#8E8E93", marginTop: 2 },
-  detailStatDiv: { width: 1, background: "#E5E5EA" },
+  detailStatVal: {
+    display: "block", fontSize: 20, fontWeight: 700,
+    color: "var(--opal-text)", fontFamily: "var(--font-display)",
+  },
+  detailStatLabel: { display: "block", fontSize: 11, color: "var(--opal-muted)", marginTop: 2 },
+  detailStatDiv: { width: 1, background: "var(--opal-border)" },
   detailSection: { marginBottom: 20 },
-  detailSectionLabel: { fontSize: 11, fontWeight: 700, color: "#007AFF", textTransform: "uppercase", margin: "0 0 8px" },
-  detailDesc: { fontSize: 14, color: "#3C3C43", lineHeight: 1.6, margin: 0 },
+  detailSectionLabel: {
+    fontSize: 11, fontWeight: 700, color: "var(--opal-violet)",
+    textTransform: "uppercase", margin: "0 0 8px", letterSpacing: 0.8,
+  },
+  detailDesc: { fontSize: 14, color: "var(--opal-sub)", lineHeight: 1.6, margin: 0 },
   detailAmenitiesGrid: { display: "flex", flexWrap: "wrap", gap: 6 },
   detailCTA: { marginTop: 18 },
   submitBookingBtn: {
-    width: "100%",
-    padding: "13px 0",
-    border: "none",
-    borderRadius: 12,
-    background: "#007AFF",
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: "inherit",
+    width: "100%", padding: "13px 0", border: "none", borderRadius: 12,
+    background: "linear-gradient(135deg, var(--opal-violet) 0%, var(--opal-teal) 100%)",
+    color: "#0a0a0f", fontSize: 15, fontWeight: 700,
+    cursor: "pointer", fontFamily: "var(--font-body)",
   },
-  bookingForm: { borderTop: "0.5px solid #E5E5EA", paddingTop: 18 },
-  formGrid: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 4 },
-  formLabel: { display: "flex", flexDirection: "column", gap: 6, fontSize: 12, fontWeight: 600, color: "#636366", marginBottom: 10 },
+  bookingForm: { borderTop: "1px solid var(--opal-border)", paddingTop: 18 },
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: 10, marginTop: 4, marginBottom: 10,
+  },
+  formLabel: {
+    display: "flex", flexDirection: "column", gap: 6,
+    fontSize: 12, fontWeight: 600, color: "var(--opal-sub)", marginBottom: 10,
+  },
   formInput: {
-    border: "1px solid #E5E5EA",
-    borderRadius: 10,
-    padding: "9px 10px",
-    fontSize: 14,
-    color: "#1C1C1E",
-    background: "#F2F2F7",
-    fontFamily: "inherit",
-    outline: "none",
+    border: "1px solid var(--opal-border)", borderRadius: 10,
+    padding: "9px 10px", fontSize: 14, color: "var(--opal-text)",
+    background: "var(--opal-surface)", fontFamily: "var(--font-body)", outline: "none",
   },
-  formError: { color: "#FF3B30", fontSize: 13, margin: "4px 0 0" },
-  miniCal: { background: "#F2F2F7", borderRadius: 14, padding: "14px 16px", maxWidth: 320 },
-  miniCalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  calNavBtn: { background: "none", border: "none", fontSize: 20, color: "#007AFF", cursor: "pointer", padding: "0 8px" },
-  calMonthLabel: { fontSize: 14, fontWeight: 600, color: "#1C1C1E" },
-  calGrid7: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 },
-  calDayHead: { fontSize: 10, fontWeight: 600, color: "#8E8E93", textAlign: "center", paddingBottom: 4 },
-  calDay: {
-    fontSize: 12,
-    textAlign: "center",
-    padding: "6px 0",
-    userSelect: "none",
-    border: "none",
-    borderRadius: 8,
-    fontFamily: "inherit",
-  },
-  calLegendRow: { display: "flex", gap: 16, marginTop: 10, fontSize: 11, color: "#636366" },
-  calLegendItem: { display: "flex", alignItems: "center", gap: 5 },
-  calLegendDot: { width: 10, height: 10, borderRadius: "50%", display: "inline-block" },
+  formError: { color: "var(--opal-red)", fontSize: 13, margin: "4px 0 0" },
   selectedDatesRow: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 },
   selectedDateChip: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "4px 8px 4px 10px",
-    borderRadius: 20,
-    background: "#007AFF",
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: 500,
+    display: "inline-flex", alignItems: "center", gap: 6,
+    padding: "4px 8px 4px 10px", borderRadius: 20,
+    background: "var(--opal-violet)", color: "#0a0a0f",
+    fontSize: 12, fontWeight: 500,
   },
   selectedDateChipRemove: {
-    background: "rgba(255,255,255,0.25)",
-    border: "none",
-    color: "#fff",
-    borderRadius: "50%",
-    width: 16,
-    height: 16,
-    fontSize: 11,
-    lineHeight: 1,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    background: "rgba(10,10,15,0.25)", border: "none", color: "#0a0a0f",
+    borderRadius: "50%", width: 16, height: 16, fontSize: 11, lineHeight: 1,
+    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
   },
 };

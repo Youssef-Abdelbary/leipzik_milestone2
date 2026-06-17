@@ -1,0 +1,65 @@
+/* ─── AppHeader: liquid-glass top bar ──────────────────────────────────── */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  padding: 14px 24px;
+}
+
+.app-header__glass {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 13, 19, 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--opal-border);
+}
+
+.app-header__content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-header__wordmark {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--opal-text);
+  background: linear-gradient(135deg, var(--opal-text) 40%, var(--opal-teal) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.app-header__crumb {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--opal-sub);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--opal-surface);
+  border: 1px solid var(--opal-border);
+  margin-left: 4px;
+}
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .app-header { padding: 10px 14px; }
+  .app-header__crumb { display: none; }
+}

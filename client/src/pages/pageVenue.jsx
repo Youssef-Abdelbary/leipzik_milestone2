@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   getMyVenues,
   createVenue,
@@ -6,128 +6,480 @@ import {
   deleteVenue,
   deactivateVenue,
 } from "../services/serviceVenue";
+import {
+    VscHome, VscMail, VscCalendar,
+} from 'react-icons/vsc';
+import { getConfirmedBookings } from "../services/serviceBookingCalendar";
+import AppHeader from "../components/componentAppHeader.jsx";
+import MiniCalendar from "../components/componentMiniCalendar.jsx";
+import { OpalSelect } from "../components/componentMenus.jsx";
+import Dock from "../components/componentDock.jsx";
+import { useNavigate } from "react-router-dom";
+import "../components/componentTheme.css";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const AMENITY_OPTIONS = ["Parking", "Outdoor Area", "Stage", "Wi-Fi", "Catering", "AV Equipment", "Dressing Room"];
+const AMENITY_OPTIONS = [
+  "Parking","Outdoor Area","Stage","Wi-Fi","Catering","AV Equipment","Dressing Room",
+];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-function getDaysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate();
+const DOCK_HEIGHT = 120;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const pad     = n => String(n).padStart(2, "0");
+const dateKey = d => { const dt = new Date(d); return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth()+1)}-${pad(dt.getUTCDate())}`; };
+const toKey   = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric", timeZone:"UTC" });
 }
-function getFirstDay(year, month) {
-  return new Date(year, month, 1).getDay();
-}
-function toKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+function formatPrice(pricing = {}) {
+  const amount = Number(pricing.basePrice ?? pricing.amount ?? 0);
+  return `${amount.toLocaleString()} ${pricing.currency ?? "EGP"}`;
 }
 
-// ─── Mini Calendar ───────────────────────────────────────────────────────────
+// ─── Glass primitive ──────────────────────────────────────────────────────────
 
-function BookingCalendar({ bookedDates = [], selectedDates = [], onToggle }) {
-  const today = new Date();
-  const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
+function GlassPanel({ children, style = {}, ...rest }) {
+  return (
+    <div {...rest} style={{
+      background: "rgba(30,30,41,0.55)",
+      backdropFilter: "blur(18px) saturate(140%)",
+      WebkitBackdropFilter: "blur(18px) saturate(140%)",
+      border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+      borderRadius: 16,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
 
-  const bookedKeys   = new Set(bookedDates.map(b => toKey(new Date(b.date))));
-  const selectedKeys = new Set(selectedDates.map(d => toKey(new Date(d))));
+function SectionLabel({ children, style = {} }) {
+  return (
+    <p style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: 0.9, textTransform: "uppercase",
+      color: "var(--opal-violet,#7c5cfc)", margin: "0 0 10px",
+      fontFamily: "var(--font-body,system-ui)",
+      ...style,
+    }}>
+      {children}
+    </p>
+  );
+}
 
-  const daysInMonth = getDaysInMonth(view.year, view.month);
-  const firstDay    = getFirstDay(view.year, view.month);
+function Avatar({ name = "?", size = 34 }) {
+  const initials = (name || "?").split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: size / 2.8,
+      background: "linear-gradient(135deg, var(--opal-violet,#7c5cfc) 0%, var(--opal-teal,#4fd1c5) 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.33, fontWeight: 700, color: "#0a0a0f", flexShrink: 0,
+      letterSpacing: -0.3, fontFamily: "var(--font-display,system-ui)",
+    }}>
+      {initials}
+    </div>
+  );
+}
 
-  const prevMonth = () => setView(v => v.month === 0 ? { year: v.year-1, month: 11 } : { ...v, month: v.month-1 });
-  const nextMonth = () => setView(v => v.month === 11 ? { year: v.year+1, month: 0 } : { ...v, month: v.month+1 });
+// ─── Date filter popover ──────────────────────────────────────────────────────
 
-  const cells = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+function DateFilterPopover({ value, onChange, label }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const display = value
+    ? new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })
+    : "Any date";
 
   return (
-    <div style={styles.cal}>
-      <div style={styles.calHeader}>
-        <button style={styles.calNav} onClick={prevMonth}>‹</button>
-        <span style={styles.calTitle}>{MONTHS[view.month]} {view.year}</span>
-        <button style={styles.calNav} onClick={nextMonth}>›</button>
-      </div>
-      <div style={styles.calGrid}>
-        {DAYS.map(d => <div key={d} style={styles.calDayLabel}>{d}</div>)}
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e-${i}`} />;
-          const date    = new Date(view.year, view.month, day);
-          const key     = toKey(date);
-          const isPast  = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          const booked  = bookedKeys.has(key);
-          const sel     = selectedKeys.has(key);
-
-          let bg = "transparent", color = "#1a1a2e", cursor = "pointer", border = "1px solid transparent";
-          if (isPast)  { bg = "transparent"; color = "#ccc"; cursor = "default"; }
-          if (booked)  { bg = "#fee2e2"; color = "#ef4444"; cursor = "not-allowed"; }
-          if (sel)     { bg = "#6366f1"; color = "#fff"; border = "1px solid #6366f1"; }
-
-          return (
-            <div
-              key={key}
-              onClick={() => !isPast && !booked && onToggle && onToggle(date)}
-              style={{ ...styles.calCell, background: bg, color, cursor, border, borderRadius: 8 }}
-            >
-              {day}
-            </div>
-          );
-        })}
-      </div>
-      <div style={styles.calLegend}>
-        <span style={styles.legendItem}><span style={{...styles.dot, background:"#fee2e2", border:"1px solid #ef4444"}} /> Booked</span>
-        <span style={styles.legendItem}><span style={{...styles.dot, background:"#6366f1"}} /> Selected</span>
+    <div ref={ref} style={{ display:"flex", flexDirection:"column", gap:0 }}>
+      {label && <SectionLabel style={{ marginBottom:5 }}>{label}</SectionLabel>}
+      <div style={{ position:"relative" }}>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          style={{
+            ...css.filterControl,
+            color: value ? "var(--opal-text,#e8e6f0)" : "var(--opal-muted,rgba(232,230,240,0.35))",
+            background: value ? "var(--opal-violet-dim,rgba(124,92,252,0.12))" : "rgba(21,21,29,0.7)",
+            border: value ? "1px solid rgba(124,92,252,0.4)" : "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+            display: "flex", alignItems: "center", gap: 7, whiteSpace: "nowrap",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0, color: value ? "var(--opal-violet,#7c5cfc)" : "var(--opal-muted,rgba(232,230,240,0.35))" }}>
+            <rect x="1" y="2" width="11" height="10" rx="2" stroke="currentColor" strokeWidth="1.2"/>
+            <path d="M1 5h11" stroke="currentColor" strokeWidth="1.2"/>
+            <path d="M4 1v2M9 1v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+          </svg>
+          {display}
+          {value && (
+            <span onClick={e => { e.stopPropagation(); onChange(""); }}
+              style={{ marginLeft:2, opacity:0.6, fontSize:14, lineHeight:1, cursor:"pointer" }}>×</span>
+          )}
+        </button>
+        {open && (
+          <div style={{ position:"absolute", top:"calc(100% + 8px)", left:0, zIndex:600 }}>
+            <MiniCalendar
+              selectedDates={value ? [value] : []}
+              onChange={dates => {
+                const next = dates.find(d => d !== value) ?? "";
+                onChange(next);
+                setOpen(false);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ─── Venue Form ──────────────────────────────────────────────────────────────
+// ─── Confirmed Bookings section ───────────────────────────────────────────────
+
+const STATUS_OPTIONS = [
+  { value:"approved",  label:"Approved"  },
+  { value:"pending",   label:"Pending"   },
+  { value:"declined",  label:"Declined"  },
+  { value:"countered", label:"Countered" },
+];
+
+function ConfirmedBookingsSection() {
+  const [bookings,        setBookings]        = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState(null);
+  const [filters,         setFilters]         = useState({ venueId:"", status:"approved", startDate:"", endDate:"" });
+  const [currentMonth,    setCurrentMonth]    = useState(new Date());
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true); setError(null);
+    getConfirmedBookings(filters)
+      .then(res  => { if (!cancelled) setBookings(res.data || []); })
+      .catch(err => { if (!cancelled) setError(err.message || "Failed to load bookings"); })
+      .finally(  () => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [filters]);
+
+  const venueOptions = useMemo(() => {
+    const map = new Map();
+    bookings.forEach(b => { if (b.venueId?._id) map.set(b.venueId._id, b.venueId.name); });
+    return [
+      { value:"", label:"All venues" },
+      ...Array.from(map.entries()).map(([id, name]) => ({ value:id, label:name })),
+    ];
+  }, [bookings]);
+
+  const bookingsByDate = useMemo(() => {
+    const map = new Map();
+    bookings.forEach(b => {
+      (b.requestedDates || []).forEach(d => {
+        const k = dateKey(d);
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(b);
+      });
+    });
+    return map;
+  }, [bookings]);
+
+  const selectedKeys = useMemo(() => {
+    if (!selectedBooking) return new Set();
+    return new Set((selectedBooking.requestedDates || []).map(d => dateKey(d)));
+  }, [selectedBooking]);
+
+  const bookedDatesList  = useMemo(() => Array.from(bookingsByDate.keys()), [bookingsByDate]);
+  const selectedDatesList = useMemo(() => Array.from(selectedKeys), [selectedKeys]);
+
+  const handleSelectBooking = b => {
+    setSelectedBooking(b);
+    const d = new Date(b.requestedDates[0]);
+    setCurrentMonth(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
+  };
+
+  const hasActiveFilters = filters.venueId || filters.startDate || filters.endDate || filters.status !== "approved";
+
+  return (
+    <div>
+      {/* ── Filters bar ── */}
+      <GlassPanel style={{ padding:"14px 18px", marginBottom:16, position:"relative", zIndex:10 }}>
+        <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"flex-end" }}>
+          <div style={{ display:"flex", flexDirection:"column" }}>
+            <SectionLabel style={{ marginBottom:5 }}>Venue</SectionLabel>
+            <OpalSelect
+              value={filters.venueId}
+              onChange={v => setFilters(f => ({ ...f, venueId:v }))}
+              options={venueOptions}
+              accent="violet"
+              style={{ minWidth:160 }}
+            />
+          </div>
+          <div style={{ display:"flex", flexDirection:"column" }}>
+            <SectionLabel style={{ marginBottom:5 }}>Status</SectionLabel>
+            <OpalSelect
+              value={filters.status}
+              onChange={v => setFilters(f => ({ ...f, status:v }))}
+              options={STATUS_OPTIONS}
+              accent="teal"
+              style={{ minWidth:140 }}
+            />
+          </div>
+          <DateFilterPopover label="From" value={filters.startDate} onChange={v => setFilters(f => ({ ...f, startDate:v }))} />
+          <DateFilterPopover label="To"   value={filters.endDate}   onChange={v => setFilters(f => ({ ...f, endDate:v }))} />
+          {hasActiveFilters && (
+            <button
+              onClick={() => setFilters({ venueId:"", status:"approved", startDate:"", endDate:"" })}
+              style={{ ...css.filterControl, color:"var(--opal-red,#ff5c66)", border:"1px solid rgba(255,92,102,0.28)", background:"transparent", alignSelf:"flex-end" }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </GlassPanel>
+
+      {/* ── Three-column row: calendar | bookings list | organizer detail ── */}
+      <div style={{ display:"grid", gridTemplateColumns:"auto 1fr 1fr", gap:16, alignItems:"stretch" }}>
+
+        {/* Col 1 — MiniCalendar */}
+        <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+          <SectionLabel>Calendar</SectionLabel>
+          <MiniCalendarControlled
+            currentMonth={currentMonth}
+            onChangeMonth={setCurrentMonth}
+            bookedDates={bookedDatesList}
+            selectedDates={selectedDatesList}
+            onDayClick={key => {
+              const dayBookings = bookingsByDate.get(key);
+              if (dayBookings?.length) handleSelectBooking(dayBookings[0]);
+            }}
+          />
+          <div style={{ display:"flex", gap:14, marginTop:14, fontSize:11, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>
+            <span style={{ display:"flex", alignItems:"center", gap:5 }}>
+              <span style={{ width:7, height:7, borderRadius:"50%", background:"var(--opal-red,#ff5c66)", display:"inline-block" }} /> Booked
+            </span>
+            <span style={{ display:"flex", alignItems:"center", gap:5 }}>
+              <span style={{ width:7, height:7, borderRadius:"50%", background:"var(--opal-teal,#4fd1c5)", display:"inline-block" }} /> Selected
+            </span>
+          </div>
+        </GlassPanel>
+
+        {/* Col 2 — Bookings list */}
+        <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", minHeight:0 }}>
+          <SectionLabel>Bookings{bookings.length > 0 && ` (${bookings.length})`}</SectionLabel>
+          {loading && <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>Loading…</p>}
+          {error   && <p style={{ margin:0, fontSize:13, color:"var(--opal-red,#ff5c66)" }}>{error}</p>}
+          {!loading && !error && bookings.length === 0 && (
+            <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>No bookings match these filters.</p>
+          )}
+          <div style={{ display:"flex", flexDirection:"column", gap:6, overflowY:"auto", flex:1 }}>
+            {bookings.map(b => {
+              const isSel = selectedBooking?._id === b._id;
+              return (
+                <button key={b._id} onClick={() => handleSelectBooking(b)} style={{
+                  textAlign:"left",
+                  background: isSel ? "rgba(79,209,197,0.1)" : "rgba(21,21,29,0.6)",
+                  border: `1px solid ${isSel ? "rgba(79,209,197,0.4)" : "var(--opal-border,rgba(255,255,255,0.08))"}`,
+                  borderRadius:10, padding:"10px 12px", cursor:"pointer",
+                  fontFamily:"var(--font-body,system-ui)", color:"var(--opal-text,#e8e6f0)",
+                  transition:"background 0.12s, border-color 0.12s", flexShrink:0,
+                }}>
+                  <div style={{ fontSize:13, fontWeight:600 }}>{b.venueId?.name || "Venue"}</div>
+                  <div style={{ fontSize:11, color:"var(--opal-sub,rgba(232,230,240,0.55))", marginTop:3 }}>
+                    {fmtDate(b.requestedDates?.[0])} · {b.organizerId?.fullname || "Organizer"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </GlassPanel>
+
+        {/* Col 3 — Organizer detail */}
+        <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column" }}>
+          <SectionLabel>Organizer Details</SectionLabel>
+          {!selectedBooking ? (
+            <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8 }}>
+              <span style={{ fontSize:24, opacity:0.25 }}>👤</span>
+              <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", textAlign:"center" }}>
+                Select a booking to view organizer details.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:10, flex:1 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <Avatar name={selectedBooking.organizerId?.fullname} size={36} />
+                <div>
+                  <div style={{ fontWeight:700, fontSize:14, color:"var(--opal-text,#e8e6f0)" }}>
+                    {selectedBooking.organizerId?.fullname}
+                  </div>
+                  <div style={{ fontSize:11, color:"var(--opal-sub,rgba(232,230,240,0.55))", marginTop:2 }}>
+                    {selectedBooking.organizerId?.email}
+                  </div>
+                </div>
+              </div>
+              {selectedBooking.organizerId?.phone && (
+                <div style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))" }}>
+                  📞 {selectedBooking.organizerId.phone}
+                </div>
+              )}
+              <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
+                <span style={css.chipAmber}>{selectedBooking.eventType}</span>
+                {selectedBooking.expectedAttendees && (
+                  <span style={css.chipMuted}>{selectedBooking.expectedAttendees} guests</span>
+                )}
+              </div>
+              {selectedBooking.specialRequirements && (
+                <div style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))", fontStyle:"italic", lineHeight:1.5 }}>
+                  "{selectedBooking.specialRequirements}"
+                </div>
+              )}
+              <div style={{ marginTop:"auto", paddingTop:12, borderTop:"1px solid var(--opal-border,rgba(255,255,255,0.08))", fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", lineHeight:1.6 }}>
+                <div>{selectedBooking.venueId?.name}</div>
+                <div>{selectedBooking.requestedDates.map(d => fmtDate(d)).join(", ")}</div>
+                {selectedBooking.proposedPrice?.amount && (
+                  <div>{selectedBooking.proposedPrice.amount} {selectedBooking.proposedPrice.currency}</div>
+                )}
+              </div>
+            </div>
+          )}
+        </GlassPanel>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── Controlled MiniCalendar ──────────────────────────────────────────────────
+
+function MiniCalendarControlled({ currentMonth, onChangeMonth, bookedDates, selectedDates, onDayClick }) {
+  const year  = currentMonth.getUTCFullYear();
+  const month = currentMonth.getUTCMonth();
+  const monthLabel = new Date(Date.UTC(year, month, 1))
+    .toLocaleDateString("en-GB", { month:"long", year:"numeric", timeZone:"UTC" });
+
+  const firstDow    = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month+1, 0)).getUTCDate();
+  const cells = [...Array(firstDow).fill(null), ...Array.from({ length:daysInMonth }, (_,i) => i+1)];
+
+  const bookedSet   = new Set(bookedDates);
+  const selectedSet = new Set(selectedDates);
+  const todayKey = (() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`; })();
+
+  const NAV_BTN = {
+    width:24, height:24, borderRadius:6,
+    border:"1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    background:"rgba(30,30,41,0.8)", color:"var(--opal-sub,rgba(232,230,240,0.55))",
+    fontSize:14, cursor:"pointer",
+    display:"flex", alignItems:"center", justifyContent:"center",
+    fontFamily:"var(--font-body,system-ui)", lineHeight:1, padding:0, flexShrink:0,
+  };
+
+  return (
+    <div style={{ userSelect:"none" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+        <button style={NAV_BTN} onClick={() => onChangeMonth(new Date(Date.UTC(year, month-1, 1)))}>‹</button>
+        <span style={{ fontSize:11, fontWeight:600, color:"var(--opal-text,#e8e6f0)", minWidth:90, textAlign:"center" }}>{monthLabel}</span>
+        <button style={NAV_BTN} onClick={() => onChangeMonth(new Date(Date.UTC(year, month+1, 1)))}>›</button>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:2 }}>
+        {["S","M","T","W","T","F","S"].map((d,i) => (
+          <div key={i} style={{ textAlign:"center", fontSize:9, fontWeight:700, color:"var(--opal-muted,rgba(232,230,240,0.35))", letterSpacing:0.4 }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={`b-${i}`} />;
+          const key      = `${year}-${pad(month+1)}-${pad(day)}`;
+          const isPast   = key < todayKey;
+          const isBooked = bookedSet.has(key);
+          const isSel    = selectedSet.has(key);
+          let bg = "transparent", color = isPast ? "rgba(255,255,255,0.15)" : "var(--opal-sub,rgba(232,230,240,0.55))", border = "1px solid transparent";
+          if (isBooked && !isSel) { bg = "rgba(255,92,102,0.15)"; color = "var(--opal-red,#ff5c66)"; border = "1px solid rgba(255,92,102,0.3)"; }
+          if (isSel)              { bg = "rgba(79,209,197,0.18)";  color = "var(--opal-teal,#4fd1c5)"; border = "1px solid rgba(79,209,197,0.4)"; }
+          return (
+            <button key={key} onClick={() => onDayClick(key)} style={{
+              aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center",
+              borderRadius:7, fontSize:11, fontWeight:600, border, cursor: isBooked ? "pointer" : "default",
+              background:bg, color, transition:"background 0.1s, color 0.1s", fontFamily:"var(--font-body,system-ui)",
+            }}>{day}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Venue form modal ─────────────────────────────────────────────────────────
 
 const EMPTY_FORM = {
-  name: "", description: "",
-  city: "", area: "", address: "",
-  capacity: "", dimensionsSqm: "",
-  amenities: [],
-  basePrice: "", currency: "EGP", pricingUnit: "per_event",
+  name:"", description:"",
+  city:"", area:"", address:"",
+  capacity:"", dimensionsSqm:"",
+  amenities:[],
+  basePrice:"", currency:"EGP", pricingUnit:"per_event",
 };
 
-function VenueForm({ initial, onSave, onCancel }) {
-const [form, setForm] = useState(initial ? {
-    name:         initial.name         || '',
-    description:  initial.description  || '',
-    city:         initial.location?.city    || '',
-    area:         initial.location?.area    || '',
-    address:      initial.location?.address || '',
-    capacity:     initial.capacity          || '',
-    dimensionsSqm:initial.dimensionsSqm     || '',
-    amenities:    initial.amenities         || [],
-    basePrice:    initial.pricing?.basePrice    || '',
-    currency:     initial.pricing?.currency     || 'EGP',
-    pricingUnit:  initial.pricing?.pricingUnit  || 'per_event',
-} : EMPTY_FORM);
-  const [photoFiles,   setPhotoFiles]   = useState([]);
-  const [photoPreviews,setPhotoPreviews]= useState([]);
-  const [bookedDates,  setBookedDates]  = useState(initial?.bookedDates || []);
-  const [selectedDates,setSelectedDates]= useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState("");
+function VenueFormModal({ initial, onSave, onCancel }) {
+  const [form, setForm] = useState(initial ? {
+    name:          initial.name                 || "",
+    description:   initial.description          || "",
+    city:          initial.location?.city       || "",
+    area:          initial.location?.area       || "",
+    address:       initial.location?.address    || "",
+    capacity:      initial.capacity             || "",
+    dimensionsSqm: initial.dimensionsSqm        || "",
+    amenities:     initial.amenities            || [],
+    basePrice:     initial.pricing?.basePrice   || "",
+    currency:      initial.pricing?.currency    || "EGP",
+    pricingUnit:   initial.pricing?.pricingUnit || "per_event",
+  } : EMPTY_FORM);
+
+  const [photoFiles,    setPhotoFiles]    = useState([]);
+  const [photoPreviews, setPhotoPreviews] = useState([]);
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState("");
   const fileRef = useRef();
+  const isEdit  = !!initial?._id;
 
-  const isEdit = !!initial?._id;
+  const today = new Date();
+  const [calView, setCalView] = useState({ year:today.getFullYear(), month:today.getMonth() });
+  const bookedKeys   = new Set((initial?.bookedDates || []).map(b => toKey(new Date(b.date))));
+  const selectedKeys = new Set(selectedDates.map(d => toKey(new Date(d))));
 
-  function set(key, val) { setForm(f => ({ ...f, [key]: val })); }
+  const daysInMonth = new Date(calView.year, calView.month+1, 0).getDate();
+  const firstDay    = new Date(calView.year, calView.month, 1).getDay();
+  const calCells    = [...Array(firstDay).fill(null), ...Array.from({ length:daysInMonth }, (_,i) => i+1)];
 
+  function toggleDate(day) {
+    const date = new Date(calView.year, calView.month, day);
+    const key  = toKey(date);
+    const past = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (past || bookedKeys.has(key)) return;
+    setSelectedDates(prev =>
+      prev.some(d => toKey(new Date(d)) === key)
+        ? prev.filter(d => toKey(new Date(d)) !== key)
+        : [...prev, date]
+    );
+  }
+
+  function set(k, v) { setForm(f => ({ ...f, [k]:v })); }
   function toggleAmenity(a) {
     setForm(f => ({
       ...f,
-      amenities: f.amenities.includes(a)
-        ? f.amenities.filter(x => x !== a)
-        : [...f.amenities, a],
+      amenities: f.amenities.includes(a) ? f.amenities.filter(x => x!==a) : [...f.amenities, a],
     }));
   }
-
   function onFileChange(e) {
     const files = Array.from(e.target.files);
     setPhotoFiles(prev => [...prev, ...files]);
@@ -137,45 +489,28 @@ const [form, setForm] = useState(initial ? {
       reader.readAsDataURL(f);
     });
   }
-
   function removePhoto(i) {
-    setPhotoFiles(prev => prev.filter((_, idx) => idx !== i));
-    setPhotoPreviews(prev => prev.filter((_, idx) => idx !== i));
-  }
-
-  function toggleDate(date) {
-    const key = toKey(date);
-    setSelectedDates(prev =>
-      prev.some(d => toKey(new Date(d)) === key)
-        ? prev.filter(d => toKey(new Date(d)) !== key)
-        : [...prev, date]
-    );
+    setPhotoFiles(prev => prev.filter((_,idx) => idx!==i));
+    setPhotoPreviews(prev => prev.filter((_,idx) => idx!==i));
   }
 
   async function handleSubmit() {
     if (!form.name || !form.city || !form.capacity || !form.basePrice) {
-      setError("Name, city, capacity and base price are required.");
-      return;
+      setError("Name, city, capacity and base price are required."); return;
     }
     setLoading(true); setError("");
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => {
+      Object.entries(form).forEach(([k,v]) => {
         if (k === "amenities") fd.append(k, JSON.stringify(v));
         else fd.append(k, v);
       });
       photoFiles.forEach(f => fd.append("photos", f));
-        if (selectedDates.length) {
-            fd.append("bookedDates", JSON.stringify(
-                selectedDates.map(d => new Date(d).toISOString())
-            ));
-        }
-
+      if (selectedDates.length) fd.append("bookedDates", JSON.stringify(selectedDates.map(d => new Date(d).toISOString())));
       if (isEdit) await updateVenue(initial._id, fd);
       else        await createVenue(fd);
-
       onSave();
-    } catch (e) {
+    } catch(e) {
       setError(e.message);
     } finally {
       setLoading(false);
@@ -183,220 +518,208 @@ const [form, setForm] = useState(initial ? {
   }
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <div style={styles.modalHeader}>
-          <h2 style={styles.modalTitle}>{isEdit ? "Edit Venue" : "New Venue"}</h2>
-          <button style={styles.closeBtn} onClick={onCancel}>✕</button>
+    <div style={css.overlay}>
+      <GlassPanel style={css.modal} onClick={e => e.stopPropagation()}>
+        <div style={css.modalHeader}>
+          <span style={css.modalTitle}>{isEdit ? "Edit Venue" : "New Venue"}</span>
+          <button style={css.closeBtn} onClick={onCancel}>×</button>
         </div>
+        <div style={css.modalBody}>
+          <SectionLabel>Basic Info</SectionLabel>
+          <label style={css.formLabel}>
+            Venue name *
+            <input style={css.formInput} value={form.name} onChange={e => set("name",e.target.value)} placeholder="e.g. Nile Garden Hall" />
+          </label>
+          <label style={css.formLabel}>
+            Description
+            <textarea style={{ ...css.formInput, minHeight:76, resize:"vertical" }} value={form.description} onChange={e => set("description",e.target.value)} placeholder="Describe the venue…" />
+          </label>
 
-        <div style={styles.modalBody}>
+          <SectionLabel style={{ marginTop:18 }}>Location</SectionLabel>
+          <div style={css.formGrid2}>
+            <label style={css.formLabel}>City *<input style={css.formInput} value={form.city} onChange={e => set("city",e.target.value)} placeholder="Cairo" /></label>
+            <label style={css.formLabel}>Area<input style={css.formInput} value={form.area} onChange={e => set("area",e.target.value)} placeholder="Maadi" /></label>
+          </div>
+          <label style={css.formLabel}>Address<input style={css.formInput} value={form.address} onChange={e => set("address",e.target.value)} placeholder="Corniche El Maadi" /></label>
 
-          {/* ── Basic Info ── */}
-          <p style={styles.sectionLabel}>Basic Info</p>
-          <div style={styles.row}>
-            <div style={styles.fieldFull}>
-              <label style={styles.label}>Venue Name *</label>
-              <input style={styles.input} value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. Nile Garden Hall" />
-            </div>
-          </div>
-          <div style={styles.fieldFull}>
-            <label style={styles.label}>Description</label>
-            <textarea style={{...styles.input, height:80, resize:"vertical"}} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Describe the venue..." />
-          </div>
-
-          {/* ── Location ── */}
-          <p style={styles.sectionLabel}>Location</p>
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>City *</label>
-              <input style={styles.input} value={form.city} onChange={e => set("city", e.target.value)} placeholder="Cairo" />
-            </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Area</label>
-              <input style={styles.input} value={form.area} onChange={e => set("area", e.target.value)} placeholder="Maadi" />
-            </div>
-          </div>
-          <div style={styles.fieldFull}>
-            <label style={styles.label}>Address</label>
-            <input style={styles.input} value={form.address} onChange={e => set("address", e.target.value)} placeholder="Corniche El Maadi" />
+          <SectionLabel style={{ marginTop:18 }}>Specs</SectionLabel>
+          <div style={css.formGrid2}>
+            <label style={css.formLabel}>Capacity *<input style={css.formInput} type="number" value={form.capacity} onChange={e => set("capacity",e.target.value)} placeholder="250" /></label>
+            <label style={css.formLabel}>Area (sqm)<input style={css.formInput} type="number" value={form.dimensionsSqm} onChange={e => set("dimensionsSqm",e.target.value)} placeholder="600" /></label>
           </div>
 
-          {/* ── Specs ── */}
-          <p style={styles.sectionLabel}>Specs</p>
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Capacity *</label>
-              <input style={styles.input} type="number" value={form.capacity} onChange={e => set("capacity", e.target.value)} placeholder="250" />
-            </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Area (sqm)</label>
-              <input style={styles.input} type="number" value={form.dimensionsSqm} onChange={e => set("dimensionsSqm", e.target.value)} placeholder="600" />
-            </div>
-          </div>
-
-          {/* ── Amenities ── */}
-          <p style={styles.sectionLabel}>Amenities</p>
-          <div style={styles.chipRow}>
+          <SectionLabel style={{ marginTop:18 }}>Amenities</SectionLabel>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:7, marginBottom:4 }}>
             {AMENITY_OPTIONS.map(a => (
-              <button
-                key={a}
-                onClick={() => toggleAmenity(a)}
-                style={{ ...styles.chip, ...(form.amenities.includes(a) ? styles.chipActive : {}) }}
-              >
-                {a}
-              </button>
+              <button key={a} type="button" onClick={() => toggleAmenity(a)} style={{ ...css.chip, ...(form.amenities.includes(a) ? css.chipActive : {}) }}>{a}</button>
             ))}
           </div>
 
-          {/* ── Pricing ── */}
-          <p style={styles.sectionLabel}>Pricing</p>
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Base Price *</label>
-              <input style={styles.input} type="number" value={form.basePrice} onChange={e => set("basePrice", e.target.value)} placeholder="35000" />
-            </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Currency</label>
-              <select style={styles.input} value={form.currency} onChange={e => set("currency", e.target.value)}>
+          <SectionLabel style={{ marginTop:18 }}>Pricing</SectionLabel>
+          <div style={css.formGrid3}>
+            <label style={css.formLabel}>Base price *<input style={css.formInput} type="number" value={form.basePrice} onChange={e => set("basePrice",e.target.value)} placeholder="35000" /></label>
+            <label style={css.formLabel}>Currency
+              <select style={css.formInput} value={form.currency} onChange={e => set("currency",e.target.value)}>
                 <option>EGP</option><option>USD</option><option>EUR</option>
               </select>
-            </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Pricing Unit</label>
-              <select style={styles.input} value={form.pricingUnit} onChange={e => set("pricingUnit", e.target.value)}>
-                <option value="per_event">Per Event</option>
-                <option value="per_day">Per Day</option>
-                <option value="per_hour">Per Hour</option>
+            </label>
+            <label style={css.formLabel}>Unit
+              <select style={css.formInput} value={form.pricingUnit} onChange={e => set("pricingUnit",e.target.value)}>
+                <option value="per_event">Per event</option>
+                <option value="per_day">Per day</option>
+                <option value="per_hour">Per hour</option>
               </select>
+            </label>
+          </div>
+
+          <SectionLabel style={{ marginTop:18 }}>Photos</SectionLabel>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:10, marginBottom:4 }}>
+            {(initial?.photos || []).map((p,i) => (
+              <div key={`ex-${i}`} style={css.photoThumb}><img src={p.url} alt="" style={css.thumbImg} /></div>
+            ))}
+            {photoPreviews.map((src,i) => (
+              <div key={`new-${i}`} style={css.photoThumb}>
+                <img src={src} alt="" style={css.thumbImg} />
+                <button style={css.removePhotoBtn} onClick={() => removePhoto(i)}>×</button>
+              </div>
+            ))}
+            <button type="button" style={css.uploadBox} onClick={() => fileRef.current.click()}>
+              <span style={{ fontSize:24, color:"var(--opal-violet,#7c5cfc)", lineHeight:1 }}>+</span>
+              <span style={{ fontSize:11, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginTop:3 }}>Add photo</span>
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={onFileChange} />
+          </div>
+
+          <SectionLabel style={{ marginTop:18 }}>Block Dates</SectionLabel>
+          <p style={{ fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:"0 0 12px" }}>Click dates to mark them as unavailable.</p>
+          <div style={css.calWrap}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+              <button style={css.navBtn} onClick={() => setCalView(v => v.month===0 ? {year:v.year-1,month:11} : {...v,month:v.month-1})}>‹</button>
+              <span style={{ fontSize:13, fontWeight:600, color:"var(--opal-text,#e8e6f0)", minWidth:110, textAlign:"center" }}>
+                {MONTHS[calView.month]} {calView.year}
+              </span>
+              <button style={css.navBtn} onClick={() => setCalView(v => v.month===11 ? {year:v.year+1,month:0} : {...v,month:v.month+1})}>›</button>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
+              {["S","M","T","W","T","F","S"].map((d,i) => (
+                <div key={i} style={{ textAlign:"center", fontSize:9, fontWeight:700, color:"var(--opal-muted,rgba(232,230,240,0.35))", padding:"2px 0", letterSpacing:0.4 }}>{d}</div>
+              ))}
+              {calCells.map((day, i) => {
+                if (!day) return <div key={`b-${i}`} />;
+                const date   = new Date(calView.year, calView.month, day);
+                const key    = toKey(date);
+                const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const booked = bookedKeys.has(key);
+                const sel    = selectedKeys.has(key);
+                let bg = "transparent", color = "var(--opal-sub,rgba(232,230,240,0.55))", cursor = "pointer", border = "1px solid transparent";
+                if (isPast)  { color = "rgba(255,255,255,0.15)"; cursor = "default"; }
+                if (booked)  { bg = "rgba(255,92,102,0.15)"; color = "var(--opal-red,#ff5c66)"; cursor = "not-allowed"; border = "1px solid rgba(255,92,102,0.3)"; }
+                if (sel)     { bg = "var(--opal-violet,#7c5cfc)"; color = "#0a0a0f"; border = "1px solid var(--opal-violet,#7c5cfc)"; }
+                return (
+                  <button key={key} type="button" onClick={() => toggleDate(day)} style={{
+                    aspectRatio:"1", display:"flex", alignItems:"center", justifyContent:"center",
+                    borderRadius:7, fontSize:11, fontWeight:600, border, cursor, background:bg, color,
+                    transition:"background 0.1s, color 0.1s", fontFamily:"var(--font-body,system-ui)",
+                  }}>{day}</button>
+                );
+              })}
             </div>
           </div>
 
-          {/* ── Photos ── */}
-          <p style={styles.sectionLabel}>Photos</p>
-          <div style={styles.photoGrid}>
-            {/* Existing photos from edit */}
-            {(initial?.photos || []).map((p, i) => (
-              <div key={`ex-${i}`} style={styles.photoThumb}>
-                <img src={p.url} alt="" style={styles.thumbImg} />
-              </div>
-            ))}
-            {/* New uploads */}
-            {photoPreviews.map((src, i) => (
-              <div key={`new-${i}`} style={styles.photoThumb}>
-                <img src={src} alt="" style={styles.thumbImg} />
-                <button style={styles.removePhoto} onClick={() => removePhoto(i)}>✕</button>
-              </div>
-            ))}
-            <button style={styles.uploadBox} onClick={() => fileRef.current.click()}>
-              <span style={{ fontSize: 28, color: "#6366f1" }}>+</span>
-              <span style={{ fontSize: 12, color: "#888", marginTop: 4 }}>Add photo</span>
-            </button>
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={onFileChange} />
-
-          {/* ── Availability Calendar ── */}
-          <p style={styles.sectionLabel}>Block Dates</p>
-          <p style={{ fontSize: 12, color: "#888", marginBottom: 12 }}>Click dates to mark them as unavailable.</p>
-          <BookingCalendar
-            bookedDates={bookedDates}
-            selectedDates={selectedDates}
-            onToggle={toggleDate}
-          />
-
-          {error && <p style={styles.error}>{error}</p>}
-
-          <div style={styles.formActions}>
-            <button style={styles.cancelBtn} onClick={onCancel}>Cancel</button>
-            <button style={styles.saveBtn} onClick={handleSubmit} disabled={loading}>
-              {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Venue"}
+          {error && <p style={{ color:"var(--opal-red,#ff5c66)", fontSize:13, marginTop:12 }}>{error}</p>}
+          <div style={css.formActions}>
+            <button style={css.cancelBtn} onClick={onCancel}>Cancel</button>
+            <button style={css.saveBtn} onClick={handleSubmit} disabled={loading}>
+              {loading ? "Saving…" : isEdit ? "Save Changes" : "Create Venue"}
             </button>
           </div>
         </div>
-      </div>
+      </GlassPanel>
     </div>
   );
 }
 
-// ─── Venue Card ──────────────────────────────────────────────────────────────
+// ─── Venue card ───────────────────────────────────────────────────────────────
 
 function VenueCard({ venue, onEdit, onDelete, onDeactivate }) {
-  const [confirming, setConfirming] = useState(null); // 'delete' | 'deactivate'
+  const [confirming, setConfirming] = useState(null);
+  const [hovered,    setHovered]    = useState(false);
+  const photoUrl = venue.photos?.[0]?.url;
 
   return (
-    <div style={styles.card}>
-      {venue.photos?.[0] && (
-        <img src={venue.photos[0].url} alt={venue.name} style={styles.cardImg} />
+    <GlassPanel
+      style={{ ...css.vCard, ...(hovered ? css.vCardHovered : {}) }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {photoUrl ? (
+        <img src={photoUrl} alt={venue.name} style={css.vCardImg} />
+      ) : (
+        <div style={{ ...css.vCardImg, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(21,21,29,0.8)", fontSize:32 }}>🏛️</div>
       )}
-      {!venue.photos?.[0] && (
-        <div style={styles.cardImgPlaceholder}>
-          <span style={{ fontSize: 32 }}>🏛️</span>
-        </div>
-      )}
-      <div style={styles.cardBody}>
-        <div style={styles.cardTop}>
+      <div style={{ padding:"12px 14px 14px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
           <div>
-            <h3 style={styles.cardName}>{venue.name}</h3>
-            <p style={styles.cardLocation}>{[venue.location?.area, venue.location?.city].filter(Boolean).join(", ")}</p>
+            <h3 style={{ fontSize:14, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:0, fontFamily:"var(--font-display,system-ui)", letterSpacing:-0.2 }}>
+              {venue.name}
+            </h3>
+            <p style={{ fontSize:10, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:"2px 0 0" }}>
+              {[venue.location?.area, venue.location?.city].filter(Boolean).join(", ")}
+            </p>
           </div>
-          <span style={{ ...styles.badge, ...(venue.isActive ? styles.badgeGreen : styles.badgeGray) }}>
+          <span style={{ ...css.statusBadge, ...(venue.isActive ? css.statusGreen : css.statusGray) }}>
             {venue.isActive ? "Active" : "Inactive"}
           </span>
         </div>
-        <p style={styles.cardDesc}>{venue.description}</p>
-        <div style={styles.cardMeta}>
+        <p style={{ fontSize:12, color:"var(--opal-sub,rgba(232,230,240,0.55))", lineHeight:1.4, marginBottom:10, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+          {venue.description}
+        </p>
+        <div style={{ display:"flex", gap:10, fontSize:11, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:12, flexWrap:"wrap" }}>
           <span>👥 {venue.capacity}</span>
-          <span>📐 {venue.dimensionsSqm} sqm</span>
-          <span>💰 {venue.pricing?.basePrice?.toLocaleString()} {venue.pricing?.currency}</span>
+          <span>📐 {venue.dimensionsSqm}sqm</span>
+          <span>💰 {formatPrice(venue.pricing)}</span>
         </div>
-
         {confirming === "delete" ? (
-          <div style={styles.confirmRow}>
-            <span style={{ fontSize: 13, color: "#ef4444" }}>Delete this venue?</span>
-            <button style={styles.confirmYes} onClick={() => { onDelete(venue._id); setConfirming(null); }}>Yes, delete</button>
-            <button style={styles.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:"var(--opal-red,#ff5c66)" }}>Delete?</span>
+            <button style={css.confirmYes} onClick={() => { onDelete(venue._id); setConfirming(null); }}>Yes</button>
+            <button style={css.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
           </div>
         ) : confirming === "deactivate" ? (
-          <div style={styles.confirmRow}>
-            <span style={{ fontSize: 13, color: "#f59e0b" }}>Deactivate this venue?</span>
-            <button style={styles.confirmYes} onClick={() => { onDeactivate(venue._id); setConfirming(null); }}>Yes</button>
-            <button style={styles.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
+          <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+            <span style={{ fontSize:11, color:"var(--opal-amber,#f5b34a)" }}>Deactivate?</span>
+            <button style={css.confirmYes} onClick={() => { onDeactivate(venue._id); setConfirming(null); }}>Yes</button>
+            <button style={css.confirmNo}  onClick={() => setConfirming(null)}>Cancel</button>
           </div>
         ) : (
-          <div style={styles.cardActions}>
-            <button style={styles.editBtn}       onClick={() => onEdit(venue)}>Edit</button>
-            <button style={styles.deactivateBtn} onClick={() => setConfirming("deactivate")}>Deactivate</button>
-            <button style={styles.deleteBtn}     onClick={() => setConfirming("delete")}>Delete</button>
+          <div style={{ display:"flex", gap:6 }}>
+            <button style={css.vBtnEdit}       onClick={() => onEdit(venue)}>Edit</button>
+            <button style={css.vBtnDeactivate} onClick={() => setConfirming("deactivate")}>Deactivate</button>
+            <button style={css.vBtnDelete}     onClick={() => setConfirming("delete")}>Delete</button>
           </div>
         )}
       </div>
-    </div>
+    </GlassPanel>
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ─── My Venues section ────────────────────────────────────────────────────────
 
-export default function VenuesPage() {
-  const [venues,    setVenues]    = useState([]);
-  const [filtered,  setFiltered]  = useState([]);
-  const [search,    setSearch]    = useState("");
-  const [filter,    setFilter]    = useState("all");   // all | active | inactive
-  const [loading,   setLoading]   = useState(true);
-  const [showForm,  setShowForm]  = useState(false);
-  const [editing,   setEditing]   = useState(null);
+function MyVenuesSection() {
+  const [venues,   setVenues]   = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [search,   setSearch]   = useState("");
+  const [filter,   setFilter]   = useState("all");
+  const [loading,  setLoading]  = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editing,  setEditing]  = useState(null);
 
   async function load() {
     setLoading(true);
-    try {
-      const { venues } = await getMyVenues();
-      setVenues(venues);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    try { const { venues } = await getMyVenues(); setVenues(venues); }
+    catch(e) { console.error(e); }
+    finally  { setLoading(false); }
   }
-
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
@@ -414,71 +737,53 @@ export default function VenuesPage() {
     setFiltered(list);
   }, [venues, search, filter]);
 
-  async function handleDelete(id) {
-    try { await deleteVenue(id); load(); } catch (e) { console.error(e); }
-  }
-
-  async function handleDeactivate(id) {
-    try { await deactivateVenue(id); load(); } catch (e) { console.error(e); }
-  }
+  async function handleDelete(id)     { try { await deleteVenue(id);     load(); } catch(e) { console.error(e); } }
+  async function handleDeactivate(id) { try { await deactivateVenue(id); load(); } catch(e) { console.error(e); } }
 
   return (
-    <div style={styles.page}>
-
-      {/* ── Header ── */}
-      <div style={styles.pageHeader}>
-        <div>
-          <h1 style={styles.pageTitle}>My Venues</h1>
-          <p style={styles.pageSubtitle}>{venues.length} listing{venues.length !== 1 ? "s" : ""}</p>
+    <div style={{ flex:"1 1 0", minWidth:0 }}>
+      {/* Toolbar */}
+      <div style={{ display:"flex", gap:10, marginBottom:14, flexWrap:"wrap", alignItems:"center" }}>
+        <div style={{ position:"relative", flex:"1 1 160px" }}>
+          <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", pointerEvents:"none" }}>⌕</span>
+          <input
+            style={css.searchInput}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search venues…"
+          />
+          {search && (
+            <button style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"var(--opal-muted,rgba(232,230,240,0.35))", fontSize:14, cursor:"pointer" }}
+              onClick={() => setSearch("")}>×</button>
+          )}
         </div>
-        <button style={styles.newBtn} onClick={() => { setEditing(null); setShowForm(true); }}>
+        <div style={{ display:"flex", gap:5 }}>
+          {["all","active","inactive"].map(f => (
+            <button key={f} onClick={() => setFilter(f)} style={{ ...css.filterBtn, ...(filter===f ? css.filterBtnActive : {}) }}>
+              {f.charAt(0).toUpperCase()+f.slice(1)}
+            </button>
+          ))}
+        </div>
+        <button style={css.newVenueBtn} onClick={() => { setEditing(null); setShowForm(true); }}>
           + New Venue
         </button>
       </div>
 
-      {/* ── Search + Filters ── */}
-      <div style={styles.toolbar}>
-        <div style={styles.searchWrap}>
-          <span style={styles.searchIcon}>🔍</span>
-          <input
-            style={styles.searchInput}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, city or area..."
-          />
-          {search && (
-            <button style={styles.clearSearch} onClick={() => setSearch("")}>✕</button>
-          )}
-        </div>
-        <div style={styles.filters}>
-          {["all","active","inactive"].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{ ...styles.filterBtn, ...(filter === f ? styles.filterBtnActive : {}) }}
-            >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Venue Grid ── */}
       {loading ? (
-        <div style={styles.center}><p style={{ color: "#888" }}>Loading venues...</p></div>
+        <p style={{ color:"var(--opal-muted,rgba(232,230,240,0.35))", fontSize:13 }}>Loading venues…</p>
       ) : filtered.length === 0 ? (
-        <div style={styles.empty}>
-          <p style={styles.emptyIcon}>🏛️</p>
-          <p style={styles.emptyTitle}>{search ? "No venues match your search" : "No venues yet"}</p>
-          <p style={styles.emptyHint}>{search ? "Try a different search term." : "Create your first listing to get started."}</p>
-          {!search && (
-            <button style={styles.newBtn} onClick={() => { setEditing(null); setShowForm(true); }}>
-              + New Venue
-            </button>
-          )}
-        </div>
+        <GlassPanel style={{ textAlign:"center", padding:"36px 24px" }}>
+          <p style={{ fontSize:28, margin:"0 0 8px" }}>🏛️</p>
+          <p style={{ fontSize:15, fontWeight:700, color:"var(--opal-text,#e8e6f0)", margin:"0 0 5px", fontFamily:"var(--font-display,system-ui)" }}>
+            {search ? "No venues match your search" : "No venues yet"}
+          </p>
+          <p style={{ fontSize:12, color:"var(--opal-muted,rgba(232,230,240,0.35))", marginBottom:16 }}>
+            {search ? "Try a different search term." : "Create your first listing to get started."}
+          </p>
+          {!search && <button style={css.newVenueBtn} onClick={() => { setEditing(null); setShowForm(true); }}>+ New Venue</button>}
+        </GlassPanel>
       ) : (
-        <div style={styles.grid}>
+        <div style={css.venueGrid}>
           {filtered.map(v => (
             <VenueCard
               key={v._id}
@@ -491,9 +796,8 @@ export default function VenuesPage() {
         </div>
       )}
 
-      {/* ── Form Modal ── */}
       {showForm && (
-        <VenueForm
+        <VenueFormModal
           initial={editing}
           onSave={() => { setShowForm(false); setEditing(null); load(); }}
           onCancel={() => { setShowForm(false); setEditing(null); }}
@@ -503,95 +807,295 @@ export default function VenuesPage() {
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
+// ─── Notifications panel ──────────────────────────────────────────────────────
 
-const styles = {
-  page:           { minHeight:"100vh", background:"#f8f8fb", fontFamily:"Inter, system-ui, sans-serif", padding:"32px 24px" },
-  pageHeader:     { display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 },
-  pageTitle:      { fontSize:28, fontWeight:700, color:"#1a1a2e", margin:0 },
-  pageSubtitle:   { fontSize:14, color:"#888", margin:"4px 0 0" },
+function NotificationsPanel() {
+  return (
+    <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", height:"100%" }}>
+      <SectionLabel>Notifications</SectionLabel>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10 }}>
+        <span style={{ fontSize:28, opacity:0.25 }}>🔔</span>
+        <p style={{ fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", margin:0, textAlign:"center" }}>
+          No notifications yet
+        </p>
+      </div>
+    </GlassPanel>
+  );
+}
 
-  toolbar:        { display:"flex", gap:16, marginBottom:28, flexWrap:"wrap" },
-  searchWrap:     { position:"relative", flex:1, minWidth:220 },
-  searchIcon:     { position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", fontSize:14 },
-  searchInput:    { width:"100%", padding:"10px 36px", border:"1px solid #e5e7eb", borderRadius:10, fontSize:14, background:"#fff", outline:"none", boxSizing:"border-box" },
-  clearSearch:    { position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#aaa", fontSize:14 },
-  filters:        { display:"flex", gap:8 },
-  filterBtn:      { padding:"10px 18px", border:"1px solid #e5e7eb", borderRadius:10, background:"#fff", fontSize:13, cursor:"pointer", color:"#555", fontWeight:500 },
-  filterBtnActive:{ background:"#6366f1", color:"#fff", borderColor:"#6366f1" },
+// ─── Root ─────────────────────────────────────────────────────────────────────
 
-  newBtn:         { padding:"10px 20px", background:"#6366f1", color:"#fff", border:"none", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer" },
+export default function PageOwnerDashboard() {
+  const navigate = useNavigate();
 
-  grid:           { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(320px, 1fr))", gap:20 },
+  const dockItems = [
+    { icon: <VscMail size={26} />,     label: "Requests",  onClick: () => navigate("/venueowner/venueresponse") },
+    { icon: <VscHome size={26} />,     label: "Home",      active: true, onClick: () => navigate("/venueowner/venues") },
+    { icon: <VscCalendar size={26} />, label: "Reports",   onClick: () => navigate("/venueowner/venuereports") },
+  ];
 
-  card:           { background:"#fff", borderRadius:14, overflow:"hidden", boxShadow:"0 2px 8px rgba(0,0,0,0.06)", border:"1px solid #f0f0f5" },
-  cardImg:        { width:"100%", height:180, objectFit:"cover" },
-  cardImgPlaceholder: { width:"100%", height:180, background:"#f3f4f6", display:"flex", alignItems:"center", justifyContent:"center" },
-  cardBody:       { padding:16 },
-  cardTop:        { display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 },
-  cardName:       { fontSize:16, fontWeight:700, color:"#1a1a2e", margin:0 },
-  cardLocation:   { fontSize:12, color:"#888", margin:"2px 0 0" },
-  cardDesc:       { fontSize:13, color:"#555", marginBottom:12, display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" },
-  cardMeta:       { display:"flex", gap:12, fontSize:12, color:"#666", marginBottom:14, flexWrap:"wrap" },
-  cardActions:    { display:"flex", gap:8 },
-  badge:          { fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20 },
-  badgeGreen:     { background:"#dcfce7", color:"#16a34a" },
-  badgeGray:      { background:"#f3f4f6", color:"#888" },
+  return (
+    <div style={css.page}>
+      <AppHeader
+        crumb="Dashboard"
+        right={<Avatar name="Owner" size={32} />}
+      />
 
-  editBtn:        { flex:1, padding:"8px 0", border:"1px solid #6366f1", borderRadius:8, background:"transparent", color:"#6366f1", fontSize:13, fontWeight:600, cursor:"pointer" },
-  deactivateBtn:  { flex:1, padding:"8px 0", border:"1px solid #f59e0b", borderRadius:8, background:"transparent", color:"#f59e0b", fontSize:13, fontWeight:600, cursor:"pointer" },
-  deleteBtn:      { flex:1, padding:"8px 0", border:"1px solid #ef4444", borderRadius:8, background:"transparent", color:"#ef4444", fontSize:13, fontWeight:600, cursor:"pointer" },
+      <div style={css.content}>
+        {/* ── Confirmed Bookings ── */}
+        <section style={{ marginBottom:28 }}>
+          <ConfirmedBookingsSection />
+        </section>
 
-  confirmRow:     { display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" },
-  confirmYes:     { padding:"6px 12px", background:"#ef4444", color:"#fff", border:"none", borderRadius:6, fontSize:12, cursor:"pointer" },
-  confirmNo:      { padding:"6px 12px", background:"#f3f4f6", color:"#555", border:"none", borderRadius:6, fontSize:12, cursor:"pointer" },
+        {/* ── Notifications + My Venues side by side ── */}
+        <section>
+          <div style={css.bottomLayout}>
+            {/* Notifications — fixed width, stretches to match venues height */}
+            <div style={{ flex:"0 0 280px", minWidth:220, display:"flex", flexDirection:"column" }}>
+              <NotificationsPanel />
+            </div>
+            {/* My Venues — takes remaining space, 2-column grid */}
+            <MyVenuesSection />
+          </div>
+        </section>
+      </div>
 
-  center:         { display:"flex", justifyContent:"center", padding:60 },
-  empty:          { textAlign:"center", padding:80 },
-  emptyIcon:      { fontSize:48, margin:0 },
-  emptyTitle:     { fontSize:18, fontWeight:600, color:"#1a1a2e", margin:"12px 0 4px" },
-  emptyHint:      { fontSize:14, color:"#888", marginBottom:20 },
+      <Dock items={dockItems} />
+    </div>
+  );
+}
 
-  // Modal
-  overlay:        { position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 },
-  modal:          { background:"#fff", borderRadius:16, width:"100%", maxWidth:680, maxHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" },
-  modalHeader:    { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"20px 24px", borderBottom:"1px solid #f0f0f5" },
-  modalTitle:     { fontSize:20, fontWeight:700, color:"#1a1a2e", margin:0 },
-  closeBtn:       { background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#888" },
-  modalBody:      { overflowY:"auto", padding:"20px 24px", flex:1 },
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
-  sectionLabel:   { fontSize:11, fontWeight:700, letterSpacing:"0.08em", color:"#6366f1", textTransform:"uppercase", margin:"20px 0 10px" },
-  row:            { display:"flex", gap:12, marginBottom:12 },
-  field:          { flex:1 },
-  fieldFull:      { flex:1, marginBottom:12 },
-  label:          { display:"block", fontSize:12, fontWeight:600, color:"#555", marginBottom:4 },
-  input:          { width:"100%", padding:"9px 12px", border:"1px solid #e5e7eb", borderRadius:8, fontSize:14, outline:"none", boxSizing:"border-box", background:"#fafafa" },
+const css = {
+  page: {
+    minHeight: "100vh",
+    background: "var(--opal-bg,#0a0a0f)",
+    fontFamily: "var(--font-body,system-ui)",
+    color: "var(--opal-text,#e8e6f0)",
+    WebkitFontSmoothing: "antialiased",
+  },
+  content: {
+    // bottom padding clears the dock (120px) + some breathing room
+    padding: `28px 28px ${DOCK_HEIGHT + 24}px`,
+  },
 
-  chipRow:        { display:"flex", flexWrap:"wrap", gap:8, marginBottom:4 },
-  chip:           { padding:"6px 14px", border:"1px solid #e5e7eb", borderRadius:20, fontSize:13, cursor:"pointer", background:"#fafafa", color:"#555" },
-  chipActive:     { background:"#ede9fe", color:"#6366f1", borderColor:"#6366f1" },
+  bottomLayout: {
+    display: "flex",
+    gap: 20,
+    alignItems: "stretch",
+  },
 
-  photoGrid:      { display:"flex", flexWrap:"wrap", gap:10, marginBottom:4 },
-  photoThumb:     { position:"relative", width:80, height:80, borderRadius:8, overflow:"hidden", border:"1px solid #e5e7eb" },
-  thumbImg:       { width:"100%", height:"100%", objectFit:"cover" },
-  removePhoto:    { position:"absolute", top:2, right:2, background:"rgba(0,0,0,0.5)", border:"none", color:"#fff", borderRadius:"50%", width:18, height:18, fontSize:10, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" },
-  uploadBox:      { width:80, height:80, border:"2px dashed #d1d5db", borderRadius:8, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", background:"#fafafa" },
+  // Filter controls
+  filterControl: {
+    padding: "9px 12px",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 10, fontSize: 13,
+    color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    background: "rgba(21,21,29,0.7)",
+    fontFamily: "var(--font-body,system-ui)", outline: "none",
+    cursor: "pointer",
+  },
+  navBtn: {
+    width: 24, height: 24, borderRadius: 6,
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    background: "rgba(30,30,41,0.8)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    fontSize: 14, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "var(--font-body,system-ui)", lineHeight: 1, padding: 0,
+  },
 
-  formActions:    { display:"flex", gap:12, justifyContent:"flex-end", marginTop:24, paddingTop:16, borderTop:"1px solid #f0f0f5" },
-  cancelBtn:      { padding:"10px 20px", border:"1px solid #e5e7eb", borderRadius:8, background:"transparent", color:"#555", fontSize:14, cursor:"pointer" },
-  saveBtn:        { padding:"10px 24px", background:"#6366f1", color:"#fff", border:"none", borderRadius:8, fontSize:14, fontWeight:600, cursor:"pointer" },
+  // Booking detail chips
+  chipAmber: {
+    padding: "3px 10px", borderRadius: 20,
+    background: "rgba(245,179,74,0.15)", color: "var(--opal-amber,#f5b34a)",
+    border: "1px solid rgba(245,179,74,0.3)", fontSize: 11, fontWeight: 600,
+  },
+  chipMuted: {
+    padding: "3px 10px", borderRadius: 20,
+    background: "rgba(255,255,255,0.05)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))", fontSize: 11,
+  },
 
-  error:          { color:"#ef4444", fontSize:13, marginTop:8 },
+  // Venue grid — 2 columns (smaller cards to give space to notifications)
+  venueGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 14,
+  },
+  vCard: {
+    overflow: "hidden",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    display: "flex", flexDirection: "column",
+  },
+  vCardHovered: {
+    transform: "translateY(-3px)",
+    boxShadow: "0 6px 24px rgba(124,92,252,0.18), inset 0 1px 0 rgba(255,255,255,0.04)",
+  },
+  vCardImg: {
+    width: "100%", height: 150, objectFit: "cover", display: "block",
+  },
+  statusBadge: {
+    fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, flexShrink: 0,
+  },
+  statusGreen: { background: "rgba(48,209,88,0.15)", color: "#30d158", border: "1px solid rgba(48,209,88,0.3)" },
+  statusGray:  { background: "rgba(255,255,255,0.06)", color: "var(--opal-muted,rgba(232,230,240,0.35))", border: "1px solid var(--opal-border,rgba(255,255,255,0.08))" },
 
-  // Calendar
-  cal:            { background:"#fafafa", border:"1px solid #e5e7eb", borderRadius:12, padding:16, maxWidth:360 },
-  calHeader:      { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 },
-  calTitle:       { fontSize:15, fontWeight:600, color:"#1a1a2e" },
-  calNav:         { background:"none", border:"none", fontSize:18, cursor:"pointer", color:"#6366f1", padding:"0 8px" },
-  calGrid:        { display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:4 },
-  calDayLabel:    { fontSize:11, fontWeight:600, color:"#aaa", textAlign:"center", paddingBottom:4 },
-  calCell:        { fontSize:13, textAlign:"center", padding:"7px 0", userSelect:"none" },
-  calLegend:      { display:"flex", gap:16, marginTop:12, fontSize:12, color:"#666" },
-  legendItem:     { display:"flex", alignItems:"center", gap:6 },
-  dot:            { width:12, height:12, borderRadius:"50%", display:"inline-block" },
+  vBtnEdit: {
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(124,92,252,0.4)", borderRadius: 7,
+    background: "rgba(124,92,252,0.08)", color: "var(--opal-violet,#7c5cfc)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+  },
+  vBtnDeactivate: {
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(245,179,74,0.35)", borderRadius: 7,
+    background: "rgba(245,179,74,0.07)", color: "var(--opal-amber,#f5b34a)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+  },
+  vBtnDelete: {
+    flex: 1, padding: "6px 0",
+    border: "1px solid rgba(255,92,102,0.35)", borderRadius: 7,
+    background: "rgba(255,92,102,0.07)", color: "var(--opal-red,#ff5c66)",
+    fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+  },
+  confirmYes: {
+    padding: "4px 10px", background: "var(--opal-red,#ff5c66)", color: "#0a0a0f",
+    border: "none", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer",
+    fontFamily: "var(--font-body,system-ui)",
+  },
+  confirmNo: {
+    padding: "4px 10px", background: "rgba(255,255,255,0.07)", color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))", borderRadius: 6,
+    fontSize: 11, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+  },
+
+  // Venue toolbar
+  searchInput: {
+    width: "100%", padding: "8px 32px",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 10, fontSize: 12,
+    background: "rgba(21,21,29,0.7)", outline: "none",
+    color: "var(--opal-text,#e8e6f0)",
+    fontFamily: "var(--font-body,system-ui)", boxSizing: "border-box",
+  },
+  filterBtn: {
+    padding: "7px 11px",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 9, fontSize: 11, fontWeight: 500,
+    color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    background: "rgba(21,21,29,0.6)", cursor: "pointer",
+    fontFamily: "var(--font-body,system-ui)",
+  },
+  filterBtnActive: {
+    background: "var(--opal-violet,#7c5cfc)", color: "#0a0a0f",
+    border: "1px solid var(--opal-violet,#7c5cfc)",
+  },
+  newVenueBtn: {
+    padding: "8px 14px",
+    background: "linear-gradient(135deg, var(--opal-violet,#7c5cfc) 0%, var(--opal-teal,#4fd1c5) 100%)",
+    color: "#0a0a0f", border: "none", borderRadius: 9,
+    fontSize: 12, fontWeight: 700, cursor: "pointer",
+    fontFamily: "var(--font-body,system-ui)", whiteSpace: "nowrap",
+  },
+
+  // Form modal
+  overlay: {
+    position: "fixed", inset: 0,
+    background: "rgba(10,10,15,0.7)", backdropFilter: "blur(4px)",
+    zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+  },
+  modal: {
+    width: "100%", maxWidth: 660, maxHeight: "90vh",
+    display: "flex", flexDirection: "column", overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "18px 22px",
+    borderBottom: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    flexShrink: 0,
+  },
+  modalTitle: {
+    fontSize: 17, fontWeight: 700, color: "var(--opal-text,#e8e6f0)",
+    fontFamily: "var(--font-display,system-ui)",
+  },
+  closeBtn: {
+    background: "none", border: "none", fontSize: 20, cursor: "pointer",
+    color: "var(--opal-muted,rgba(232,230,240,0.35))", lineHeight: 1,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: 28, height: 28,
+  },
+  modalBody: {
+    overflowY: "auto", padding: "18px 22px 24px", flex: 1,
+  },
+  formLabel: {
+    display: "flex", flexDirection: "column", gap: 6,
+    fontSize: 12, fontWeight: 600, color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    marginBottom: 10,
+  },
+  formInput: {
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 10, padding: "9px 10px", fontSize: 13,
+    color: "var(--opal-text,#e8e6f0)",
+    background: "rgba(21,21,29,0.7)",
+    fontFamily: "var(--font-body,system-ui)", outline: "none",
+    width: "100%", boxSizing: "border-box",
+  },
+  formGrid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
+  formGrid3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 },
+  chip: {
+    padding: "6px 14px",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 20, fontSize: 12, cursor: "pointer",
+    background: "rgba(21,21,29,0.7)",
+    color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    fontFamily: "var(--font-body,system-ui)",
+  },
+  chipActive: {
+    background: "var(--opal-violet-dim,rgba(124,92,252,0.15))",
+    color: "var(--opal-violet,#7c5cfc)",
+    border: "1px solid rgba(124,92,252,0.4)",
+  },
+  photoThumb: {
+    position: "relative", width: 76, height: 76, borderRadius: 10,
+    overflow: "hidden", border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+  },
+  thumbImg: { width: "100%", height: "100%", objectFit: "cover" },
+  removePhotoBtn: {
+    position: "absolute", top: 3, right: 3,
+    background: "rgba(10,10,15,0.65)", border: "none", color: "#fff",
+    borderRadius: "50%", width: 18, height: 18, fontSize: 12, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  uploadBox: {
+    width: 76, height: 76,
+    border: "2px dashed var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 10, display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", cursor: "pointer",
+    background: "transparent",
+  },
+  calWrap: {
+    background: "rgba(21,21,29,0.7)",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 14, padding: "14px 16px",
+  },
+  formActions: {
+    display: "flex", gap: 10, justifyContent: "flex-end",
+    marginTop: 24, paddingTop: 16,
+    borderTop: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+  },
+  cancelBtn: {
+    padding: "9px 18px",
+    border: "1px solid var(--opal-border,rgba(255,255,255,0.08))",
+    borderRadius: 10, background: "transparent",
+    color: "var(--opal-sub,rgba(232,230,240,0.55))",
+    fontSize: 13, cursor: "pointer", fontFamily: "var(--font-body,system-ui)",
+  },
+  saveBtn: {
+    padding: "9px 22px",
+    background: "linear-gradient(135deg, var(--opal-violet,#7c5cfc) 0%, var(--opal-teal,#4fd1c5) 100%)",
+    color: "#0a0a0f", border: "none", borderRadius: 10,
+    fontSize: 13, fontWeight: 700, cursor: "pointer",
+    fontFamily: "var(--font-body,system-ui)",
+  },
 };
