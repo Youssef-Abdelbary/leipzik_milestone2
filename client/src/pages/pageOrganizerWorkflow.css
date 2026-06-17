@@ -379,3 +379,33 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+.overdue-reminder-card {
+  border-color: #fecaca;
+  background-color: #fff7f7;
+}
+
+.overdue-text {
+  margin: 8px 0 0;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.overdue-badge {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.upcoming-badge {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}

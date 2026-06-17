@@ -57,10 +57,7 @@ function OrganizerWorkflow() {
             );
             setTasks(tasksData);
 
-            const notificationsData = await fetchJson(
-                `http://localhost:5001/api/workflow/notifications/${organizerId}`
-            );
-            setNotifications(notificationsData);
+            
             } catch (error) {
             console.error("Failed to load workflow data:", error);
             }
@@ -69,16 +66,46 @@ function OrganizerWorkflow() {
         loadWorkflowData();
     }, []);
     const filteredEvents = events.filter((event) => {
+        if (!event.date) {
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const eventDateObject = new Date(event.date);
+        eventDateObject.setHours(0, 0, 0, 0);
+
+        if (eventDateObject < today) {
+            return false;
+        }
+
         if (selectedDate === "") {
             return true;
         }
 
-        const eventDate = new Date(event.date).toISOString().split("T")[0];
+        const eventDate = eventDateObject.toISOString().split("T")[0];
 
         return eventDate === selectedDate;
     });
 
     const filteredTasks = tasks.filter((task) => {
+        const taskEvent = getTaskEvent(task);
+
+        if (!taskEvent?.date) {
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const eventDate = new Date(taskEvent.date);
+        eventDate.setHours(0, 0, 0, 0);
+
+        if (eventDate < today) {
+            return false;
+        }
+
         if (selectedStatus === "") {
             return true;
         }
@@ -101,37 +128,26 @@ function OrganizerWorkflow() {
             return false;
         }
 
-        const dueDate = new Date(task.dueDate);
+        const taskEvent = getTaskEvent(task);
 
-        return dueDate >= now;
+        if (!taskEvent?.date) {
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const eventDate = new Date(taskEvent.date);
+        eventDate.setHours(0, 0, 0, 0);
+
+        if (eventDate < today) {
+            return false;
+        }
+
+        return true;
     });
 
-    async function handleMarkNotificationAsRead(notificationId) {
-        try {
-            const response = await fetch(
-            `http://localhost:5001/api/workflow/notifications/${notificationId}/read`,
-            {
-                method: "PATCH",
-            }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-            throw new Error(data.message || "Failed to mark notification as read");
-            }
-
-            setNotifications((currentNotifications) =>
-            currentNotifications.map((notification) =>
-                notification._id === notificationId
-                ? { ...notification, status: "read" }
-                : notification
-            )
-            );
-        } catch (error) {
-            console.error("Failed to mark notification as read:", error);
-        }
-    }
+    
   return (
     <div className="workflow-page">
         <div className="workflow-header-row">
@@ -286,72 +302,60 @@ function OrganizerWorkflow() {
                     )}
 
                     {reminderTasks.map((task) => {
-  const taskEvent = getTaskEvent(task);
+                    const taskEvent = getTaskEvent(task);
+                    const dueDate = new Date(task.dueDate);
+                    const isOverdue = dueDate < now;
 
-  return (
-    <div className="reminder-card" key={task._id}>
-      <div>
-        <h3>⚠️ {task.title}</h3>
-        <p>{task.description}</p>
+                    return (
+                        <div
+                        className={isOverdue ? "reminder-card overdue-reminder-card" : "reminder-card"}
+                        key={task._id}
+                        >
+                        <div>
+                            <h3>{isOverdue ? "🚨" : "⚠️"} {task.title}</h3>
+                            <p>{task.description}</p>
 
-        <p className="task-event-name">
-          🗓️ Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
-        </p>
-      </div>
+                            <p className="task-event-name">
+                            🗓️ Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
+                            </p>
+
+                            {isOverdue && (
+                            <p className="overdue-text">Deadline has passed</p>
+                            )}
+                        </div>
 
                         <div className="reminder-info">
-                        <span>📅 Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-                        <span>⏰ {new Date(task.dueDate).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        })}</span>
-                        <span>🔥 {task.priority}</span>
+                            <span>📅 Due: {dueDate.toLocaleDateString()}</span>
+
+                            <span>
+                            ⏰{" "}
+                            {dueDate.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })}
+                            </span>
+
+                            <span>🔥 {task.priority}</span>
+
+                            <span className={isOverdue ? "overdue-badge" : "upcoming-badge"}>
+                            {isOverdue ? "Overdue" : "Upcoming"}
+                            </span>
                         </div>
-                    </div>
-  );
-})}
+                        </div>
+                    );
+                    })}
                 </div>
                 </div>
                 <div className="notifications-section">
                     <h2>🔔 Notifications</h2>
-                    <p>Unread task reminder notifications for the organizer.</p>
+                    <p>General organizer notifications will appear here.</p>
 
                     <div className="notifications-list">
-                        {notifications.length === 0 && (
-                        <p className="empty-message">No notifications yet.</p>
-                        )}
-
-                        {notifications.map((notification) => (
-                        <div className="notification-card" key={notification._id}>
-                            <div>
-                            <h3>{notification.title}</h3>
-                            <p>{notification.message}</p>
-                            </div>
-
-                            <div className="notification-info">
-                            <span>{notification.status}</span>
-
-                            <span>
-                                ⏰{" "}
-                                {new Date(notification.scheduledFor).toLocaleString([], {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                                })}
-                            </span>
-
-                            {notification.status === "unread" && (
-                                <button
-                                className="mark-read-button"
-                                onClick={() => handleMarkNotificationAsRead(notification._id)}
-                                >
-                                Mark as Read
-                                </button>
-                            )}
-                            </div>
-                        </div>
-                        ))}
+                        <p className="empty-message">
+                            No notifications to show yet.
+                        </p>
                     </div>
-                    </div>
+                </div>
             </div>
     </div>
   );
