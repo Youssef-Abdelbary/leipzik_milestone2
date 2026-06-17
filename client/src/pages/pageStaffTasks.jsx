@@ -7,8 +7,6 @@ const STAFF_TABS = [
   { id: "tasks", label: "✅ Tasks" },
   { id: "layout", label: "🏛 Layout" },
   { id: "dayof", label: "📅 Day-Of" },
-  { id: "dashboard", label: "📊 Dashboard" },
-  { id: "profile", label: "👤 Profile" },
 ];
 
 export default function StaffTasks() {
