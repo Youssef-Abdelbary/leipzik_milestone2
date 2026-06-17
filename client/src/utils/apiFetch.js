@@ -1,6 +1,19 @@
 const BASE_URL = "http://localhost:5001/api";
 import { log } from "./logger";
 
+export function getUserIdFromToken() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.user_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export { BASE_URL };
+
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");

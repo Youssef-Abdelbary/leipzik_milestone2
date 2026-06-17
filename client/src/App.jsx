@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Register from "./pages/pageRegister";
 import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
@@ -21,10 +21,10 @@ import BudgetManagement from "./pages/pageBudgetManagement";
 import PageReplyVenue from './pages/pageReplyVenue.jsx';
 import FeedbackPage from './pages/pageFeedback';
 import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
-import InvoiceVendorPage from "./pages/pageInvoicesVendor";
 import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
 import StaffTasks from "./pages/pageStaffTasks";
+import VendorDashboard from "./pages/pageVendorDashboard";
 import Layout from "./pages/layout";
 import ProfilePage from "./pages/pageProfile";
 
@@ -46,9 +46,17 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-
+        <Route path="/organizer/events" element={<Events />} />
+        <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
+        <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
+        <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
+        <Route path="/vendor/invoices" element={<Navigate to="/vendor/dashboard?tab=invoices" replace />} />
+        <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
+        <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
+        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
         <Route element={<Layout />}>
           <Route path="/register" element={<Register />} />
+          <Route path="/staff/guestlist" element={<GuestList />} />
           <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
           <Route path="/organizer/deactivate" element={<UserDeactivation />} />
           <Route path="/venueowner/venues" element={<VenuesPage />} />
@@ -58,19 +66,12 @@ function App() {
           <Route path="/venueowner/venuereports" element={<VenueReports />} />
           <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
           <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
-          <Route path="/organizer/events" element={<Events />} />
-          <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
-          <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
           <Route path="/notificationsview" element={<NotificationsPage />} />
           <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
           <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
           <Route path="/organizer/budget" element={<BudgetManagement />} />
           <Route path="/organizer/reply" element={<PageReplyVenue />} />
-          <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
           <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
-          <Route path="/vendor/invoices" element={<InvoiceVendorPage />} />
-          <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
-          <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
           <Route path="/staff/dashboard" element={<StaffTasks />} />
           <Route path="/pageProfile" element={<ProfilePage />} />
           <Route path="/profile" element={<ProfilePage />} />

@@ -9,9 +9,7 @@ const router = express.Router();
 
 
 router.get("/", getVendors);
-
-
 router.post("/", createVendorRequest);
-router.get("/",  getVendorRequests);
+router.get("/requests", getVendorRequests);
 
 export default router;

@@ -1,5 +1,8 @@
 import Invoice from "../models/modelInvoice.js";
 import User from "../models/modelUser.js";
+import VendorRequest from "../models/modelVendorRequest.js";
+import Vendor from "../models/modelVendor.js";
+import { ensureVendorProfile } from "../utils/ensureVendorProfile.js";
 import { createNotification } from "../utils/notificationUtil.js";
 import { uploadToCloudinary } from "../utils/uploadCloudinary.js";
 import multer from "multer";
@@ -36,44 +39,67 @@ export const getInvoices = async (req, res) => {
 
 // POST /api/invoices
 // Vendor creates and submits a new invoice.
+// Link via vendorRequestId (recommended) — eventId + organizerId are resolved automatically.
 export const createInvoice = async (req, res) => {
   try {
-    console.log("createInvoice req.body:", req.body);
-
     const { organizerEmail, vendorId, eventId, vendorRequestId, invoiceNumber, items, tax, currency } = req.body;
 
-    if (!organizerEmail || !vendorId || !invoiceNumber || !Array.isArray(items) || items.length === 0) {
-      console.log("createInvoice validation failed", { organizerEmail, vendorId, invoiceNumber, items });
-      return res.status(400).json({ message: "Missing required invoice fields." });
+    if (!vendorId || !invoiceNumber || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "vendorId, invoiceNumber, and items are required." });
     }
 
-    const organizer = await User.findOne({
-      email: organizerEmail.toLowerCase().trim(),
-      role: "organizer",
-    });
+    let resolvedEventId = eventId || null;
+    let resolvedOrganizerId = null;
 
-    if (!organizer) {
-      console.log("createInvoice: no organizer found for email", organizerEmail);
-      return res.status(404).json({ message: "No organizer found with that email." });
+    if (vendorRequestId) {
+      const request = await VendorRequest.findById(vendorRequestId).lean();
+      if (!request) {
+        return res.status(404).json({ message: "Vendor request not found." });
+      }
+      if (request.status !== "accepted") {
+        return res.status(400).json({ message: "Invoices can only be linked to accepted orders." });
+      }
+
+      const vendorProfile = await ensureVendorProfile(vendorId);
+      if (!vendorProfile || String(request.vendorId) !== String(vendorProfile._id)) {
+        return res.status(403).json({ message: "This order does not belong to you." });
+      }
+
+      resolvedEventId = request.eventId;
+      resolvedOrganizerId = request.organizerId;
     }
 
-    const organizerId = organizer._id;
+    if (!resolvedOrganizerId) {
+      if (!organizerEmail) {
+        return res.status(400).json({ message: "Provide organizerEmail or link the invoice to an accepted order." });
+      }
+      const organizer = await User.findOne({
+        email: organizerEmail.toLowerCase().trim(),
+        role: "organizer",
+      });
+      if (!organizer) {
+        return res.status(404).json({ message: "No organizer found with that email." });
+      }
+      resolvedOrganizerId = organizer._id;
+    }
+
+    if (!resolvedEventId) {
+      return res.status(400).json({ message: "Link the invoice to an accepted order so it appears under the correct event." });
+    }
 
     const itemsWithTotals = items.map((item) => ({
       ...item,
       total: item.quantity * item.unitPrice,
     }));
-    console.log("itemsWithTotals:", itemsWithTotals);
 
     const subtotal = itemsWithTotals.reduce((sum, item) => sum + item.total, 0);
     const taxAmount = tax || 0;
     const totalAmount = subtotal + taxAmount;
-    console.log("subtotal/tax/total:", subtotal, taxAmount, totalAmount);
 
     const invoice = await Invoice.create({
-      organizerId,
+      organizerId: resolvedOrganizerId,
       vendorId,
-      eventId: eventId || null,
+      eventId: resolvedEventId,
       vendorRequestId: vendorRequestId || null,
       invoiceNumber,
       items: itemsWithTotals,
@@ -83,8 +109,6 @@ export const createInvoice = async (req, res) => {
       currency: currency || "EGP",
       status: "pending_review",
     });
-
-    console.log("invoice created:", invoice);
 
     res.status(201).json({ data: invoice });
   } catch (err) {
