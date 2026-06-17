@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import "./TabTeam.css";
+import "../../components/componentTheme.css";
+import { GlassPanel } from "../../components/componentTheme";
 
 export default function TabTeam({ eventId }) {
   const [staffMembers, setStaffMembers] = useState([]);
@@ -169,84 +171,89 @@ export default function TabTeam({ eventId }) {
   return (
     <div className="team-tab">
       <div className="team-header">
-        <h1>👥 Team Members</h1>
+        <h1>Team Members</h1>
         <p>View staff members, assign tasks, and track task status for this event.</p>
       </div>
 
       <div className="team-summary-cards">
-        <div className="team-summary-card">
-            <h3>Total Staff</h3>
-            <p>{totalStaff}</p>
-        </div>
+        <GlassPanel className="team-summary-card">
+          <span>Total Staff</span>
+          <p>{totalStaff}</p>
+        </GlassPanel>
 
-        <div className="team-summary-card">
-            <h3>Total Tasks</h3>
-            <p>{totalTasks}</p>
-        </div>
+        <GlassPanel className="team-summary-card">
+          <span>Total Tasks</span>
+          <p>{totalTasks}</p>
+        </GlassPanel>
 
-        <div className="team-summary-card">
-            <h3>Unassigned Tasks</h3>
-            <p>{unassignedTasks}</p>
-        </div>
+        <GlassPanel className="team-summary-card">
+          <span>Unassigned Tasks</span>
+          <p>{unassignedTasks}</p>
+        </GlassPanel>
 
-        <div className="team-summary-card">
-            <h3>Done Tasks</h3>
-            <p>{doneTasks}</p>
-        </div>
-        </div>
+        <GlassPanel className="team-summary-card">
+          <span>Done Tasks</span>
+          <p>{doneTasks}</p>
+        </GlassPanel>
+      </div>
 
       <div className="team-layout">
-        <section className="team-section">
+        <GlassPanel className="team-section">
           <div className="team-section-header">
-            <h2>Staff Members</h2>
+            <div>
+              <h2>Staff Members</h2>
+              <p>Filter staff and view their task load.</p>
+            </div>
 
-            <select
-              value={employmentTypeFilter}
-              onChange={(e) => setEmploymentTypeFilter(e.target.value)}
-            >
-              <option value="">All types</option>
-              <option value="full_time">Full-time</option>
-              <option value="part_time">Part-time</option>
-            </select>
+            <div className="team-header-actions">
+              <select
+                value={employmentTypeFilter}
+                onChange={(e) => setEmploymentTypeFilter(e.target.value)}
+              >
+                <option value="">All types</option>
+                <option value="full_time">Full-time</option>
+                <option value="part_time">Part-time</option>
+              </select>
 
-            <select
+              <select
                 value={specialityFilter}
                 onChange={(e) => setSpecialityFilter(e.target.value)}
-            >
+              >
                 <option value="">All specialities</option>
                 <option value="Catering">Catering</option>
                 <option value="Logistics">Logistics</option>
                 <option value="Seating">Seating</option>
                 <option value="Guest Service">Guest Service</option>
-            </select>
+              </select>
+            </div>
           </div>
 
           <div className="team-list">
             {staffMembers.map((staff) => (
-                <div
+              <div
                 key={staff._id}
                 className={`team-card staff-card-clickable ${
-                    selectedStaff?._id === staff._id ? "selected-staff-card" : ""
+                  selectedStaff?._id === staff._id ? "selected-staff-card" : ""
                 }`}
                 onClick={() =>
-                    selectedStaff?._id === staff._id
+                  selectedStaff?._id === staff._id
                     ? setSelectedStaff(null)
                     : setSelectedStaff(staff)
                 }
-                >
+              >
                 <div className="staff-name-row">
-                <div>
+                  <div>
                     <h3>{staff.fullName || staff.email}</h3>
                     <p className="staff-task-count">
-                    {getStaffTaskCount(staff._id)} assigned task(s)
+                      {getStaffTaskCount(staff._id)} assigned task(s)
                     </p>
-                </div>
+                  </div>
 
-                <span>{selectedStaff?._id === staff._id ? "▲" : "▼"}</span>
+                  <span>{selectedStaff?._id === staff._id ? "▲" : "▼"}</span>
                 </div>
 
                 {selectedStaff?._id === staff._id && (
-                    <div className="staff-inline-details">
+                  <div className="staff-inline-details">
                     <p>Email: {staff.email}</p>
                     <p>Phone: {staff.phone || "Not specified"}</p>
                     <p>Age: {staff.age}</p>
@@ -254,83 +261,87 @@ export default function TabTeam({ eventId }) {
                     <p>Speciality: {staff.speciality}</p>
                     <p>Experience: {staff.experienceYears} years</p>
                     <p>
-                        Tasks completed: {getStaffDoneTaskCount(staff._id)} /{" "}
-                        {getStaffTaskCount(staff._id)}
+                      Tasks completed: {getStaffDoneTaskCount(staff._id)} /{" "}
+                      {getStaffTaskCount(staff._id)}
                     </p>
-                    </div>
+                  </div>
                 )}
-                </div>
+              </div>
             ))}
           </div>
-        </section>
+        </GlassPanel>
 
-        <section className="team-section">
+        <GlassPanel className="team-section">
           <div className="team-section-header">
-            <h2>Event Tasks</h2>
+            <div>
+              <h2>Event Tasks</h2>
+              <p>Create tasks, assign staff, and track progress.</p>
+            </div>
 
             <div className="task-header-actions">
               <button
                 className="add-task-button"
                 onClick={() => setShowTaskForm(!showTaskForm)}
               >
-                {showTaskForm ? "Cancel" : "+ Add Task"}
+                {showTaskForm ? "Cancel" : "Add Task"}
               </button>
 
               <select
                 value={taskStatusFilter}
                 onChange={(e) => setTaskStatusFilter(e.target.value)}
               >
-              <option value="">All statuses</option>
-              <option value="not_assigned">Not assigned</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In progress</option>
-              <option value="done">Done</option>
-            </select>
+                <option value="">All statuses</option>
+                <option value="not_assigned">Not assigned</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
           </div>
-        </div>
-        {showTaskForm && (
-          <div className="add-task-form">
-            <input
-              type="text"
-              placeholder="Task title"
-              value={taskForm.title}
-              onChange={(e) => updateTaskForm("title", e.target.value)}
-            />
 
-            <input
-              type="text"
-              placeholder="Description"
-              value={taskForm.description}
-              onChange={(e) => updateTaskForm("description", e.target.value)}
-            />
+          {showTaskForm && (
+            <div className="add-task-form">
+              <input
+                type="text"
+                placeholder="Task title"
+                value={taskForm.title}
+                onChange={(e) => updateTaskForm("title", e.target.value)}
+              />
 
-            <input
-              type="text"
-              placeholder="Category, e.g. Logistics"
-              value={taskForm.category}
-              onChange={(e) => updateTaskForm("category", e.target.value)}
-            />
+              <input
+                type="text"
+                placeholder="Description"
+                value={taskForm.description}
+                onChange={(e) => updateTaskForm("description", e.target.value)}
+              />
 
-            <select
-              value={taskForm.priority}
-              onChange={(e) => updateTaskForm("priority", e.target.value)}
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+              <input
+                type="text"
+                placeholder="Category, e.g. Logistics"
+                value={taskForm.category}
+                onChange={(e) => updateTaskForm("category", e.target.value)}
+              />
 
-            <input
-              type="datetime-local"
-              value={taskForm.dueDate}
-              onChange={(e) => updateTaskForm("dueDate", e.target.value)}
-            />
+              <select
+                value={taskForm.priority}
+                onChange={(e) => updateTaskForm("priority", e.target.value)}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
 
-            <button className="save-task-button" onClick={createTask}>
-              Save Task
-            </button>
-          </div>
-        )}
+              <input
+                type="datetime-local"
+                value={taskForm.dueDate}
+                onChange={(e) => updateTaskForm("dueDate", e.target.value)}
+              />
+
+              <button className="save-task-button" onClick={createTask}>
+                Save Task
+              </button>
+            </div>
+          )}
 
           <div className="team-list">
             {tasks.map((task) => (
@@ -347,31 +358,31 @@ export default function TabTeam({ eventId }) {
                 </div>
 
                 <div className="task-meta-row">
-                <span>Category: {task.category}</span>
-                <span>Priority: {task.priority}</span>
+                  <span>Category: {task.category}</span>
+                  <span>Priority: {task.priority}</span>
                 </div>
 
                 <div className="assigned-staff-badge">
-                Assigned to: {getStaffName(task.assignedTo)}
+                  Assigned to: {getStaffName(task.assignedTo)}
                 </div>
 
                 <div className="task-progress-row">
-                <span>Progress</span>
-                <strong>{task.progressPercent || 0}%</strong>
+                  <span>Progress</span>
+                  <strong>{task.progressPercent || 0}%</strong>
                 </div>
 
                 <div className="task-progress-bar">
-                <div
+                  <div
                     className="task-progress-fill"
                     style={{ width: `${task.progressPercent || 0}%` }}
-                ></div>
+                  ></div>
                 </div>
 
                 <select
-                    value={task.assignedTo || ""}
-                    onChange={(e) => assignTask(task._id, e.target.value)}
-                    className="assign-select"
-                    disabled={task.status === "done"}
+                  value={task.assignedTo || ""}
+                  onChange={(e) => assignTask(task._id, e.target.value)}
+                  className="assign-select"
+                  disabled={task.status === "done"}
                 >
                   <option value="">Assign staff member</option>
 
@@ -381,13 +392,16 @@ export default function TabTeam({ eventId }) {
                     </option>
                   ))}
                 </select>
+
                 {task.status === "done" && (
-                    <p className="done-task-note">Completed tasks cannot be reassigned.</p>
+                  <p className="done-task-note">
+                    Completed tasks cannot be reassigned.
+                  </p>
                 )}
               </div>
             ))}
           </div>
-        </section>
+        </GlassPanel>
       </div>
     </div>
   );

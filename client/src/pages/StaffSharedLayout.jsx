@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import "./StaffSharedLayout.css";
+import "../components/componentTheme.css";
+import { P, icons, GlassPanel } from "../components/componentTheme";
 
 function StaffSharedLayout() {
   const [layouts, setLayouts] = useState([]);
@@ -57,11 +59,19 @@ function StaffSharedLayout() {
     loadSharedLayouts();
   }, []);
 
+  const selectedElements = selectedLayout?.elements || [];
+
   return (
     <div className="shared-layout-tab">
-      {layouts.length > 0 && (
-        <div className="shared-layout-controls">
+      <div className="shared-layout-header">
+        <div>
+          <h1>Shared Floor Plan</h1>
+          <p>View the digital layout shared by the organizer.</p>
+        </div>
+
+        {layouts.length > 0 && (
           <select
+            className="shared-layout-select"
             value={selectedLayout?._id || ""}
             onChange={(event) => {
               const layout = layouts.find(
@@ -76,26 +86,81 @@ function StaffSharedLayout() {
               </option>
             ))}
           </select>
-        </div>
+        )}
+      </div>
+
+      {message && (
+        <GlassPanel className="shared-layout-empty">
+          <div className="shared-layout-empty-icon">🏛️</div>
+          <h2>Layout unavailable</h2>
+          <p>{message}</p>
+        </GlassPanel>
       )}
 
-      {message && <p className="staff-message">{message}</p>}
-
       {selectedLayout && (
-        <div className="staff-floor-plan">
-          {selectedLayout.elements.map((item) => (
-            <div
-              key={item.elementId}
-              className={`staff-layout-item ${item.type.toLowerCase()}`}
-              style={{
-                left: `${item.x}px`,
-                top: `${item.y}px`,
-              }}
-            >
-              {getItemIcon(item.type)} {item.label || item.type}
+        <>
+          <div className="shared-layout-stats">
+            <GlassPanel className="shared-layout-stat">
+              <span>Total Items</span>
+              <strong>{selectedElements.length}</strong>
+            </GlassPanel>
+
+            <GlassPanel className="shared-layout-stat">
+              <span>Tables</span>
+              <strong>
+                {selectedElements.filter((item) => item.type === "Table").length}
+              </strong>
+            </GlassPanel>
+
+            <GlassPanel className="shared-layout-stat">
+              <span>Chairs</span>
+              <strong>
+                {selectedElements.filter((item) => item.type === "Chair").length}
+              </strong>
+            </GlassPanel>
+
+            <GlassPanel className="shared-layout-stat">
+              <span>Event Areas</span>
+              <strong>
+                {
+                  selectedElements.filter((item) =>
+                    ["Stage", "Booth", "Entrance"].includes(item.type)
+                  ).length
+                }
+              </strong>
+            </GlassPanel>
+          </div>
+
+          <GlassPanel className="shared-layout-panel">
+            <div className="shared-layout-panel-header">
+              <div>
+                <h2>{selectedLayout.title || "Venue Layout"}</h2>
+                <p>Organizer-approved floor plan for this event.</p>
+              </div>
+
+              <span className="shared-layout-badge">
+                {selectedElements.length} elements
+              </span>
             </div>
-          ))}
-        </div>
+
+            <div className="staff-floor-plan">
+              {selectedElements.map((item) => (
+                <div
+                  key={item.elementId}
+                  className={`staff-layout-item ${item.type.toLowerCase()}`}
+                  style={{
+                    left: `${item.x}px`,
+                    top: `${item.y}px`,
+                  }}
+                  title={item.label || item.type}
+                >
+                  <span>{getItemIcon(item.type)}</span>
+                  
+                </div>
+              ))}
+            </div>
+          </GlassPanel>
+        </>
       )}
     </div>
   );

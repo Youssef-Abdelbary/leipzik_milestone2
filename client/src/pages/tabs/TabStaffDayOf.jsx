@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { getGuests, updateGuestCheckIn } from "../../services/serviceGuestList";
 import {
   getEventVendorsForStaff,
   markVendorArrived,
 } from "../../services/serviceStaffDayOf";
+import { icons, GlassPanel } from "../../components/componentTheme";
+import "../../components/componentTheme.css";
 import "./TabStaffDayOf.css";
 
 const CHECKIN_OPTIONS = ["Hasn't Arrived", "Arrived"];
+
 function normalizeCheckInStatus(status) {
   if (!status) return "Hasn't Arrived";
 
@@ -29,16 +32,16 @@ export default function TabStaffDayOf() {
   const [staffId, setStaffId] = useState("");
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [selectedEventTitle, setSelectedEventTitle] = useState("");
 
   const [guests, setGuests] = useState([]);
   const [vendors, setVendors] = useState([]);
 
   const [guestStatusFilter, setGuestStatusFilter] = useState("all");
   const [vendorStatusFilter, setVendorStatusFilter] = useState("all");
-  
+
   const [loading, setLoading] = useState(false);
   const [expandedGuestId, setExpandedGuestId] = useState(null);
+
   useEffect(() => {
     const loggedInUser =
       JSON.parse(localStorage.getItem("loggedInUser")) ||
@@ -90,7 +93,6 @@ export default function TabStaffDayOf() {
       setLoading(true);
 
       const res = await updateGuestCheckIn(guestId, newStatus, "manual");
-
       const updatedGuest = res.data;
 
       setGuests((prev) =>
@@ -109,7 +111,6 @@ export default function TabStaffDayOf() {
       setLoading(true);
 
       await markVendorArrived(staffId, selectedEventId, vendorRequestId);
-
       await loadVendorsForEvent();
     } catch (error) {
       console.error("Failed to mark vendor arrived:", error);
@@ -121,7 +122,6 @@ export default function TabStaffDayOf() {
 
   const filteredGuests = guests.filter((guest) => {
     const status = normalizeCheckInStatus(guest.checkIn?.status);
-
     return guestStatusFilter === "all" || status === guestStatusFilter;
   });
 
@@ -131,62 +131,69 @@ export default function TabStaffDayOf() {
   });
 
   const totalGuests = guests.length;
+
   const arrivedGuests = guests.filter(
-    (guest) => guest.checkIn?.status === "Arrived"
+    (guest) => normalizeCheckInStatus(guest.checkIn?.status) === "Arrived"
   ).length;
 
   const totalVendors = vendors.length;
+
   const arrivedVendors = vendors.filter(
     (vendor) => vendor.arrivalStatus === "arrived"
   ).length;
 
-
+  const selectedEvent = events.find((event) => event._id === selectedEventId);
 
   return (
     <div className="staff-dayof-tab">
-      <div className="staff-page-header">
+      <div className="dayof-page-header">
         <div>
           <h1>Day-Of Logistics</h1>
           <p>
-            Manage guest check-in and vendor arrival for events you are assigned
-            to.
+            Manage guest check-in and vendor arrivals for your assigned events.
           </p>
         </div>
+
+        {selectedEvent && (
+          <span className="dayof-selected-event-badge">
+            {icons.calendar} {selectedEvent.title}
+          </span>
+        )}
       </div>
 
-      <div className="staff-summary-cards">
-        <div className="staff-summary-card">
-          <h3>Total Guests</h3>
-          <p>{totalGuests}</p>
-        </div>
+      <div className="dayof-summary-cards">
+        <GlassPanel className="dayof-summary-card">
+          <span>Total Guests</span>
+          <strong>{totalGuests}</strong>
+        </GlassPanel>
 
-        <div className="staff-summary-card">
-          <h3>Arrived Guests</h3>
-          <p>{arrivedGuests}</p>
-        </div>
+        <GlassPanel className="dayof-summary-card">
+          <span>Arrived Guests</span>
+          <strong>{arrivedGuests}</strong>
+        </GlassPanel>
 
-        <div className="staff-summary-card">
-          <h3>Total Vendors</h3>
-          <p>{totalVendors}</p>
-        </div>
+        <GlassPanel className="dayof-summary-card">
+          <span>Total Vendors</span>
+          <strong>{totalVendors}</strong>
+        </GlassPanel>
 
-        <div className="staff-summary-card">
-          <h3>Arrived Vendors</h3>
-          <p>{arrivedVendors}</p>
-        </div>
+        <GlassPanel className="dayof-summary-card">
+          <span>Arrived Vendors</span>
+          <strong>{arrivedVendors}</strong>
+        </GlassPanel>
       </div>
 
-      <section className="staff-section">
-        <div className="staff-section-header">
+      <GlassPanel className="dayof-section">
+        <div className="dayof-section-header">
           <div>
             <h2>Participating Events</h2>
             <p>Select an event to manage day-of operations.</p>
           </div>
         </div>
 
-        <div className="staff-list">
+        <div className="dayof-event-list">
           {events.length === 0 && (
-            <p className="staff-empty">No assigned events found.</p>
+            <p className="dayof-empty">No assigned events found.</p>
           )}
 
           {events.map((event) => {
@@ -197,35 +204,37 @@ export default function TabStaffDayOf() {
                 key={event._id}
                 className={
                   isSelected
-                    ? "staff-event-card selected-event-card expanded-event-card"
-                    : "staff-event-card"
+                    ? "dayof-event-card selected expanded"
+                    : "dayof-event-card"
                 }
                 onClick={() => {
                   if (isSelected) {
                     setSelectedEventId("");
-                    setSelectedEventTitle("");
                     setGuests([]);
                     setVendors([]);
+                    setExpandedGuestId(null);
                   } else {
                     setSelectedEventId(event._id);
-                    setSelectedEventTitle(event.title);
+                    setExpandedGuestId(null);
                   }
                 }}
               >
-                <div className="staff-event-main-row">
+                <div className="dayof-event-main-row">
                   <div>
                     <h3>{event.title}</h3>
                     <p>
-                      📅{" "}
+                      {icons.calendar}{" "}
                       {event.date
                         ? new Date(event.date).toDateString()
                         : "No date"}
                     </p>
                   </div>
 
-                  <div className="staff-event-right">
-                    <span className="staff-status-badge">{event.status}</span>
-                    <span className="event-expand-arrow">
+                  <div className="dayof-event-right">
+                    <span className="dayof-status-badge">
+                      {event.status || "planning"}
+                    </span>
+                    <span className="dayof-expand-arrow">
                       {isSelected ? "▲" : "▼"}
                     </span>
                   </div>
@@ -274,103 +283,128 @@ export default function TabStaffDayOf() {
                                 </td>
                               </tr>
                             ) : (
-                            filteredGuests.map((guest) => {
-                            const isExpanded = expandedGuestId === guest._id;
+                              filteredGuests.map((guest) => {
+                                const isExpanded =
+                                  expandedGuestId === guest._id;
 
-                            return (
-                                <>
-                                <tr
-                                    key={guest._id}
-                                    className="dayof-clickable-row"
-                                    onClick={() =>
-                                    setExpandedGuestId(isExpanded ? null : guest._id)
-                                    }
-                                >
-                                    <td>{guest.fullName || "Unnamed guest"}</td>
-                                    <td>{guest.email || "-"}</td>
-                                    <td>{guest.rsvp?.status || "pending"}</td>
-                                    <td onClick={(event) => event.stopPropagation()}>
-                                    <select
-                                        value={normalizeCheckInStatus(guest.checkIn?.status)}
-                                        onChange={(event) =>
-                                        handleCheckInChange(guest._id, event.target.value)
-                                        }
-                                        disabled={loading}
+                                return (
+                                  <Fragment key={guest._id}>
+                                    <tr
+                                      className="dayof-clickable-row"
+                                      onClick={() =>
+                                        setExpandedGuestId(
+                                          isExpanded ? null : guest._id
+                                        )
+                                      }
                                     >
-                                        {CHECKIN_OPTIONS.map((option) => (
-                                        <option key={option} value={option}>
-                                            {option}
-                                        </option>
-                                        ))}
-                                    </select>
-                                    </td>
-                                </tr>
-
-                                {isExpanded && (
-                                    <tr className="dayof-expanded-guest-row">
-                                    <td colSpan="4">
-                                        <div className="dayof-guest-details">
-                                        <DetailItem label="Phone" value={guest.phone || "-"} />
-                                        <DetailItem label="Event" value={guest.eventId?.title || "-"} />
-                                        <DetailItem
-                                            label="Invitation Status"
-                                            value={guest.invitationStatus || "-"}
-                                        />
-                                        <DetailItem
-                                            label="RSVP Status"
-                                            value={guest.rsvp?.status || "-"}
-                                        />
-                                        <DetailItem
-                                            label="Dietary Preferences"
-                                            value={(guest.rsvp?.dietaryPreferences || []).join(", ") || "-"}
-                                        />
-                                        <DetailItem
-                                            label="Special Requirements"
-                                            value={guest.rsvp?.specialRequirements || "-"}
-                                        />
-                                        <DetailItem
-                                            label="QR Code"
-                                            value={guest.qrCode?.code || "-"}
-                                        />
-                                        <DetailItem
-                                            label="Check-in Status"
-                                            value={guest.checkIn?.status || "-"}
-                                        />
-                                        <DetailItem
-                                            label="Checked In At"
-                                            value={
-                                            guest.checkIn?.checkedInAt
-                                                ? new Date(guest.checkIn.checkedInAt).toLocaleString()
-                                                : "-"
-                                            }
-                                        />
-                                        <DetailItem
-                                            label="Check-in Method"
-                                            value={guest.checkIn?.method || "-"}
-                                        />
-                                        <DetailItem
-                                            label="Invitation Sent"
-                                            value={
-                                            guest.invitationSentAt
-                                                ? new Date(guest.invitationSentAt).toLocaleDateString()
-                                                : "-"
-                                            }
-                                        />
-                                        <DetailItem
-                                            label="Confirmation Sent"
-                                            value={
-                                            guest.confirmationSentAt
-                                                ? new Date(guest.confirmationSentAt).toLocaleDateString()
-                                                : "-"
-                                            }
-                                        />
-                                        </div>
-                                    </td>
+                                      <td>{guest.fullName || "Unnamed guest"}</td>
+                                      <td>{guest.email || "-"}</td>
+                                      <td>{guest.rsvp?.status || "pending"}</td>
+                                      <td
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                      >
+                                        <select
+                                          value={normalizeCheckInStatus(
+                                            guest.checkIn?.status
+                                          )}
+                                          onChange={(event) =>
+                                            handleCheckInChange(
+                                              guest._id,
+                                              event.target.value
+                                            )
+                                          }
+                                          disabled={loading}
+                                        >
+                                          {CHECKIN_OPTIONS.map((option) => (
+                                            <option
+                                              key={option}
+                                              value={option}
+                                            >
+                                              {option}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </td>
                                     </tr>
-                                )}
-                                </>
-                            );
-                            })                            )}
+
+                                    {isExpanded && (
+                                      <tr className="dayof-expanded-guest-row">
+                                        <td colSpan="4">
+                                          <div className="dayof-guest-details">
+                                            <DetailItem
+                                              label="Phone"
+                                              value={guest.phone || "-"}
+                                            />
+                                            <DetailItem
+                                              label="Event"
+                                              value={
+                                                guest.eventId?.title || "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="Invitation Status"
+                                              value={
+                                                guest.invitationStatus || "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="RSVP Status"
+                                              value={guest.rsvp?.status || "-"}
+                                            />
+                                            <DetailItem
+                                              label="Dietary Preferences"
+                                              value={
+                                                (
+                                                  guest.rsvp
+                                                    ?.dietaryPreferences || []
+                                                ).join(", ") || "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="Special Requirements"
+                                              value={
+                                                guest.rsvp
+                                                  ?.specialRequirements || "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="QR Code"
+                                              value={guest.qrCode?.code || "-"}
+                                            />
+                                            <DetailItem
+                                              label="Check-in Status"
+                                              value={
+                                                normalizeCheckInStatus(
+                                                  guest.checkIn?.status
+                                                ) || "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="Checked In At"
+                                              value={
+                                                guest.checkIn?.checkedInAt
+                                                  ? new Date(
+                                                      guest.checkIn.checkedInAt
+                                                    ).toLocaleString()
+                                                  : "-"
+                                              }
+                                            />
+                                            <DetailItem
+                                              label="Check-in Method"
+                                              value={
+                                                guest.checkIn?.method || "-"
+                                              }
+                                            />
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </Fragment>
+                                );
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -397,7 +431,7 @@ export default function TabStaffDayOf() {
 
                       <div className="vendor-card-list">
                         {filteredVendors.length === 0 && (
-                          <p className="staff-empty">No vendors found.</p>
+                          <p className="dayof-empty">No vendors found.</p>
                         )}
 
                         {filteredVendors.map((vendor) => (
@@ -442,16 +476,16 @@ export default function TabStaffDayOf() {
             );
           })}
         </div>
-      </section>
+      </GlassPanel>
     </div>
   );
 }
 
-  function DetailItem({ label, value }) {
-    return (
-        <div>
-        <div className="dayof-detail-label">{label}</div>
-        <div className="dayof-detail-value">{value}</div>
-        </div>
-    );
-    }
+function DetailItem({ label, value }) {
+  return (
+    <div>
+      <div className="dayof-detail-label">{label}</div>
+      <div className="dayof-detail-value">{value}</div>
+    </div>
+  );
+}

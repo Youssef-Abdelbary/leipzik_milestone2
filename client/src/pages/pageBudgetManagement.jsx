@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../utils/apiFetch";
 import "./pageBudgetManagement.css";
+import "../components/componentTheme.css";
+import { GlassPanel } from "../components/componentTheme";
 
 function BudgetManagement({ eventId: propEventId }) {
   const { eventId: routeEventId } = useParams();
@@ -31,42 +33,6 @@ function BudgetManagement({ eventId: propEventId }) {
     paymentDate: "",
   });
 
-//   useEffect(() => {
-//     async function loadOrganizerEvents() {
-//       try {
-//         const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-
-//         if (!loggedInUser?._id && !loggedInUser?.id) {
-//           console.warn("No logged-in user found.");
-//           return;
-//         }
-
-//         const organizerId = loggedInUser._id || loggedInUser.id;
-
-//         const response = await fetch(
-//           `http://localhost:5001/api/workflow/events/${organizerId}`
-//         );
-
-//         const data = await response.json();
-
-//         if (!response.ok) {
-//           alert(data.message || "Failed to load events");
-//           return;
-//         }
-
-//         setEvents(data);
-
-//         if (data.length > 0) {
-//           setSelectedEventId(data[0]._id);
-//         }
-//       } catch (error) {
-//         console.error("Load events error:", error);
-//         alert("Something went wrong while loading events.");
-//       }
-//     }
-
-//     loadOrganizerEvents();
-//   }, []);
 
   useEffect(() => {
     async function loadBudgetForEvent() {
@@ -314,34 +280,38 @@ async function saveEditedExpense() {
     <div className="budget-page">
       <div className="budget-header">
         <div>
-          <h1>💰 Budget Management</h1>
+          <h1>Budget Management</h1>
           <p>View planned budget, actual expenses, and remaining budget for this event.</p>
         </div>
-
-        
       </div>
 
-      {loading && <p className="budget-loading">Loading budget...</p>}
+      {loading && (
+        <GlassPanel className="budget-state-card">
+          <p className="budget-loading">Loading budget...</p>
+        </GlassPanel>
+      )}
 
       {!loading && !budgetData && (
-        <p className="budget-empty">Select an event to view its budget.</p>
+        <GlassPanel className="budget-state-card">
+          <p className="budget-empty">Select an event to view its budget.</p>
+        </GlassPanel>
       )}
 
       {!loading && budgetData && (
         <>
           <div className="budget-summary-cards">
-            <div className="budget-card">
-              <h3>Planned Total</h3>
+            <GlassPanel className="budget-card">
+              <span>Planned Total</span>
               <p>{formatMoney(budgetData.plannedTotal)}</p>
-            </div>
+            </GlassPanel>
 
-            <div className="budget-card">
-              <h3>Actual Total</h3>
+            <GlassPanel className="budget-card">
+              <span>Actual Total</span>
               <p>{formatMoney(budgetData.actualTotal)}</p>
-            </div>
+            </GlassPanel>
 
-            <div className="budget-card">
-              <h3>Remaining / Difference</h3>
+            <GlassPanel className="budget-card">
+              <span>Remaining / Difference</span>
               <p
                 className={
                   budgetData.difference >= 0
@@ -351,234 +321,250 @@ async function saveEditedExpense() {
               >
                 {formatMoney(budgetData.difference)}
               </p>
-            </div>
+            </GlassPanel>
           </div>
 
-          
-
           <div className="budget-sections">
-            <section className="budget-section">
-            <div className="budget-section-header">
-                <h2>📊 Planned Budget Breakdown</h2>
+            <GlassPanel className="budget-section">
+              <div className="budget-section-header">
+                <div>
+                  <h2>Planned Budget Breakdown</h2>
+                  <p>Manage the planned budget categories for this event.</p>
+                </div>
 
                 <button
-                className="edit-budget-button"
-                onClick={() => setIsEditingPlannedBudget(!isEditingPlannedBudget)}
+                  className="edit-budget-button"
+                  onClick={() => setIsEditingPlannedBudget(!isEditingPlannedBudget)}
                 >
-                {isEditingPlannedBudget ? "Cancel" : "Edit Planned Budget"}
+                  {isEditingPlannedBudget ? "Cancel" : "Edit Planned Budget"}
                 </button>
-            </div>
+              </div>
 
-            {!isEditingPlannedBudget && (
+              {!isEditingPlannedBudget && (
                 <>
-                {budgetData.plannedBreakdown.length === 0 && (
+                  {budgetData.plannedBreakdown.length === 0 && (
                     <p className="budget-empty">No planned breakdown found.</p>
-                )}
+                  )}
 
-                <div className="budget-list">
+                  <div className="budget-list">
                     {budgetData.plannedBreakdown.map((item, index) => (
-                    <div className="budget-list-row" key={index}>
+                      <div className="budget-list-row" key={index}>
                         <span>{item.category}</span>
                         <strong>{formatMoney(item.plannedAmount)}</strong>
-                    </div>
+                      </div>
                     ))}
-                </div>
+                  </div>
                 </>
-            )}
+              )}
 
-            {isEditingPlannedBudget && (
+              {isEditingPlannedBudget && (
                 <div className="planned-budget-form">
-                <label>Planned Total Budget</label>
+                  <label>Planned Total Budget</label>
 
-                <input
+                  <input
                     type="number"
                     value={plannedTotalInput}
                     onChange={(event) => setPlannedTotalInput(event.target.value)}
-                />
+                  />
 
-                <p className="breakdown-total">
+                  <p className="breakdown-total">
                     Categories Total: {Number(breakdownTotal).toLocaleString()}{" "}
                     {budgetData?.currency || "EGP"}
-                </p>
+                  </p>
 
-                <h3>Budget Categories</h3>
+                  <h3>Budget Categories</h3>
 
-                {breakdownInputs.map((item, index) => (
+                  {breakdownInputs.map((item, index) => (
                     <div className="breakdown-edit-row" key={index}>
-                    <input
+                      <input
                         type="text"
                         placeholder="Category"
                         value={item.category}
                         onChange={(event) =>
-                        updateBreakdownItem(index, "category", event.target.value)
+                          updateBreakdownItem(index, "category", event.target.value)
                         }
-                    />
+                      />
 
-                    <input
+                      <input
                         type="number"
                         placeholder="Amount"
                         value={item.plannedAmount}
                         onChange={(event) =>
-                        updateBreakdownItem(index, "plannedAmount", event.target.value)
+                          updateBreakdownItem(
+                            index,
+                            "plannedAmount",
+                            event.target.value
+                          )
                         }
-                    />
+                      />
 
-                    <button
+                      <button
                         className="remove-breakdown-button"
                         onClick={() => removeBreakdownItem(index)}
-                    >
+                      >
                         Remove
-                    </button>
+                      </button>
                     </div>
-                ))}
+                  ))}
 
-                <div className="planned-budget-actions">
+                  <div className="planned-budget-actions">
                     <button className="add-breakdown-button" onClick={addBreakdownItem}>
-                    + Add Category
+                      Add Category
                     </button>
 
                     <button className="save-budget-button" onClick={savePlannedBudget}>
-                    Save Planned Budget
+                      Save Planned Budget
                     </button>
+                  </div>
                 </div>
-                </div>
-            )}
-            </section>
+              )}
+            </GlassPanel>
 
-            <section className="budget-section">
-            <div className="budget-section-header">
-                <h2>🧾 Actual Expense Records</h2>
+            <GlassPanel className="budget-section">
+              <div className="budget-section-header">
+                <div>
+                  <h2>Actual Expense Records</h2>
+                  <p>Track and edit the expenses already paid for this event.</p>
+                </div>
 
                 <button
-                className="edit-budget-button"
-                onClick={() => setShowExpenseForm(!showExpenseForm)}
+                  className="edit-budget-button"
+                  onClick={() => setShowExpenseForm(!showExpenseForm)}
                 >
-                {showExpenseForm ? "Cancel" : "Add Expense"}
+                  {showExpenseForm ? "Cancel" : "Add Expense"}
                 </button>
-            </div>
+              </div>
 
-            {showExpenseForm && (
+              {showExpenseForm && (
                 <div className="expense-form">
-                <input
+                  <input
                     type="text"
                     placeholder="Category"
                     value={expenseForm.category}
-                    onChange={(event) => updateExpenseForm("category", event.target.value)}
-                />
+                    onChange={(event) =>
+                      updateExpenseForm("category", event.target.value)
+                    }
+                  />
 
-                <input
+                  <input
                     type="text"
                     placeholder="Description"
                     value={expenseForm.description}
                     onChange={(event) =>
-                    updateExpenseForm("description", event.target.value)
+                      updateExpenseForm("description", event.target.value)
                     }
-                />
+                  />
 
-                <input
+                  <input
                     type="number"
                     placeholder="Amount"
                     value={expenseForm.amount}
-                    onChange={(event) => updateExpenseForm("amount", event.target.value)}
-                />
+                    onChange={(event) =>
+                      updateExpenseForm("amount", event.target.value)
+                    }
+                  />
 
-                <input
+                  <input
                     type="date"
                     value={expenseForm.paymentDate}
                     onChange={(event) =>
-                    updateExpenseForm("paymentDate", event.target.value)
+                      updateExpenseForm("paymentDate", event.target.value)
                     }
-                />
+                  />
 
-                <button className="save-budget-button" onClick={saveActualExpense}>
+                  <button className="save-budget-button" onClick={saveActualExpense}>
                     Save Expense
-                </button>
+                  </button>
                 </div>
-            )}
+              )}
 
-            {budgetData.actualExpenses.length === 0 && (
+              {budgetData.actualExpenses.length === 0 && (
                 <p className="budget-empty">No actual expenses found.</p>
-            )}
+              )}
 
-            <div className="budget-list">
+              <div className="budget-list">
                 {budgetData.actualExpenses.map((expense) => (
-                    <div className="expense-row" key={expense._id}>
-                        {editingExpenseId === expense._id ? (
-                        <div className="expense-edit-form">
-                            <input
-                            type="text"
-                            value={editExpenseForm.category}
-                            onChange={(event) =>
-                                updateEditExpenseForm("category", event.target.value)
-                            }
-                            placeholder="Category"
-                            />
+                  <div className="expense-row" key={expense._id}>
+                    {editingExpenseId === expense._id ? (
+                      <div className="expense-edit-form">
+                        <input
+                          type="text"
+                          value={editExpenseForm.category}
+                          onChange={(event) =>
+                            updateEditExpenseForm("category", event.target.value)
+                          }
+                          placeholder="Category"
+                        />
 
-                            <input
-                            type="text"
-                            value={editExpenseForm.description}
-                            onChange={(event) =>
-                                updateEditExpenseForm("description", event.target.value)
-                            }
-                            placeholder="Description"
-                            />
+                        <input
+                          type="text"
+                          value={editExpenseForm.description}
+                          onChange={(event) =>
+                            updateEditExpenseForm("description", event.target.value)
+                          }
+                          placeholder="Description"
+                        />
 
-                            <input
-                            type="number"
-                            value={editExpenseForm.amount}
-                            onChange={(event) =>
-                                updateEditExpenseForm("amount", event.target.value)
-                            }
-                            placeholder="Amount"
-                            />
+                        <input
+                          type="number"
+                          value={editExpenseForm.amount}
+                          onChange={(event) =>
+                            updateEditExpenseForm("amount", event.target.value)
+                          }
+                          placeholder="Amount"
+                        />
 
-                            <input
-                            type="date"
-                            value={editExpenseForm.paymentDate}
-                            onChange={(event) =>
-                                updateEditExpenseForm("paymentDate", event.target.value)
-                            }
-                            />
+                        <input
+                          type="date"
+                          value={editExpenseForm.paymentDate}
+                          onChange={(event) =>
+                            updateEditExpenseForm("paymentDate", event.target.value)
+                          }
+                        />
 
-                            <button className="save-budget-button" onClick={saveEditedExpense}>
-                            Save
-                            </button>
+                        <button className="save-budget-button" onClick={saveEditedExpense}>
+                          Save
+                        </button>
 
-                            <button className="remove-breakdown-button" onClick={cancelEditingExpense}>
-                            Cancel
-                            </button>
+                        <button
+                          className="remove-breakdown-button"
+                          onClick={cancelEditingExpense}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <h3>{expense.category}</h3>
+                          <p>{expense.description}</p>
+                          <small>
+                            {expense.paymentDate
+                              ? new Date(expense.paymentDate).toLocaleDateString()
+                              : "No payment date"}
+                          </small>
                         </div>
-                        ) : (
-                        <>
-                            <div>
-                            <h3>{expense.category}</h3>
-                            <p>{expense.description}</p>
-                            <small>
-                                {expense.paymentDate
-                                ? new Date(expense.paymentDate).toLocaleDateString()
-                                : "No payment date"}
-                            </small>
-                            </div>
 
-                            <div className="expense-actions">
-                            <strong>{formatMoney(expense.amount)}</strong>
+                        <div className="expense-actions">
+                          <strong>{formatMoney(expense.amount)}</strong>
 
-                            <button
-                                className="edit-expense-button"
-                                onClick={() => startEditingExpense(expense)}
-                            >
-                                Edit
-                            </button>
-                            </div>
-                        </>
-                        )}
-                    </div>
-                    ))}
-            </div>
-            </section>
-             </div>
-                      <section className="budget-comparison-section">
-            <h2>📈 Planned vs Actual by Category</h2>
+                          <button
+                            className="edit-expense-button"
+                            onClick={() => startEditingExpense(expense)}
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </GlassPanel>
+          </div>
+
+          <GlassPanel className="budget-comparison-section">
+            <h2>Planned vs Actual by Category</h2>
 
             {budgetData.categoryComparison?.length === 0 && (
               <p className="budget-empty">No category comparison available.</p>
@@ -607,8 +593,7 @@ async function saveEditedExpense() {
                 </div>
               ))}
             </div>
-          </section>
-          
+          </GlassPanel>
         </>
       )}
     </div>
