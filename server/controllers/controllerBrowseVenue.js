@@ -1,6 +1,6 @@
 import Venue from '../models/modelVenue.js';
-import Booking from '../models/modelBooking.js';
 import BrowseVenue from '../models/modelBrowseVenue.js';
+import Notification from '../models/modelNotification.js';
 import cloudinary from '../config/cloudinary.js';
 import multer from 'multer';
 import { Readable } from 'stream';
@@ -72,6 +72,22 @@ export async function requestBooking(req, res) {
 
             status: 'pending',
         });
+
+        // ─── Notify the venue owner ───────────────────────────────────────────
+        const dateLabel = requestedDates.length === 1
+            ? new Date(requestedDates[0]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            : `${requestedDates.length} dates`;
+
+        await Notification.create({
+            userId:            venue.ownerId,
+            type:              'booking_request',
+            title:             'Booking Request',
+            message:           `New ${eventType} at ${venue.name}.`,
+            relatedEntityType: 'BrowseVenue',
+            relatedEntityId:   bookingRequest._id,
+            status:            'unread',
+        });
+        // ─────────────────────────────────────────────────────────────────────
 
         return res.status(201).json({ message: 'Booking request sent', bookingRequest });
     } catch (err) {

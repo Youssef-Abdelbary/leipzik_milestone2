@@ -53,7 +53,7 @@ export async function approveBooking(req, res) {
             return res.status(400).json({ message: `Booking is already ${booking.status}` });
 
         booking.status = 'approved';
-        booking.decidedAt = new Date();  // was: respondedAt
+        booking.decidedAt = new Date();
         await booking.save();
 
         // ─── Lock out the requested dates on the venue's availability calendar ───
@@ -101,8 +101,8 @@ export async function declineBooking(req, res) {
 
         const { reason } = req.body;
         booking.status = 'declined';
-        booking.ownerResponseMessage = reason || null;  // was: declineReason
-        booking.decidedAt = new Date();                 // was: respondedAt
+        booking.ownerResponseMessage = reason || null;
+        booking.decidedAt = new Date();
         await booking.save();
 
         const venueName = booking.venueId.name;
@@ -139,7 +139,6 @@ export async function getVenueAvailability(req, res) {
         const seen   = new Set();
         const merged = [];
 
-        // ── 1. Dates from venue.bookedDates with no bookingId = manually blocked ──
         for (const entry of venue.bookedDates ?? []) {
             const key = toDateStr(entry.date);
             if (seen.has(key)) continue;
@@ -151,7 +150,6 @@ export async function getVenueAvailability(req, res) {
             });
         }
 
-        // ── 2. Approved BrowseVenue bookings ────────────────────────────────────
         const approvedBookings = await BrowseVenue.find({ venueId, status: 'approved' })
             .select('requestedDates')
             .lean();
@@ -159,7 +157,7 @@ export async function getVenueAvailability(req, res) {
         for (const booking of approvedBookings) {
             for (const date of booking.requestedDates ?? []) {
                 const key = toDateStr(date);
-                if (seen.has(key)) continue;   // venue.bookedDates already has it
+                if (seen.has(key)) continue;
                 seen.add(key);
                 merged.push({
                     date:      key,
@@ -172,7 +170,7 @@ export async function getVenueAvailability(req, res) {
         return res.status(200).json({
             venueId,
             venueName:   venue.name,
-            bookedDates: merged,   // [{ date, bookingId, source: 'booking'|'manual' }]
+            bookedDates: merged,
         });
     } catch (err) {
         return res.status(500).json({ message: 'Failed to fetch venue availability', error: err.message });

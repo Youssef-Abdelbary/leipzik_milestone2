@@ -9,6 +9,9 @@ import {
     getVenueAvailability,
 } from '../controllers/controllerReplyVenue.js';
 
+const router = express.Router();
+router.use(authenticate);
+
 function requireOrganizer(req, res, next) {
     if (req.user.role !== 'organizer') {
         return res.status(403).json({ message: 'Access denied' });
@@ -16,13 +19,11 @@ function requireOrganizer(req, res, next) {
     next();
 }
 
-const router = express.Router();
+router.get('/', requireOrganizer, getMyVenueReplies);
+router.get('/venue/:venueId/availability', requireOrganizer, getVenueAvailability);
+router.get('/:bookingId', requireOrganizer, getBookingMessages);
+router.post('/:bookingId/message', requireOrganizer, sendBookingMessage);
+router.post('/:bookingId/counter', requireOrganizer, sendCounterProposal);
+router.post('/:bookingId/match', requireOrganizer, matchCounterProposal);
 
-router.use(authenticate);
-router.get('/', getMyVenueReplies);
-router.get('/venue/:venueId/availability', getVenueAvailability);
-router.get('/:bookingId', getBookingMessages);
-router.post('/:bookingId/message', sendBookingMessage);
-router.post('/:bookingId/counter', sendCounterProposal);
-router.post('/:bookingId/match', matchCounterProposal);
 export default router;
