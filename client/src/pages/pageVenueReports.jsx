@@ -2,12 +2,12 @@
 import { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import {
-    VscHome, VscMail, VscCalendar,
+    VscHome, VscMail, VscCalendar, VscBell, VscPerson,
 } from 'react-icons/vsc';
 import { getBookingSummary, getBookingHistory } from '../services/serviceVenueReports';
-import AppHeader from '../components/componentAppHeader.jsx';
 import Dock from '../components/componentDock.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
+import AppHeader from '../components/componentAppHeader.jsx';
 import '../components/componentTheme.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,29 +21,14 @@ const proratedAmount = h => {
 };
 
 const STATUS_COLOR = {
-    approved:  { bg: 'var(--opal-teal-dim)',   text: 'var(--opal-teal)'   },
-    declined:  { bg: 'var(--opal-red-dim)',    text: 'var(--opal-red)'    },
-    countered: { bg: 'var(--opal-amber-dim)',  text: 'var(--opal-amber)'  },
-    pending:   { bg: 'var(--opal-violet-dim)', text: 'var(--opal-violet)' },
+    approved: { bg: 'var(--opal-teal-dim)', text: 'var(--opal-teal)' },
+    declined: { bg: 'var(--opal-red-dim)', text: 'var(--opal-red)' },
+    countered: { bg: 'var(--opal-amber-dim)', text: 'var(--opal-amber)' },
+    pending: { bg: 'var(--opal-violet-dim)', text: 'var(--opal-violet)' },
 };
 const statusColor = status => STATUS_COLOR[status] ?? STATUS_COLOR.pending;
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────
-
-function Avatar({ name = '?', size = 36 }) {
-    const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-    return (
-        <div style={{
-            width: size, height: size, borderRadius: size / 2.8,
-            background: 'linear-gradient(135deg, var(--opal-violet) 0%, var(--opal-teal) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: size * 0.33, fontWeight: 700, color: '#0a0a0f', flexShrink: 0,
-            letterSpacing: -0.3, fontFamily: 'var(--font-display)',
-        }}>
-            {initials}
-        </div>
-    );
-}
 
 function GlassCard({ children, style = {}, ...rest }) {
     return (
@@ -147,18 +132,18 @@ export default function PageVenueReports() {
         y += 8;
         doc.setFontSize(9);
         doc.setTextColor(120);
-        doc.text('Venue',     marginX,        y);
-        doc.text('Bookings',  marginX + 80,   y);
-        doc.text('Revenue',   marginX + 115,  y);
-        doc.text('Occupancy', marginX + 155,  y);
+        doc.text('Venue', marginX, y);
+        doc.text('Bookings', marginX + 80, y);
+        doc.text('Revenue', marginX + 115, y);
+        doc.text('Occupancy', marginX + 155, y);
         y += 6;
         doc.setTextColor(0);
 
         (summary?.venues || []).forEach(v => {
             checkPage(8);
-            doc.text(v.venueName,           marginX,       y);
-            doc.text(String(v.totalBookings), marginX + 80,  y);
-            doc.text(fmtMoney(v.revenue),   marginX + 115, y);
+            doc.text(v.venueName, marginX, y);
+            doc.text(String(v.totalBookings), marginX + 80, y);
+            doc.text(fmtMoney(v.revenue), marginX + 115, y);
             doc.text(`${v.occupancyRate}%`, marginX + 155, y);
             y += 6;
         });
@@ -172,10 +157,10 @@ export default function PageVenueReports() {
         y += 8;
         doc.setFontSize(9);
         doc.setTextColor(120);
-        doc.text('Dates',     marginX,       y);
-        doc.text('Venue',     marginX + 65,  y);
+        doc.text('Dates', marginX, y);
+        doc.text('Venue', marginX + 65, y);
         doc.text('Organizer', marginX + 115, y);
-        doc.text('Amount',    marginX + 165, y);
+        doc.text('Amount', marginX + 165, y);
         y += 6;
         doc.setTextColor(0);
 
@@ -208,9 +193,9 @@ export default function PageVenueReports() {
                 doc.text(line, marginX, y + i * 5);
             });
 
-            doc.text(h.venueId?.name || '',         marginX + 65,  y);
-            doc.text(h.organizerId?.fullname || '',  marginX + 115, y);
-            doc.text(fmtMoney(amount, currency),     marginX + 165, y);
+            doc.text(h.venueId?.name || '', marginX + 65, y);
+            doc.text(h.organizerId?.fullname || '', marginX + 115, y);
+            doc.text(fmtMoney(amount, currency), marginX + 165, y);
 
             y += rowHeight;
         });
@@ -219,15 +204,24 @@ export default function PageVenueReports() {
     };
 
     const dockItems = [
-        { icon: <VscMail size={26} />,     label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
-        { icon: <VscHome size={26} />,     label: 'Home',     onClick: () => navigate('/venueowner/venues') },
-        { icon: <VscCalendar size={26} />, label: 'Reports',  active: true, onClick: () => navigate('/venueowner/venuereports') },
+        { icon: <VscMail size={26} />, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
+        { icon: <VscBell size={26} />, label: 'Notifications', onClick: () => navigate('/notificationsview') },
+        { icon: <VscHome size={26} />, label: 'Home', onClick: () => navigate('/venueowner/venues') },
+        { icon: <VscCalendar size={26} />, label: 'Reports', active: true, onClick: () => navigate('/venueowner/venuereports') },
+        { icon: <VscPerson size={26} />, label: 'Owner Profile', onClick: () => navigate('/pageProfile') },
     ];
 
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
-            <AppHeader crumb="Venue Reports" right={<Avatar name="Account" size={32} />} />
-
+            <AppHeader
+                crumb="Venue Reports"
+                right={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ecfb8', display: 'inline-block', boxShadow: '0 0 6px rgba(62,207,184,0.4)' }} />
+                        Venue Owner Portal
+                    </div>
+                }
+            />
             <div style={{ flex: 1, overflowY: 'auto', padding: `24px 32px ${DOCK_HEIGHT + 16}px` }}>
 
                 {/* ── Filters + export ── */}

@@ -1,35 +1,49 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import AppHeader from "../components/componentAppHeader.jsx";
 import "./header.css";
 
-function getUserInitials() {
+function getStoredUser() {
     try {
         const stored = localStorage.getItem("loggedInUser");
-        if (!stored) return "U";
-        const user = JSON.parse(stored);
-        return (user.fullname || "").split(" ").map((word) => word[0] || "").join("").slice(0, 2).toUpperCase() || "U";
+        return stored ? JSON.parse(stored) : null;
     } catch {
-        return "U";
+        return null;
     }
+}
+
+function getUserInitials() {
+    const user = getStoredUser();
+    const fullname = user?.fullname || "";
+    return (fullname.split(" ").map((word) => word[0] || "").join("").slice(0, 2).toUpperCase() || "U");
 }
 
 const Layout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const user = getStoredUser();
     const initials = getUserInitials();
+    const showAvatar = user?.role !== "venue_owner";
+    const hideHeader = location.pathname.startsWith('/venueowner')
+        || ((location.pathname === '/pageProfile' || location.pathname === '/profile') && user?.role === 'venue_owner')
+        || location.pathname === '/notificationsview';
 
     return (
         <>
-            <AppHeader
-                right={
-                    <button
-                        type="button"
-                        className="app-header__avatar"
-                        onClick={() => navigate("/pageProfile")}
-                    >
-                        {initials}
-                    </button>
-                }
-            />
+            {!hideHeader && (
+                <AppHeader
+                    right={
+                        showAvatar ? (
+                            <button
+                                type="button"
+                                className="app-header__avatar"
+                                onClick={() => navigate("/pageProfile")}
+                            >
+                                {initials}
+                            </button>
+                        ) : null
+                    }
+                />
+            )}
 
             <main className="page-content">
                 <Outlet />
