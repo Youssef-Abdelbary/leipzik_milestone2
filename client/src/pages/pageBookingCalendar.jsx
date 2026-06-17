@@ -1,17 +1,21 @@
 // pageBookingsCalendar.jsx
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { VscHome, VscMail, VscCalendar, VscBell, VscPerson } from 'react-icons/vsc';
+import Dock from '../components/componentDock.jsx';
+import AppHeader from '../components/componentAppHeader.jsx';
 import { getConfirmedBookings } from '../services/serviceBookingCalendar';
 
 const C = {
     surface: '#22252D',
-    border:  'rgba(255,255,255,0.07)',
-    green:   '#30D158',
-    red:     '#FF453A',
-    amber:   '#F5A623',
-    text:    '#F2F2F7',
-    sub:     'rgba(242,242,247,0.45)',
-    muted:   'rgba(242,242,247,0.22)',
-    blue:    '#4F8EF7',
+    border: 'rgba(255,255,255,0.07)',
+    green: '#30D158',
+    red: '#FF453A',
+    amber: '#F5A623',
+    text: '#F2F2F7',
+    sub: 'rgba(242,242,247,0.45)',
+    muted: 'rgba(242,242,247,0.22)',
+    blue: '#4F8EF7',
 };
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -41,6 +45,7 @@ function buildMonthGrid(year, month) {
 }
 
 export default function PageBookingsCalendar() {
+    const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -99,7 +104,15 @@ export default function PageBookingsCalendar() {
         setCurrentMonth(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
     };
 
-    const page = { minHeight: '100vh', background: '#15171C', color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif', padding: 32 };
+    const dockItems = [
+        { icon: <VscMail size={26} />, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
+        { icon: <VscBell size={26} />, label: 'Notifications', onClick: () => navigate('/notificationsview') },
+        { icon: <VscHome size={26} />, label: 'Home', onClick: () => navigate('/venueowner/venues') },
+        { icon: <VscCalendar size={26} />, label: 'Reports', onClick: () => navigate('/venueowner/venuereports') },
+        { icon: <VscPerson size={26} />, label: 'Owner Profile', onClick: () => navigate('/pageProfile') },
+    ];
+
+    const page = { minHeight: '100vh', background: '#15171C', color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif', padding: 32, paddingBottom: 150 };
     const panel = { background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '18px 20px' };
     const label = { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase' };
     const select = { background: '#1A1C22', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit' };
@@ -107,6 +120,15 @@ export default function PageBookingsCalendar() {
 
     return (
         <div style={page}>
+            <AppHeader
+                crumb="Booking Calendar"
+                right={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ecfb8', display: 'inline-block', boxShadow: '0 0 6px rgba(62,207,184,0.4)' }} />
+                        Venue Owner Portal
+                    </div>
+                }
+            />
             <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 800 }}>Confirmed Bookings</h1>
             <p style={{ margin: '0 0 24px', fontSize: 14, color: C.sub }}>Calendar overview of confirmed bookings across your listings.</p>
 
@@ -248,6 +270,8 @@ export default function PageBookingsCalendar() {
                     </div>
                 </div>
             </div>
+
+            <Dock items={dockItems} />
         </div>
     );
 }
