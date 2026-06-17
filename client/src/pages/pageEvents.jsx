@@ -2,8 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listEvents, deleteEvent } from '../services/serviceEvent';
 import { EVENT_TYPES } from '../utils/constants';
-import { P, icons, STATUS_COLORS, STATUS_OPTIONS } from '../utils/theme';
+import { P, icons, STATUS_COLORS, STATUS_OPTIONS, GlassPanel } from '../components/componentTheme';
+import { OpalSelect } from '../components/componentMenus';
+import AppHeader from '../components/componentAppHeader';
 import SettingsModal from '../components/SettingsModal';
+import '../components/componentTheme.css';
 
 const BLANK_EVENT = {
   title: '', description: '', date: '', startTime: '09:00',
@@ -25,13 +28,13 @@ function isPast(d) {
 
 function DeleteModal({ event, onConfirm, onCancel, loading }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.80)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
       <style>{`@keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
-      <div style={{ background: P.panel, borderRadius: 16, padding: '32px 36px', maxWidth: 420, width: '90%', border: `1px solid ${P.border}`, boxShadow: '0 20px 48px rgba(0,0,0,0.8)', animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ width: 44, height: 44, borderRadius: '50%', background: P.redGlow, border: `1px solid ${P.red}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: P.red }}>
+      <GlassPanel style={{ padding: '32px 36px', maxWidth: 420, width: '90%', boxShadow: '0 24px 56px rgba(0,0,0,0.8)', animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <div style={{ width: 44, height: 44, borderRadius: '50%', background: P.redGlow, border: `1px solid ${P.red}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: P.red }}>
           {icons.warning}
         </div>
-        <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: P.text }}>Delete event?</h2>
+        <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: P.text, fontFamily: 'var(--font-display)' }}>Delete event?</h2>
         <p style={{ margin: '0 0 24px', fontSize: 14, color: P.sub, lineHeight: 1.6 }}>
           <strong style={{ color: P.text }}>{event.title}</strong> will be permanently deleted. This cannot be undone.
         </p>
@@ -52,7 +55,7 @@ function DeleteModal({ event, onConfirm, onCancel, loading }) {
             {loading ? 'Deleting…' : 'Delete Event'}
           </button>
         </div>
-      </div>
+      </GlassPanel>
     </div>
   );
 }
@@ -133,19 +136,12 @@ export default function Events() {
 
   const hasFilters = search || statusFilter !== 'all' || typeFilter !== 'all' || dateFilter !== 'all';
 
-  const inp = {
-    height: '42px', padding: '0 14px', boxSizing: 'border-box',
-    borderRadius: 9, border: `1px solid ${P.border}`,
-    background: P.hover, color: P.text, fontSize: 13, outline: 'none',
-    fontFamily: 'inherit', transition: 'border-color 0.15s',
-  };
-
   const statItems = [
     { label: 'Total',     value: events.length,                                         color: P.blue,   filterType: 'all'    },
-    { label: 'Planning',  value: events.filter(e => e.status === 'planning').length,    color: P.purple, filterType: 'status', filterKey: 'planning'  },
-    { label: 'Confirmed', value: events.filter(e => e.status === 'confirmed').length,   color: P.green,  filterType: 'status', filterKey: 'confirmed' },
-    { label: 'Upcoming',  value: events.filter(e => e.date && !isPast(e.date)).length,  color: P.teal,   filterType: 'date',   filterKey: 'upcoming'  },
-    { label: 'Past',      value: events.filter(e => e.date &&  isPast(e.date)).length,  color: P.muted,  filterType: 'date',   filterKey: 'past'      },
+    { label: 'Planning',  value: events.filter(e => e.status === 'planning').length,    color: P.indigo, filterType: 'status', filterKey: 'planning'  },
+    { label: 'Confirmed', value: events.filter(e => e.status === 'confirmed').length,   color: P.teal,   filterType: 'status', filterKey: 'confirmed' },
+    { label: 'Upcoming',  value: events.filter(e => e.date && !isPast(e.date)).length,  color: P.cyan,   filterType: 'date',   filterKey: 'upcoming'  },
+    { label: 'Past',      value: events.filter(e => e.date &&  isPast(e.date)).length,  color: P.purple, filterType: 'date',   filterKey: 'past'      },
   ];
 
   const getTileActive = (st) => {
@@ -167,61 +163,59 @@ export default function Events() {
     }
   };
 
+  const statusOptions = [{ value: 'all', label: 'All Status' }, ...STATUS_OPTIONS.map(st => ({ value: st, label: st.charAt(0).toUpperCase() + st.slice(1) }))];
+  const typeOptions   = [{ value: 'all', label: 'All Types'  }, ...EVENT_TYPES.map(t => ({ value: t.value, label: t.label }))];
+
   return (
-    <div style={{ minHeight: '100vh', background: P.bg, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", color: P.text }}>
+    <div style={{ minHeight: '100vh', background: 'var(--opal-bg)', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
       <style>{`
         @keyframes pageIn   { from { opacity:0 } to { opacity:1 } }
         @keyframes cardIn   { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes modalIn  { from { opacity:0; transform:scale(0.96) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
         @keyframes skpulse  { 0%,100%{opacity:1} 50%{opacity:.3} }
-        .ev-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .ev-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4) !important; }
-        .open-btn { transition: all 0.15s ease; }
-        .open-btn:hover { background: ${P.blue} !important; }
-        .del-btn  { transition: all 0.15s ease; }
+        .ev-card { transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease; }
+        .ev-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(139,109,255,0.40) !important;
+          box-shadow: 0 0 0 1px rgba(139,109,255,0.14), 0 8px 32px 4px rgba(139,109,255,0.20), 0 2px 8px rgba(0,0,0,0.5) !important;
+        }
+        .open-btn:hover { background: ${P.blue} !important; border-color: ${P.blue} !important; color: #0a0a12 !important; }
         .del-btn:hover  { background: ${P.red} !important; color: #fff !important; border-color: ${P.red} !important; }
-        select option { background: ${P.panel}; color: ${P.text}; }
+        .stat-tile:hover { transform: translateY(-3px) !important; }
+        .nav-back-btn { background:none;border:none;color:var(--opal-sub);cursor:pointer;font-size:13px;padding:6px 10px;border-radius:8px;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all 0.15s; }
+        .nav-back-btn:hover { background:rgba(255,255,255,0.06);color:var(--opal-text); }
+        .new-event-btn { display:flex;align-items:center;gap:7px;padding:9px 18px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s;white-space:nowrap; }
+        .new-event-btn:hover { opacity:0.85; }
       `}</style>
 
-      {/* Nav */}
-      <div style={{ background: 'rgba(17,17,17,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${P.border}`, padding: '0 28px', height: 54, display: 'flex', alignItems: 'center', gap: 10, position: 'sticky', top: 0, zIndex: 50 }}>
-        <button
-          onClick={() => navigate('/organizer/workflow')}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: P.sub, cursor: 'pointer', fontSize: 13, padding: '4px 8px', borderRadius: 6, fontFamily: 'inherit', transition: 'color 0.15s' }}
-          onMouseEnter={e => e.currentTarget.style.color = P.text}
-          onMouseLeave={e => e.currentTarget.style.color = P.sub}
-        >
-          {icons.back} Workflow
-        </button>
-        <span style={{ color: P.muted, fontSize: 14, userSelect: 'none' }}>/</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: P.text }}>Events</span>
-      </div>
-
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '36px 24px', animation: 'pageIn 0.3s ease' }}>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: P.text, letterSpacing: '-0.03em' }}>My Events</h1>
-            <p style={{ margin: '4px 0 0', fontSize: 14, color: P.sub }}>Plan and manage your pop-up events.</p>
-          </div>
+      <AppHeader
+        back={{ label: 'Workflow', onClick: () => navigate('/organizer/workflow') }}
+        crumb="My Events"
+        right={
           <button
+            className="new-event-btn"
             onClick={() => setShowCreate(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: P.blue, color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0 }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            style={{ background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color: '#0a0a12' }}
           >
             {icons.plus} New Event
           </button>
+        }
+      />
+
+      <div style={{ maxWidth: 980, margin: '0 auto', padding: '32px 24px', animation: 'pageIn 0.3s ease' }}>
+
+        {/* Page heading */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, color: P.text, letterSpacing: '-0.04em', fontFamily: 'var(--font-display)', lineHeight: 1.1 }}>My Events</h1>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: P.sub, lineHeight: 1.5 }}>Plan and manage your pop-up events.</p>
         </div>
 
         {error && (
-          <div style={{ background: P.redGlow, color: P.red, border: `1px solid ${P.red}33`, borderRadius: 8, padding: '12px 16px', fontSize: 13, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: P.redGlow, color: P.red, border: `1px solid ${P.red}44`, borderRadius: 10, padding: '12px 16px', fontSize: 13, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
             {icons.warning} {error}
           </div>
         )}
 
-        {/* Stats row — each tile is a filter toggle */}
+        {/* Stat tiles */}
         {!loading && events.length > 0 && (
           <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
             {statItems.map((st, i) => {
@@ -230,22 +224,45 @@ export default function Events() {
                 <button
                   key={st.label}
                   onClick={() => handleTileClick(st)}
+                  className="stat-tile"
                   style={{
                     flex: '1 1 80px',
-                    background: active ? `${st.color}18` : P.surface,
+                    background: active
+                      ? `linear-gradient(135deg, ${st.color}22 0%, ${st.color}10 100%)`
+                      : 'rgba(19,19,30,0.72)',
+                    backdropFilter: 'blur(16px) saturate(140%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(140%)',
                     border: `1px solid ${active ? st.color + '55' : P.border}`,
-                    borderRadius: 12, padding: '14px 20px', textAlign: 'center',
+                    borderRadius: 14, padding: '18px 20px', textAlign: 'center',
                     cursor: 'pointer', fontFamily: 'inherit',
                     animation: `cardIn 0.3s ease ${i * 0.05}s both`,
-                    transition: 'background 0.15s, border-color 0.15s, transform 0.15s',
-                    transform: active ? 'translateY(-2px)' : 'translateY(0)',
-                    boxShadow: active ? `0 4px 16px ${st.color}22` : 'none',
+                    transition: 'all 0.2s cubic-bezier(0.34,1.2,0.64,1)',
+                    transform: active ? 'translateY(-3px)' : 'translateY(0)',
+                    boxShadow: active
+                      ? `0 0 0 1px ${st.color}33, 0 8px 24px ${st.color}22, inset 0 1px 0 rgba(255,255,255,0.06)`
+                      : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                    outline: 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = `${st.color}0d`; e.currentTarget.style.borderColor = `${st.color}33`; } e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = P.surface; e.currentTarget.style.borderColor = P.border; } e.currentTarget.style.transform = active ? 'translateY(-2px)' : 'translateY(0)'; }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = `linear-gradient(135deg, ${st.color}18 0%, ${st.color}08 100%)`;
+                      e.currentTarget.style.borderColor = `${st.color}44`;
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(19,19,30,0.72)';
+                      e.currentTarget.style.borderColor = P.border;
+                    }
+                  }}
                 >
-                  <div style={{ fontSize: 22, fontWeight: 800, color: st.color, lineHeight: 1 }}>{st.value}</div>
-                  <div style={{ fontSize: 11, color: active ? st.color : P.muted, marginTop: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', transition: 'color 0.15s' }}>{st.label}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: st.color, lineHeight: 1, fontFamily: 'var(--font-display)', letterSpacing: '-0.04em' }}>{st.value}</div>
+                  <div style={{ fontSize: 10, color: active ? st.color : P.muted, marginTop: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em' }}>{st.label}</div>
+                  {active && (
+                    <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: st.color, borderRadius: '2px 2px 0 0', opacity: 0.7 }} />
+                  )}
                 </button>
               );
             })}
@@ -257,7 +274,7 @@ export default function Events() {
           <div style={{ flex: '1 1 220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
             <span style={{ position: 'absolute', left: 12, color: P.muted, display: 'flex', pointerEvents: 'none' }}>{icons.search}</span>
             <input
-              style={{ ...inp, width: '100%', paddingLeft: 40 }}
+              style={{ width: '100%', height: 42, padding: '0 14px 0 42px', boxSizing: 'border-box', borderRadius: 10, border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.55)', backdropFilter: 'blur(12px)', color: P.text, fontSize: 13, outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by title, location, or type…"
@@ -265,20 +282,24 @@ export default function Events() {
               onBlur={e => e.target.style.borderColor = P.border}
             />
           </div>
-          <select style={{ ...inp, cursor: 'pointer' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setDateFilter('all'); }}>
-            <option value="all">All Status</option>
-            {STATUS_OPTIONS.map(st => <option key={st} value={st}>{st.charAt(0).toUpperCase() + st.slice(1)}</option>)}
-          </select>
-          <select style={{ ...inp, cursor: 'pointer' }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-            <option value="all">All Types</option>
-            {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
+          <OpalSelect
+            value={statusFilter}
+            onChange={v => { setStatusFilter(v); setDateFilter('all'); }}
+            options={statusOptions}
+            accent="violet"
+            style={{ minWidth: 140 }}
+          />
+          <OpalSelect
+            value={typeFilter}
+            onChange={v => setTypeFilter(v)}
+            options={typeOptions}
+            accent="teal"
+            style={{ minWidth: 140 }}
+          />
           {hasFilters && (
             <button
               onClick={() => { setSearch(''); setStatusFilter('all'); setTypeFilter('all'); setDateFilter('all'); }}
-              style={{ ...inp, cursor: 'pointer', color: P.sub, display: 'flex', alignItems: 'center', gap: 6 }}
-              onMouseEnter={e => e.currentTarget.style.color = P.text}
-              onMouseLeave={e => e.currentTarget.style.color = P.sub}
+              style={{ height: 42, padding: '0 14px', borderRadius: 10, border: `1px solid ${P.red}44`, background: P.redGlow, color: P.red, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.15s' }}
             >
               {icons.x} Clear
             </button>
@@ -289,26 +310,26 @@ export default function Events() {
         {loading ? (
           <div>
             {[1, 2, 3].map(i => (
-              <div key={i} style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 12, padding: '20px 24px', marginBottom: 10, height: 80, animation: `skpulse 1.4s infinite ${i * 0.12}s` }} />
+              <div key={i} style={{ background: 'rgba(30,30,41,0.55)', border: `1px solid ${P.border}`, borderRadius: 14, padding: '20px 24px', marginBottom: 10, height: 80, animation: `skpulse 1.4s infinite ${i * 0.12}s` }} />
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: P.surface, borderRadius: 16, border: `1px solid ${P.border}`, animation: 'cardIn 0.35s ease both' }}>
-            <div style={{ color: P.muted, marginBottom: 12, display: 'flex', justifyContent: 'center', transform: 'scale(1.8)' }}>{icons.clipboard}</div>
-            <p style={{ fontWeight: 700, color: P.text, fontSize: 16, margin: '0 0 8px' }}>No events yet</p>
-            <p style={{ color: P.sub, fontSize: 14, marginBottom: 24 }}>Create your first event to get started.</p>
+          <GlassPanel style={{ textAlign: 'center', padding: '64px 20px', animation: 'cardIn 0.35s ease both' }}>
+            <div style={{ color: P.muted, marginBottom: 16, display: 'flex', justifyContent: 'center', transform: 'scale(2)' }}>{icons.clipboard}</div>
+            <p style={{ fontWeight: 700, color: P.text, fontSize: 17, margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>No events yet</p>
+            <p style={{ color: P.sub, fontSize: 14, marginBottom: 28 }}>Create your first event to get started.</p>
             <button
               onClick={() => setShowCreate(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', background: P.blue, color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color: '#0a0a0f', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               {icons.plus} New Event
             </button>
-          </div>
+          </GlassPanel>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: P.surface, borderRadius: 16, border: `1px solid ${P.border}` }}>
-            <p style={{ fontWeight: 700, color: P.text, fontSize: 16, margin: '0 0 8px' }}>No events match your filters</p>
+          <GlassPanel style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ fontWeight: 700, color: P.text, fontSize: 16, margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>No events match your filters</p>
             <p style={{ color: P.sub, fontSize: 14 }}>Try adjusting your search or filters.</p>
-          </div>
+          </GlassPanel>
         ) : (
           <div>
             {filtered.map((ev, i) => {
@@ -319,46 +340,49 @@ export default function Events() {
                   key={ev._id}
                   className="ev-card"
                   style={{
-                    background: P.surface,
+                    background: past ? 'rgba(19,19,30,0.55)' : 'rgba(19,19,30,0.72)',
+                    backdropFilter: 'blur(18px) saturate(140%)',
+                    WebkitBackdropFilter: 'blur(18px) saturate(140%)',
                     border: `1px solid ${P.border}`,
-                    borderRadius: 12,
-                    padding: '18px 22px',
+                    borderLeft: `3px solid ${past ? P.muted : statusColor}`,
+                    borderRadius: 14,
+                    padding: '18px 20px 18px 18px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 16,
                     marginBottom: 10,
-                    opacity: past ? 0.75 : 1,
+                    opacity: past ? 0.65 : 1,
                     animation: `cardIn 0.32s ease ${i * 0.06}s both`,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
                   }}
                 >
                   <div
                     style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
                     onClick={() => navigate(`/organizer/events/${ev._id}/workspace`)}
                   >
-                    <div style={{ margin: '0 0 7px', fontSize: 16, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      {ev.title}
-                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: statusColor + '1a', color: statusColor, border: `1px solid ${statusColor}33`, letterSpacing: '0.05em' }}>
-                        {(ev.status || 'planning').toUpperCase()}
+                    <div style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: P.text, fontFamily: 'var(--font-display)', lineHeight: 1.2 }}>{ev.title}</span>
+                      <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 800, background: statusColor + '22', color: statusColor, border: `1px solid ${statusColor}44`, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+                        {ev.status || 'planning'}
                       </span>
-                      {past && <span style={{ padding: '3px 8px', borderRadius: 99, fontSize: 11, fontWeight: 600, background: P.hover, color: P.muted, border: `1px solid ${P.border}` }}>PAST</span>}
+                      {past && <span style={{ padding: '3px 8px', borderRadius: 99, fontSize: 10, fontWeight: 700, background: 'rgba(255,255,255,0.06)', color: P.sub, border: `1px solid ${P.border}`, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Past</span>}
                     </div>
-                    <div style={{ display: 'flex', gap: 14, fontSize: 13, color: P.sub, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ color: P.muted }}>{icons.calendar}</span>{fmtDate(ev.date)}</span>
+                    <div style={{ display: 'flex', gap: 12, fontSize: 12, color: P.sub, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ color: P.indigo, display:'flex' }}>{icons.calendar}</span>{fmtDate(ev.date)}</span>
                       {ev.startTime && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span style={{ color: P.muted }}>{icons.clock}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ color: P.cyan, display:'flex' }}>{icons.clock}</span>
                           {ev.startTime}{ev.endTime ? `–${ev.endTime}` : ''}
                         </span>
                       )}
                       {ev.locationSnapshot?.venueName && ev.locationSnapshot.venueName !== 'TBD' && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ color: P.muted }}>{icons.mapPin}</span>{ev.locationSnapshot.venueName}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ color: P.teal, display:'flex' }}>{icons.mapPin}</span>{ev.locationSnapshot.venueName}</span>
                       )}
                       {ev.eventType && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ color: P.muted }}>{icons.tag}</span>{fmtType(ev.eventType)}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ color: P.orange, display:'flex' }}>{icons.tag}</span>{fmtType(ev.eventType)}</span>
                       )}
                       {ev.expectedAttendees > 0 && (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ color: P.muted }}>{icons.users}</span>{ev.expectedAttendees.toLocaleString()} expected</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ color: P.purple, display:'flex' }}>{icons.users}</span>{ev.expectedAttendees.toLocaleString()} expected</span>
                       )}
                     </div>
                   </div>
@@ -366,14 +390,14 @@ export default function Events() {
                     <button
                       className="open-btn"
                       onClick={() => navigate(`/organizer/events/${ev._id}/workspace`)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: P.blue, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 9, border: `1px solid ${P.blue}55`, background: P.blueGlow, color: P.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                     >
                       Open {icons.arrowRight}
                     </button>
                     <button
                       className="del-btn"
                       onClick={e => { e.stopPropagation(); setConfirmDelete(ev); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: `1px solid ${P.red}44`, background: P.redGlow, color: P.red, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, border: `1px solid ${P.red}44`, background: P.redGlow, color: P.red, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
                     >
                       {icons.trash}
                     </button>
@@ -381,7 +405,7 @@ export default function Events() {
                 </div>
               );
             })}
-            <p style={{ fontSize: 13, color: P.muted, marginTop: 10 }}>Showing {filtered.length} of {events.length} events</p>
+            <p style={{ fontSize: 13, color: P.muted, marginTop: 12 }}>Showing {filtered.length} of {events.length} events</p>
           </div>
         )}
       </div>

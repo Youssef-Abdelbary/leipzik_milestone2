@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getBroadcasts, sendBroadcast, getUnseenRecipients } from '../../services/serviceBroadcast';
-import { P, icons } from '../../utils/theme';
+import { P, icons, GlassPanel } from '../../components/componentTheme';
+import { OpalSelect } from '../../components/componentMenus';
 
 const MESSAGE_TYPES = [
   { value:'announcement', label:'Announcement', icon: 'megaphone' },
@@ -10,17 +11,17 @@ const MESSAGE_TYPES = [
 ];
 
 const RSVP_TARGETS = [
-  { value:'all',       label:'All Guests',               desc:'Every guest regardless of RSVP status' },
-  { value:'attending', label:'Attending only',            desc:'Guests who confirmed they\'re coming' },
-  { value:'pending',   label:'No response yet',          desc:'Guests who haven\'t replied' },
-  { value:'declined',  label:'Declined (follow-up)',     desc:'Guests who can\'t make it' },
+  { value:'all',       label:'All Guests',           desc:"Every guest regardless of RSVP status" },
+  { value:'attending', label:'Attending only',        desc:"Guests who confirmed they're coming" },
+  { value:'pending',   label:'No response yet',       desc:"Guests who haven't replied" },
+  { value:'declined',  label:'Declined (follow-up)',  desc:"Guests who can't make it" },
 ];
 
 const TYPE_COLORS = {
-  announcement: { bg:'rgba(91,156,246,0.15)', text:P.blue   },
-  reminder:     { bg:'rgba(251,191,36,0.15)', text:P.amber  },
-  update:       { bg:'rgba(74,222,128,0.15)', text:P.green  },
-  followup:     { bg:'rgba(192,132,252,0.15)',text:P.purple },
+  announcement: { bg:P.blueGlow,   text:P.blue   },
+  reminder:     { bg:P.amberGlow,  text:P.amber  },
+  update:       { bg:P.orangeGlow, text:P.orange },
+  followup:     { bg:P.roseGlow,   text:P.rose   },
 };
 
 const EMPTY_FORM = {
@@ -43,17 +44,17 @@ function DeliveryBar({ broadcast }) {
   const readPct      = Math.round((read/total)*100);
 
   return (
-    <div style={{ marginTop:14, padding:'14px 16px', background:P.panel, borderRadius:10, border:`1px solid ${P.border}` }}>
+    <GlassPanel style={{ marginTop:14, padding:'14px 16px' }}>
       <p style={{ margin:'0 0 12px', fontSize:13, fontWeight:600, color:P.text }}>Delivery Stats</p>
       <div style={{ display:'flex', gap:20, marginBottom:14, flexWrap:'wrap' }}>
         {[
-          { label:'Sent to',  value:total,            color:P.text  },
-          { label:'Delivered',value:delivered,         color:P.blue  },
-          { label:'Seen',     value:read,             color:P.green },
-          { label:'Not seen', value:delivered-read,   color:P.red   },
+          { label:'Sent to',   value:total,           color:P.text  },
+          { label:'Delivered', value:delivered,        color:P.blue  },
+          { label:'Seen',      value:read,            color:P.green },
+          { label:'Not seen',  value:delivered-read,  color:P.red   },
         ].map(s => (
           <div key={s.label} style={{ textAlign:'center', minWidth:54 }}>
-            <p style={{ margin:0, fontSize:22, fontWeight:800, color:s.color, lineHeight:1 }}>{s.value}</p>
+            <p style={{ margin:0, fontSize:22, fontWeight:800, color:s.color, lineHeight:1, fontFamily:'var(--font-display)' }}>{s.value}</p>
             <p style={{ margin:'3px 0 0', fontSize:10, color:P.muted, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>{s.label}</p>
           </div>
         ))}
@@ -70,7 +71,7 @@ function DeliveryBar({ broadcast }) {
           </span>
         ))}
       </div>
-    </div>
+    </GlassPanel>
   );
 }
 
@@ -96,9 +97,9 @@ function RecipientTable({ recipients }) {
               </td>
               <td style={{ padding:'9px 12px', fontSize:12, color:P.sub, textTransform:'capitalize' }}>{r.rsvpStatus}</td>
               <td style={{ padding:'9px 12px' }}>
-              {r.deliveryMethod==='email' && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.blueGlow, color:P.blue, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.mail} Email</span>}
-              {r.deliveryMethod==='in_app'&& <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.bell} In-app</span>}
-                {r.deliveryMethod==='none'  && <span style={{ fontSize:11, color:P.muted }}>—</span>}
+                {r.deliveryMethod==='email'  && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.blueGlow,  color:P.blue,  fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.mail} Email</span>}
+                {r.deliveryMethod==='in_app' && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.bell} In-app</span>}
+                {r.deliveryMethod==='none'   && <span style={{ fontSize:11, color:P.muted }}>—</span>}
               </td>
               <td style={{ padding:'9px 12px', fontSize:12, color:P.sub }}>{r.sentAt ? fmtDate(r.sentAt) : <span style={{color:P.muted}}>Not sent</span>}</td>
               <td style={{ padding:'9px 12px' }}>
@@ -187,10 +188,9 @@ export default function TabMessages({ eventId }) {
   const set = (k,v) => setForm(p => ({...p,[k]:v}));
   const isTargeted = form.specificGuestIds?.length > 0;
 
-  // ── Shared input style ────────────────────────────────────────────────────
   const inp = {
-    width:'100%', padding:'11px 14px', borderRadius:9,
-    border:`1px solid ${P.border}`, background:P.hover,
+    width:'100%', padding:'11px 14px', borderRadius:10,
+    border:`1px solid ${P.border}`, background:'rgba(30,30,41,0.7)',
     color:P.text, fontSize:14, outline:'none',
     boxSizing:'border-box', fontFamily:'inherit',
     transition:'border-color 0.15s',
@@ -206,19 +206,23 @@ export default function TabMessages({ eventId }) {
     : form.rsvpFilter==='pending'   ? <><span style={{display:'flex',flexShrink:0}}>{icons.clock}</span>Guests who haven&apos;t responded — good for RSVP deadline nudges.</>
     : <><span style={{display:'flex',flexShrink:0}}>{icons.refresh}</span>Guests who declined — use sparingly (e.g. date change or re-invitation).</>;
 
+  const rsvpOptions = RSVP_TARGETS.map(t => ({ value: t.value, label: t.label }));
+
   return (
-    <div style={{ maxWidth:900, margin:'0 auto', padding:'28px 24px', fontFamily:'system-ui,-apple-system,sans-serif', color:P.text }}>
+    <div style={{ maxWidth:900, margin:'0 auto', padding:'28px 24px', fontFamily:'var(--font-body)', color:P.text }}>
 
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div>
-          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, display:'flex', alignItems:'center', gap:10 }}><span style={{color:P.teal}}>{icons.messages}</span> Guest Messages</h2>
+          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, display:'flex', alignItems:'center', gap:10, fontFamily:'var(--font-display)' }}>
+            <span style={{color:P.teal}}>{icons.messages}</span> Guest Messages
+          </h2>
           <p style={{ margin:'5px 0 0', fontSize:13, color:P.sub }}>Broadcast announcements via email and in-app notifications.</p>
         </div>
         {!showCompose && (
           <button
             onClick={() => { setForm(EMPTY_FORM); setShowCompose(true); setSendError(null); setSendResult(null); }}
-            style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 20px', background:P.blue, color:'#fff', border:'none', borderRadius:9, fontSize:14, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0, transition:'opacity 0.15s' }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 20px', background:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:'#0a0a0f', border:'none', borderRadius:10, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', flexShrink:0, transition:'opacity 0.15s' }}
             onMouseEnter={e => e.currentTarget.style.opacity='0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity='1'}
           >
@@ -227,23 +231,25 @@ export default function TabMessages({ eventId }) {
         )}
       </div>
 
-      {error && <div style={{ background:P.redGlow, color:P.red, borderRadius:9, padding:'10px 14px', fontSize:13, marginBottom:20, border:`1px solid ${P.red}33` }}>{error}</div>}
+      {error && <div style={{ background:P.redGlow, color:P.red, borderRadius:10, padding:'10px 14px', fontSize:13, marginBottom:20, border:`1px solid ${P.red}33` }}>{error}</div>}
 
-      {/* ── Compose panel ────────────────────────────────────────────────── */}
+      {/* Compose panel */}
       {showCompose && (
-        <div style={{ background:P.surface, border:`1px solid ${P.border}`, borderRadius:14, padding:'24px', marginBottom:22, boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
+        <GlassPanel style={{ padding:'24px', marginBottom:22, boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-            <p style={{ margin:0, fontSize:15, fontWeight:700, color:P.text }}>Compose Broadcast</p>
-            <button onClick={() => { setShowCompose(false); setSendError(null); setForm(EMPTY_FORM); }} style={{ background:'none', border:'none', color:P.muted, cursor:'pointer', display:'flex', padding:4 }}>{icons.x}</button>
+            <p style={{ margin:0, fontSize:15, fontWeight:700, color:P.text, fontFamily:'var(--font-display)' }}>Compose Broadcast</p>
+            <button onClick={() => { setShowCompose(false); setSendError(null); setForm(EMPTY_FORM); }} style={{ background:'none', border:'none', color:P.muted, cursor:'pointer', display:'flex', padding:4, borderRadius:6, transition:'color 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.color=P.text}
+              onMouseLeave={e => e.currentTarget.style.color=P.muted}
+            >{icons.x}</button>
           </div>
 
           {sendError && (
-            <div style={{ background:P.redGlow, color:P.red, border:`1px solid ${P.red}33`, borderRadius:8, padding:'10px 14px', fontSize:13, marginBottom:16 }}>{sendError}</div>
+            <div style={{ background:P.redGlow, color:P.red, border:`1px solid ${P.red}33`, borderRadius:9, padding:'10px 14px', fontSize:13, marginBottom:16 }}>{sendError}</div>
           )}
 
-          {/* Success */}
           {sendResult && (
-            <div style={{ background:P.greenGlow, color:P.green, border:`1px solid ${P.green}33`, borderRadius:8, padding:'14px', fontSize:13, marginBottom:14 }}>
+            <div style={{ background:P.greenGlow, color:P.green, border:`1px solid ${P.green}33`, borderRadius:9, padding:'14px', fontSize:13, marginBottom:14 }}>
               <p style={{ margin:'0 0 4px', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}>{icons.check} Broadcast sent!</p>
               <p style={{ margin:0 }}>
                 Sent to {sendResult.recipientCount} guest(s) · Delivered to {sendResult.deliveredCount}
@@ -254,7 +260,6 @@ export default function TabMessages({ eventId }) {
 
           {!sendResult && (
             <>
-              {/* Subject */}
               <div style={{ marginBottom:16 }}>
                 {fieldLabel('Subject / Title *')}
                 <input
@@ -267,7 +272,6 @@ export default function TabMessages({ eventId }) {
                 />
               </div>
 
-              {/* Message body */}
               <div style={{ marginBottom:16 }}>
                 {fieldLabel('Message *')}
                 <textarea
@@ -280,7 +284,7 @@ export default function TabMessages({ eventId }) {
                 />
               </div>
 
-              {/* Message type — FULL WIDTH */}
+              {/* Message type */}
               <div style={{ marginBottom:16 }}>
                 {fieldLabel('Message Type')}
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
@@ -294,16 +298,14 @@ export default function TabMessages({ eventId }) {
                         style={{
                           flex:       '1 1 auto',
                           padding:    '10px 14px',
-                          borderRadius: 9,
+                          borderRadius: 10,
                           border:     `1px solid ${isSelected ? tc.text+'55' : P.border}`,
-                          background: isSelected ? tc.bg : P.hover,
+                          background: isSelected ? tc.bg : 'rgba(30,30,41,0.55)',
+                          backdropFilter: 'blur(8px)',
                           color:      isSelected ? tc.text : P.sub,
-                          fontSize:   13,
-                          fontWeight: 600,
-                          cursor:     'pointer',
-                          fontFamily: 'inherit',
-                          transition: 'all 0.15s',
-                          whiteSpace: 'nowrap',
+                          fontSize:   13, fontWeight: 600,
+                          cursor:     'pointer', fontFamily: 'inherit',
+                          transition: 'all 0.15s', whiteSpace: 'nowrap',
                         }}
                       >
                         <span style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -316,18 +318,18 @@ export default function TabMessages({ eventId }) {
                 </div>
               </div>
 
-              {/* Send to — FULL WIDTH */}
+              {/* Send to */}
               <div style={{ marginBottom:16 }}>
                 {fieldLabel('Send To')}
                 {isTargeted ? (
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <div style={{ flex:1, padding:'11px 14px', borderRadius:9, border:`1px solid ${P.purple}44`, background:P.purpleGlow, fontSize:14, color:P.purple, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ flex:1, padding:'11px 14px', borderRadius:10, border:`1px solid ${P.purple}44`, background:P.purpleGlow, fontSize:14, color:P.purple, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
                       {icons.users} {form.specificGuestIds.length} specific guest{form.specificGuestIds.length!==1?'s':''} (unseen recipients)
                     </div>
                     <button
                       onClick={() => set('specificGuestIds', null)}
                       title="Remove targeting — use RSVP filter instead"
-                      style={{ padding:'11px 14px', borderRadius:9, border:`1px solid ${P.border}`, background:P.hover, fontSize:13, color:P.sub, cursor:'pointer', flexShrink:0, fontFamily:'inherit', transition:'all 0.15s' }}
+                      style={{ padding:'11px 14px', borderRadius:10, border:`1px solid ${P.border}`, background:'rgba(30,30,41,0.55)', fontSize:13, color:P.sub, cursor:'pointer', flexShrink:0, fontFamily:'inherit', transition:'all 0.15s' }}
                       onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
                       onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
                     >
@@ -335,53 +337,33 @@ export default function TabMessages({ eventId }) {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                    {RSVP_TARGETS.map(t => {
-                      const isSel = form.rsvpFilter === t.value;
-                      return (
-                        <button
-                          key={t.value}
-                          onClick={() => set('rsvpFilter', t.value)}
-                          style={{
-                            padding:    '12px 14px',
-                            borderRadius: 9,
-                            border:     `1px solid ${isSel ? P.blue+'55' : P.border}`,
-                            background: isSel ? P.blueGlow : P.hover,
-                            color:      isSel ? P.blue : P.sub,
-                            fontSize:   13,
-                            fontWeight: 600,
-                            cursor:     'pointer',
-                            textAlign:  'left',
-                            fontFamily: 'inherit',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          <div style={{ marginBottom:3 }}>{t.label}</div>
-                          <div style={{ fontSize:11, color:isSel?P.blue+'99':P.muted, fontWeight:400 }}>{t.desc}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <OpalSelect
+                    value={form.rsvpFilter}
+                    onChange={v => set('rsvpFilter', v)}
+                    options={rsvpOptions}
+                    accent="teal"
+                  />
                 )}
               </div>
 
               {/* Context hint */}
-              <div style={{ padding:'10px 14px', background:P.panel, borderRadius:8, fontSize:12, color:P.sub, marginBottom:18, lineHeight:1.5, display:'flex', alignItems:'flex-start', gap:8 }}>
+              <div style={{ padding:'10px 14px', background:P.panel, borderRadius:9, fontSize:12, color:P.sub, marginBottom:18, lineHeight:1.5, display:'flex', alignItems:'flex-start', gap:8, border:`1px solid ${P.border}` }}>
                 {contextHint}
               </div>
 
-              {/* Actions */}
               <div style={{ display:'flex', gap:10 }}>
                 <button
                   onClick={() => { setShowCompose(false); setSendError(null); setForm(EMPTY_FORM); }}
-                  style={{ padding:'11px 20px', borderRadius:9, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}
+                  style={{ padding:'11px 20px', borderRadius:10, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
+                  onMouseLeave={e => { e.currentTarget.style.color=P.sub; e.currentTarget.style.borderColor=P.border; }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSend}
                   disabled={sending}
-                  style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 24px', borderRadius:9, border:'none', background: sending?P.muted:P.blue, color:'#fff', fontWeight:600, fontSize:14, cursor:sending?'not-allowed':'pointer', fontFamily:'inherit', transition:'opacity 0.15s' }}
+                  style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'11px 24px', borderRadius:10, border:'none', background: sending?P.hover:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:sending?P.muted:'#0a0a0f', fontWeight:700, fontSize:14, cursor:sending?'not-allowed':'pointer', fontFamily:'inherit', transition:'opacity 0.15s' }}
                 >
                   {icons.send}
                   {sending ? 'Sending…' : isTargeted ? `Send to ${form.specificGuestIds.length} guests` : 'Send Broadcast'}
@@ -389,18 +371,18 @@ export default function TabMessages({ eventId }) {
               </div>
             </>
           )}
-        </div>
+        </GlassPanel>
       )}
 
-      {/* ── Broadcast history ────────────────────────────────────────────── */}
+      {/* Broadcast history */}
       {loading ? (
         <p style={{ color:P.muted, fontSize:14 }}>Loading messages…</p>
       ) : broadcasts.length === 0 ? (
-        <div style={{ textAlign:'center', padding:'60px 20px', background:P.surface, borderRadius:14, border:`1px solid ${P.border}` }}>
+        <GlassPanel style={{ textAlign:'center', padding:'60px 20px' }}>
           <div style={{ color:P.muted, display:'flex', justifyContent:'center', transform:'scale(2)', marginBottom:20 }}>{icons.messages}</div>
-          <p style={{ fontWeight:600, color:P.text, fontSize:16, margin:'0 0 8px' }}>No messages sent yet</p>
+          <p style={{ fontWeight:700, color:P.text, fontSize:16, margin:'0 0 8px', fontFamily:'var(--font-display)' }}>No messages sent yet</p>
           <p style={{ color:P.sub, fontSize:14 }}>Use broadcasts to communicate with guests on the day of the event.</p>
-        </div>
+        </GlassPanel>
       ) : (
         <div>
           <p style={{ fontSize:12, color:P.muted, marginBottom:12 }}>
@@ -415,8 +397,7 @@ export default function TabMessages({ eventId }) {
             const isFetching  = fetchingUnseen === bc._id;
 
             return (
-              <div key={bc._id} style={{ background:P.surface, border:`1px solid ${P.border}`, borderRadius:12, marginBottom:10, overflow:'hidden', transition:'border-color 0.15s' }}>
-                {/* Card header */}
+              <GlassPanel key={bc._id} style={{ marginBottom:10, overflow:'hidden', transition:'border-color 0.15s' }}>
                 <div
                   style={{ display:'flex', alignItems:'center', gap:12, padding:'15px 18px', cursor:'pointer' }}
                   onClick={() => setExpanded(isOpen ? null : bc._id)}
@@ -425,7 +406,7 @@ export default function TabMessages({ eventId }) {
                     {(() => { const mt = MESSAGE_TYPES.find(t=>t.value===bc.type); return mt ? <><span style={{display:'flex'}}>{icons[mt.icon]}</span>{mt.label}</> : bc.type; })()}
                   </span>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <p style={{ margin:0, fontSize:14, fontWeight:700, color:P.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bc.title}</p>
+                    <p style={{ margin:0, fontSize:14, fontWeight:700, color:P.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:'var(--font-display)' }}>{bc.title}</p>
                     <p style={{ margin:'3px 0 0', fontSize:11, color:P.muted }}>
                       {fmtDate(bc.createdAt)} · {bc.totalSent||0} sent ·{' '}
                       <span style={{color:P.green}}>{bc.totalRead||0} seen</span>
@@ -433,12 +414,11 @@ export default function TabMessages({ eventId }) {
                     </p>
                   </div>
 
-                  {/* Follow-up button */}
                   {unseenCount > 0 && (
                     <button
                       onClick={e => { e.stopPropagation(); handleFollowUp(bc); }}
                       disabled={isFetching}
-                      style={{ padding:'5px 12px', borderRadius:7, border:`1px solid ${P.red}44`, background:P.redGlow, color: isFetching?P.muted:P.red, fontSize:12, fontWeight:600, cursor:isFetching?'not-allowed':'pointer', whiteSpace:'nowrap', flexShrink:0, fontFamily:'inherit', transition:'all 0.15s' }}
+                      style={{ padding:'5px 12px', borderRadius:8, border:`1px solid ${P.red}44`, background:P.redGlow, color: isFetching?P.muted:P.red, fontSize:12, fontWeight:600, cursor:isFetching?'not-allowed':'pointer', whiteSpace:'nowrap', flexShrink:0, fontFamily:'inherit', transition:'all 0.15s' }}
                     >
                       <span style={{ display:'flex', alignItems:'center', gap:5 }}>{isFetching ? <>{icons.refresh} Loading…</> : <>{icons.refresh} Follow-up ({unseenCount})</>}</span>
                     </button>
@@ -447,21 +427,20 @@ export default function TabMessages({ eventId }) {
                   <span style={{ color:P.muted, display:'flex', transition:'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink:0 }}>{icons.chevronDown}</span>
                 </div>
 
-                {/* Expanded */}
                 {isOpen && (
                   <div style={{ padding:'0 18px 18px', borderTop:`1px solid ${P.borderSub}` }}>
-                    <p style={{ margin:'14px 0', fontSize:13, background:P.panel, padding:'12px 16px', borderRadius:8, color:P.sub, lineHeight:1.7, borderLeft:`3px solid ${tc.text}`, whiteSpace:'pre-wrap' }}>
+                    <p style={{ margin:'14px 0', fontSize:13, background:P.panel, padding:'12px 16px', borderRadius:9, color:P.sub, lineHeight:1.7, borderLeft:`3px solid ${tc.text}`, whiteSpace:'pre-wrap' }}>
                       {bc.message}
                     </p>
                     <DeliveryBar broadcast={bc} />
                     <div style={{ marginTop:14 }}>
                       <button
                         onClick={() => setShowRecipients(showRecips ? null : bc._id)}
-                        style={{ padding:'7px 14px', borderRadius:7, border:`1px solid ${P.border}`, background:P.hover, color:P.sub, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}
+                        style={{ padding:'7px 14px', borderRadius:8, border:`1px solid ${P.border}`, background:'rgba(30,30,41,0.55)', color:P.sub, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}
                         onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
                         onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
                       >
-                        <span style={{ display:'flex', alignItems:'center', gap:6, transition:'all 0.2s' }}>
+                        <span style={{ display:'flex', alignItems:'center', gap:6 }}>
                           <span style={{ display:'flex', transition:'transform 0.2s', transform: showRecips ? 'rotate(180deg)' : 'rotate(0deg)' }}>{icons.chevronDown}</span>
                           {showRecips ? 'Hide recipients' : `Show recipients (${bc.recipients?.length||0})`}
                         </span>
@@ -470,7 +449,7 @@ export default function TabMessages({ eventId }) {
                     {showRecips && <RecipientTable recipients={bc.recipients}/>}
                   </div>
                 )}
-              </div>
+              </GlassPanel>
             );
           })}
         </div>

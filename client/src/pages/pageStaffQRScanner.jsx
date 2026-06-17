@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { checkInByQR } from '../services/serviceGuest';
-import { P, icons } from '../utils/theme';
+import { P, icons, GlassPanel } from '../components/componentTheme';
+import AppHeader from '../components/componentAppHeader';
+import '../components/componentTheme.css';
 
 export default function StaffQRScanner() {
   const [scanResult, setScanResult]           = useState(null);
@@ -9,14 +11,13 @@ export default function StaffQRScanner() {
   const [cameraActive, setCameraActive]       = useState(false);
   const [cameraError, setCameraError]         = useState(null);
   const [history, setHistory]                 = useState([]);
-  const [camPermission, setCamPermission]     = useState('unknown'); // 'unknown'|'granted'|'denied'|'unavailable'
+  const [camPermission, setCamPermission]     = useState('unknown');
   const scannerRef      = useRef(null);
   const scannerInstance = useRef(null);
   const manualRef       = useRef(null);
 
   useEffect(() => { manualRef.current?.focus(); }, []);
 
-  // Check camera availability and permission on mount
   useEffect(() => {
     if (!navigator.mediaDevices?.enumerateDevices) {
       setCamPermission('unavailable');
@@ -102,57 +103,62 @@ export default function StaffQRScanner() {
   }, []);
 
   const camStatus = {
-    granted:     { label: 'Camera ready',       color: P.green,  glow: P.greenGlow,  icon: icons.camera },
-    denied:      { label: 'Camera denied',       color: P.red,    glow: P.redGlow,    icon: icons.videoOff },
-    unavailable: { label: 'No camera detected',  color: P.amber,  glow: P.amberGlow,  icon: icons.videoOff },
-    unknown:     { label: 'Camera status unknown', color: P.muted, glow: 'transparent', icon: icons.camera },
+    granted:     { label: 'Camera ready',         color: P.green,  glow: P.greenGlow,  icon: icons.camera   },
+    denied:      { label: 'Camera denied',         color: P.red,    glow: P.redGlow,    icon: icons.videoOff },
+    unavailable: { label: 'No camera detected',    color: P.amber,  glow: P.amberGlow,  icon: icons.videoOff },
+    unknown:     { label: 'Camera status unknown', color: P.muted,  glow: 'transparent',icon: icons.camera   },
   }[camPermission] || { label: 'Camera status unknown', color: P.muted, glow: 'transparent', icon: icons.camera };
 
   const resultAccent = scanResult?.alreadyCheckedIn ? P.amber : scanResult?.error ? P.red : P.green;
   const resultGlow   = scanResult?.alreadyCheckedIn ? P.amberGlow : scanResult?.error ? P.redGlow : P.greenGlow;
   const resultIcon   = scanResult?.alreadyCheckedIn ? icons.warning : scanResult?.error ? icons.xCircle : icons.checkCircle;
 
+  const inp = {
+    flex: 1, padding: '10px 14px', borderRadius: 10,
+    border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.7)',
+    color: P.text, fontSize: 14, outline: 'none',
+    fontFamily: 'monospace', transition: 'border-color 0.15s',
+  };
+
   return (
-    <div style={{ minHeight: '100vh', background: P.bg, fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif", color: P.text }}>
+    <div style={{ minHeight: '100vh', background: 'var(--opal-bg)', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
       <style>{`
         @keyframes slideDown { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:translateY(0); } }
         @keyframes cardIn    { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
         @keyframes spin      { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         @keyframes pulse     { 0%,100%{box-shadow:0 0 0 0 ${P.blue}55} 50%{box-shadow:0 0 0 6px transparent} }
-        select option { background: ${P.panel}; }
       `}</style>
 
-      {/* Nav */}
-      <div style={{ background: 'rgba(17,17,17,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${P.border}`, padding: '0 24px', display: 'flex', alignItems: 'center', height: 54, gap: 14, position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: P.blue, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            {icons.qr}
-          </div>
-          <span style={{ color: P.text, fontSize: 15, fontWeight: 700 }}>PopEyez</span>
-        </div>
-        <span style={{ color: P.muted, fontSize: 13 }}>/ QR Check-in Scanner</span>
-      </div>
+      <AppHeader
+        back={{ label: 'Dashboard', onClick: () => window.history.back() }}
+        crumb="QR Check-in"
+        right={
+          <span style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:99, fontSize:11, fontWeight:700, background:P.tealGlow, color:P.teal, border:`1px solid ${P.teal}44` }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:P.teal, display:'inline-block', boxShadow:`0 0 6px ${P.teal}` }}/>
+            Staff Scanner
+          </span>
+        }
+      />
 
-      <div style={{ maxWidth: 580, margin: '0 auto', padding: '32px 24px' }}>
-        <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: P.text, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ color: P.blue }}>{icons.qr}</span> QR Check-in
-        </h1>
-        <p style={{ margin: '0 0 28px', fontSize: 14, color: P.sub }}>
-          Scan a guest&apos;s QR code to check them in instantly.
-        </p>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 24px' }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ margin: '0 0 6px', fontSize: 28, fontWeight: 900, color: P.text, letterSpacing: '-0.03em', display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-display)', lineHeight: 1.1 }}>
+            <span style={{ color: P.teal, background: P.tealGlow, padding: 8, borderRadius: 10, display: 'flex' }}>{icons.qr}</span>
+            QR Check-in
+          </h1>
+          <p style={{ margin: '0 0 0', fontSize: 14, color: P.sub, lineHeight: 1.5 }}>
+            Scan a guest&apos;s QR code to check them in instantly.
+          </p>
+        </div>
 
         {/* Result banner */}
         {scanResult && (
-          <div style={{
-            background: resultGlow,
+          <GlassPanel style={{
             border: `1px solid ${resultAccent}44`,
-            borderRadius: 12,
-            padding: '18px 20px',
-            marginBottom: 20,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 14,
+            padding: '18px 20px', marginBottom: 20,
+            display: 'flex', alignItems: 'flex-start', gap: 14,
             animation: 'slideDown 0.28s cubic-bezier(0.34,1.56,0.64,1) both',
+            background: resultGlow,
           }}>
             <span style={{ color: resultAccent, display: 'flex', flexShrink: 0, transform: 'scale(1.3)' }}>{resultIcon}</span>
             <div>
@@ -166,14 +172,14 @@ export default function StaffQRScanner() {
                 </p>
               )}
             </div>
-          </div>
+          </GlassPanel>
         )}
 
         {/* Camera section */}
-        <div style={{ background: P.surface, border: `1px solid ${cameraActive ? P.blue + '66' : P.border}`, borderRadius: 14, padding: 20, marginBottom: 16, transition: 'border-color 0.2s', animation: cameraActive ? 'pulse 2s infinite' : 'none' }}>
+        <GlassPanel style={{ padding: 20, marginBottom: 14, transition: 'border-color 0.2s', border: `1px solid ${cameraActive ? P.blue + '66' : P.border}`, animation: cameraActive ? 'pulse 2s infinite' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: P.blue }}>{icons.camera}</span> Camera Scanner
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-display)' }}>
+              <span style={{ color: P.blue, background: P.blueGlow, padding: 5, borderRadius: 7, display: 'flex' }}>{icons.camera}</span> Camera Scanner
             </p>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -188,17 +194,17 @@ export default function StaffQRScanner() {
           </div>
 
           {cameraError && (
-            <div style={{ background: P.redGlow, color: P.red, border: `1px solid ${P.red}33`, borderRadius: 8, padding: '10px 14px', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ background: P.redGlow, color: P.red, border: `1px solid ${P.red}33`, borderRadius: 9, padding: '10px 14px', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               {icons.warning} {cameraError}
             </div>
           )}
 
-          <div id="qr-reader-div" ref={scannerRef} style={{ width: '100%', display: cameraActive ? 'block' : 'none', marginBottom: 12, borderRadius: 8, overflow: 'hidden' }} />
+          <div id="qr-reader-div" ref={scannerRef} style={{ width: '100%', display: cameraActive ? 'block' : 'none', marginBottom: 12, borderRadius: 10, overflow: 'hidden' }} />
 
           {!cameraActive ? (
             <button
               onClick={startCamera}
-              style={{ width: '100%', padding: '12px', background: P.blue, color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'opacity 0.15s' }}
+              style={{ width: '100%', padding: '12px', background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color: '#0a0a0f', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'opacity 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
@@ -212,12 +218,12 @@ export default function StaffQRScanner() {
               {icons.x} Stop Camera
             </button>
           )}
-        </div>
+        </GlassPanel>
 
         {/* Manual / physical scanner */}
-        <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 14, padding: 20, marginBottom: 20 }}>
-          <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: P.teal }}>{icons.keyboard}</span> Manual / Physical Scanner
+        <GlassPanel style={{ padding: 20, marginBottom: 20 }}>
+          <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-display)' }}>
+            <span style={{ color: P.cyan, background: P.cyanGlow, padding: 5, borderRadius: 7, display: 'flex' }}>{icons.keyboard}</span> Manual / Physical Scanner
           </p>
           <p style={{ margin: '0 0 14px', fontSize: 13, color: P.sub }}>
             If you have a USB/Bluetooth QR scanner, it types the code here automatically. Press Enter or click Check In.
@@ -228,12 +234,7 @@ export default function StaffQRScanner() {
               value={manualCode}
               onChange={e => setManualCode(e.target.value)}
               placeholder="Scan or type QR code…"
-              style={{
-                flex: 1, padding: '10px 14px', borderRadius: 9,
-                border: `1px solid ${P.border}`, background: P.hover,
-                color: P.text, fontSize: 14, outline: 'none',
-                fontFamily: 'monospace', transition: 'border-color 0.15s',
-              }}
+              style={inp}
               onFocus={e => e.target.style.borderColor = P.blue}
               onBlur={e => e.target.style.borderColor = P.border}
               autoFocus
@@ -242,11 +243,15 @@ export default function StaffQRScanner() {
               type="submit"
               disabled={loading || !manualCode.trim()}
               style={{
-                padding: '10px 20px', background: (loading || !manualCode.trim()) ? P.muted : P.blue,
-                color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 600,
+                padding: '10px 20px',
+                background: (loading || !manualCode.trim())
+                  ? P.hover
+                  : `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
+                color: (loading || !manualCode.trim()) ? P.muted : '#0a0a0f',
+                border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,
                 cursor: (loading || !manualCode.trim()) ? 'not-allowed' : 'pointer',
                 whiteSpace: 'nowrap', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6,
-                transition: 'background 0.15s',
+                transition: 'opacity 0.15s',
               }}
             >
               {loading
@@ -255,13 +260,13 @@ export default function StaffQRScanner() {
               }
             </button>
           </form>
-        </div>
+        </GlassPanel>
 
         {/* Recent check-ins */}
         {history.length > 0 && (
-          <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 14, padding: 20 }}>
-            <p style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: P.green }}>{icons.check}</span> Recent Check-ins
+          <GlassPanel style={{ padding: 20 }}>
+            <p style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: P.text, display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-display)' }}>
+              <span style={{ color: P.teal, background: P.tealGlow, padding: 5, borderRadius: 7, display: 'flex' }}>{icons.check}</span> Recent Check-ins
             </p>
             {history.map((item, i) => (
               <div
@@ -274,13 +279,13 @@ export default function StaffQRScanner() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: P.green, display: 'inline-block', flexShrink: 0 }} />
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: P.green, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 6px ${P.green}` }} />
                   <span style={{ fontSize: 14, fontWeight: 600, color: P.text }}>{item.name}</span>
                 </div>
                 <span style={{ fontSize: 12, color: P.muted }}>{item.time}</span>
               </div>
             ))}
-          </div>
+          </GlassPanel>
         )}
       </div>
     </div>

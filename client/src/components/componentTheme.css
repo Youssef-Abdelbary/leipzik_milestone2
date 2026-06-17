@@ -1,37 +1,47 @@
 
 :root {
   /* Surfaces */
-  --opal-void:    #0a0a0f;
-  --opal-bg:      #0d0d13;
-  --opal-panel:   #15151d;
-  --opal-surface: #1e1e29;
-  --opal-surface-hover: #262633;
+  --opal-void:          #0a0a12;
+  --opal-bg:            #0a0a12;
+  --opal-panel:         #0f0f19;
+  --opal-surface:       #13131e;
+  --opal-surface-hover: #1e1e2e;
 
   /* Borders / lines */
-  --opal-border:       rgba(255, 255, 255, 0.07);
-  --opal-border-hover: rgba(255, 255, 255, 0.14);
+  --opal-border:       rgba(255, 255, 255, 0.08);
+  --opal-border-hover: rgba(255, 255, 255, 0.18);
 
   /* Accents */
-  --opal-violet:      #7c5cfc;
-  --opal-violet-dim:  rgba(124, 92, 252, 0.14);
-  --opal-teal:        #4fd1c5;
-  --opal-teal-dim:    rgba(79, 209, 197, 0.12);
-  --opal-amber:       #f5b34a;
-  --opal-amber-dim:   rgba(245, 179, 74, 0.12);
-  --opal-red:         #ff5c66;
-  --opal-red-dim:     rgba(255, 92, 102, 0.1);
+  --opal-violet:      #8b6dff;
+  --opal-violet-dim:  rgba(139, 109, 255, 0.16);
+  --opal-teal:        #3ecfb8;
+  --opal-teal-dim:    rgba(62, 207, 184, 0.14);
+  --opal-amber:       #f5a623;
+  --opal-amber-dim:   rgba(245, 166, 35, 0.14);
+  --opal-red:         #f4607a;
+  --opal-red-dim:     rgba(244, 96, 122, 0.14);
+  --opal-purple:      #c084fc;
+  --opal-purple-dim:  rgba(192, 132, 252, 0.14);
+  --opal-rose:        #fb7185;
+  --opal-rose-dim:    rgba(251, 113, 133, 0.14);
+  --opal-orange:      #fb923c;
+  --opal-orange-dim:  rgba(251, 146, 60, 0.14);
+  --opal-indigo:      #818cf8;
+  --opal-indigo-dim:  rgba(129, 140, 248, 0.14);
+  --opal-cyan:        #22d3ee;
+  --opal-cyan-dim:    rgba(34, 211, 238, 0.12);
 
   /* Text */
-  --opal-text:   #e8e6f0;
-  --opal-sub:    rgba(232, 230, 240, 0.5);
-  --opal-muted:  rgba(232, 230, 240, 0.26);
+  --opal-text:   #ede9ff;
+  --opal-sub:    rgba(237, 233, 255, 0.60);
+  --opal-muted:  rgba(237, 233, 255, 0.35);
 
   /* Fonts */
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
-  /* Base type scale — slightly larger overall for readability */
+  /* Base type scale */
   --text-xs:   0.78rem;
   --text-sm:   0.9rem;
   --text-base: 1.05rem;
@@ -46,11 +56,11 @@ body {
   margin: 0;
   background: var(--opal-bg);
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124, 92, 252, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(79, 209, 197, 0.08), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(139, 109, 255, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(62, 207, 184, 0.09), transparent);
   background-attachment: fixed;
   color: var(--opal-text);
   font-family: var(--font-body);
-  font-size: 17px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }

@@ -16,41 +16,172 @@ function getTransporter() {
   return _transporter;
 }
 
+// ─── Shared email shell ───────────────────────────────────────────────────────
+// All emails share this outer wrapper so the brand stays consistent.
+function emailShell({ subtitle, bodyHtml, footerHtml }) {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PopEyez</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a12;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <!-- Outer wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a12;padding:32px 16px;">
+    <tr><td align="center">
+      <!-- Card -->
+      <table role="presentation" width="100%" style="max-width:560px;background:#13131e;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+
+        <!-- Header bar -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a1030 0%,#0d1f2d 100%);border-bottom:1px solid rgba(139,109,255,0.25);padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:18px 28px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <!-- Logo ring / mark (inline SVG) -->
+                      <td style="vertical-align:middle;padding-right:14px;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(139,109,255,0.15) 0%,rgba(62,207,184,0.15) 100%);border:1.5px solid rgba(139,109,255,0.4);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+                          <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Outer gradient ring -->
+                            <defs>
+                              <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#8b6dff"/>
+                                <stop offset="100%" stop-color="#3ecfb8"/>
+                              </linearGradient>
+                            </defs>
+                            <circle cx="22" cy="22" r="20" fill="none" stroke="url(#lg1)" stroke-width="1.5" stroke-dasharray="5 3"/>
+                            <!-- Inner eye shape -->
+                            <ellipse cx="22" cy="22" rx="7" ry="5" fill="none" stroke="#8b6dff" stroke-width="1.5"/>
+                            <circle cx="22" cy="22" r="2.5" fill="#3ecfb8"/>
+                          </svg>
+                        </div>
+                      </td>
+                      <!-- Brand name + subtitle -->
+                      <td style="vertical-align:middle;">
+                        <div style="font-size:18px;font-weight:900;letter-spacing:-0.03em;background:linear-gradient(90deg,#8b6dff,#3ecfb8);-webkit-background-clip:text;background-clip:text;color:#8b6dff;line-height:1.1;">PopEyez</div>
+                        <div style="font-size:11px;color:rgba(237,233,255,0.45);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">${subtitle || 'Events Platform'}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Gradient accent line under header -->
+        <tr>
+          <td style="height:2px;background:linear-gradient(90deg,#8b6dff 0%,#3ecfb8 60%,transparent 100%);padding:0;"></td>
+        </tr>
+
+        <!-- Body -->
+        <tr><td style="padding:32px 28px;">${bodyHtml}</td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background:#0f0f19;border-top:1px solid rgba(255,255,255,0.06);padding:20px 28px;text-align:center;">
+            ${footerHtml || ''}
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 10px;">
+              <tr>
+                <td style="vertical-align:middle;padding-right:6px;">
+                  <svg width="16" height="16" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#8b6dff"/>
+                        <stop offset="100%" stop-color="#3ecfb8"/>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="22" cy="22" r="20" fill="none" stroke="url(#lg2)" stroke-width="2" stroke-dasharray="5 3"/>
+                    <ellipse cx="22" cy="22" rx="7" ry="5" fill="none" stroke="#8b6dff" stroke-width="2"/>
+                    <circle cx="22" cy="22" r="2.5" fill="#3ecfb8"/>
+                  </svg>
+                </td>
+                <td style="vertical-align:middle;font-size:12px;font-weight:700;color:rgba(237,233,255,0.35);letter-spacing:0.02em;">PopEyez</td>
+              </tr>
+            </table>
+            <p style="margin:0;font-size:11px;color:rgba(237,233,255,0.25);">
+              You received this because you were added to an event · powered by the opal platform
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ─── Shared CTA button ────────────────────────────────────────────────────────
+function ctaBtn(href, label) {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <tr>
+        <td style="background:linear-gradient(135deg,#8b6dff 0%,#3ecfb8 100%);border-radius:10px;padding:1px;">
+          <a href="${href}"
+             style="display:inline-block;padding:13px 36px;background:#13131e;border-radius:9px;
+                    color:#ede9ff;text-decoration:none;font-size:15px;font-weight:700;
+                    letter-spacing:0.01em;font-family:inherit;">
+            ${label}
+          </a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+// ─── Detail row (icon dot + label + value) ────────────────────────────────────
+function detailRow(dotColor, label, value) {
+  return `
+    <tr>
+      <td style="padding:8px 0;vertical-align:top;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td width="20" style="vertical-align:top;padding-top:4px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};"></div>
+            </td>
+            <td style="vertical-align:top;">
+              <p style="margin:0;font-size:11px;font-weight:700;color:rgba(237,233,255,0.35);text-transform:uppercase;letter-spacing:0.08em;">${label}</p>
+              <p style="margin:2px 0 0;font-size:14px;font-weight:600;color:#ede9ff;">${value}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+}
+
+
+// ─── Feedback request ─────────────────────────────────────────────────────────
 export async function sendFeedbackRequestEmail({ to, guestName, eventTitle, feedbackUrl }) {
   const transporter = getTransporter();
   const firstName = (guestName || 'Guest').split(' ')[0];
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8" /><title>Share your feedback</title></head>
-    <body style="margin:0;padding:0;background:#F8FAFC;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;">
-        <div style="background:#0F172A;padding:20px 28px;">
-          <span style="color:#F8FAFC;font-size:18px;font-weight:700;">PopEyez</span>
-          <span style="color:#475569;font-size:13px;margin-left:8px;">/ Post-Event Feedback</span>
-        </div>
-        <div style="padding:32px 28px;text-align:center;">
-          <div style="width:56px;height:56px;background:#fbbf2422;border:2px solid #fbbf2444;border-radius:50%;display:inline-block;margin-bottom:16px;"></div>
-          <p style="margin:0 0 6px;font-size:15px;color:#64748B;">Hi ${firstName},</p>
-          <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#0F172A;">How was the event?</h1>
-          <p style="margin:0 0 8px;font-size:16px;font-weight:600;color:#0F172A;">${eventTitle}</p>
-          <p style="margin:0 0 28px;font-size:15px;color:#475569;line-height:1.6;">
-            We'd love to hear your thoughts. It only takes a minute!
-          </p>
-          <a href="${feedbackUrl}" style="display:inline-block;padding:14px 36px;background:#0F172A;color:#fff;text-decoration:none;border-radius:10px;font-size:16px;font-weight:700;">
-            Share Feedback →
-          </a>
-        </div>
-        <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 28px;text-align:center;">
-          <p style="margin:0;font-size:12px;color:#94A3B8;">
-            You attended <strong>${eventTitle}</strong>. If this was a mistake, ignore this email.
-          </p>
-        </div>
-      </div>
-    </body>
-    </html>
+  const body = `
+    <p style="margin:0 0 6px;font-size:14px;color:rgba(237,233,255,0.5);">Hi ${firstName},</p>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;line-height:1.2;">
+      How was the event?
+    </h1>
+    <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#ede9ff;">${eventTitle}</p>
+    <p style="margin:0 0 28px;font-size:14px;color:rgba(237,233,255,0.52);line-height:1.7;">
+      Your feedback takes less than a minute and helps the organiser make the next event even better.
+    </p>
+    <!-- Star row (decorative) -->
+    <p style="text-align:center;font-size:26px;letter-spacing:8px;margin:0 0 28px;">
+      <span style="color:#f5a623;">★★★★★</span>
+    </p>
+    ${ctaBtn(feedbackUrl, 'Leave Your Feedback →')}
   `;
+
+  const footer = `
+    <p style="margin:0;font-size:12px;color:rgba(237,233,255,0.35);">
+      You attended <strong style="color:rgba(237,233,255,0.6);">${eventTitle}</strong>.
+      If this doesn't apply to you, ignore this email.
+    </p>
+  `;
+
+  const html = emailShell({ subtitle: 'Post-Event Feedback', bodyHtml: body, footerHtml: footer });
 
   await transporter.sendMail({
     from:    `"PopEyez Events" <${process.env.SMTP_USER}>`,
@@ -61,45 +192,32 @@ export async function sendFeedbackRequestEmail({ to, guestName, eventTitle, feed
   });
 }
 
-/**
- * Send a broadcast message to a guest.
- */
+
+// ─── Broadcast message ────────────────────────────────────────────────────────
 export async function sendBroadcastEmail({ to, guestName, subject, body, readUrl, eventTitle }) {
   const transporter = getTransporter();
   const firstName = (guestName || 'Guest').split(' ')[0];
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>${subject}</title>
-    </head>
-    <body style="margin:0;padding:0;background:#F8FAFC;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;">
-        <div style="background:#0F172A;padding:20px 28px;">
-          <span style="color:#F8FAFC;font-size:18px;font-weight:700;">PopEyez</span>
-          <span style="color:#475569;font-size:13px;margin-left:8px;">/ ${eventTitle || 'Event'}</span>
-        </div>
-        <div style="padding:28px;">
-          <p style="margin:0 0 6px;font-size:15px;color:#64748B;">Hello ${firstName},</p>
-          <p style="margin:0 0 24px;font-size:22px;font-weight:700;color:#0F172A;line-height:1.3;">${subject}</p>
-          <div style="background:#F8FAFC;border-left:3px solid #0F172A;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
-            <p style="margin:0;font-size:15px;color:#374151;line-height:1.7;white-space:pre-wrap;">${body}</p>
-          </div>
-        </div>
-        <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 28px;text-align:center;">
-          <p style="margin:0 0 8px;font-size:12px;color:#94A3B8;">
-            You received this because you are a guest at <strong>${eventTitle || 'the event'}</strong>.
-          </p>
-          <a href="${readUrl}" style="font-size:12px;color:#64748B;text-decoration:underline;">Mark as received</a>
-        </div>
-        <img src="${readUrl}?pixel=1" width="1" height="1" style="display:block;width:1px;height:1px;border:0;" alt="" />
-      </div>
-    </body>
-    </html>
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:14px;color:rgba(237,233,255,0.5);">Hello ${firstName},</p>
+    <h1 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#ede9ff;letter-spacing:-0.02em;line-height:1.3;">
+      ${subject}
+    </h1>
+    <!-- Message bubble -->
+    <div style="background:#0f0f19;border-left:3px solid #8b6dff;border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:rgba(237,233,255,0.75);line-height:1.75;white-space:pre-wrap;">${body}</p>
+    </div>
   `;
+
+  const footerHtml = `
+    <p style="margin:0 0 8px;font-size:12px;color:rgba(237,233,255,0.35);">
+      You received this because you are a guest at <strong style="color:rgba(237,233,255,0.6);">${eventTitle || 'the event'}</strong>.
+    </p>
+    <a href="${readUrl}" style="font-size:12px;color:#8b6dff;text-decoration:none;font-weight:600;">Mark as received</a>
+  `;
+
+  const html = emailShell({ subtitle: eventTitle || 'Message', bodyHtml, footerHtml }) +
+    `<img src="${readUrl}?pixel=1" width="1" height="1" style="display:none;" alt=""/>`;
 
   await transporter.sendMail({
     from:    `"PopEyez Events" <${process.env.SMTP_USER}>`,
@@ -110,10 +228,8 @@ export async function sendBroadcastEmail({ to, guestName, subject, body, readUrl
   });
 }
 
-/**
- * Send an RSVP invitation email to a guest.
- * NEW: used by controllerGuest.js sendInvitation
- */
+
+// ─── Invitation ───────────────────────────────────────────────────────────────
 export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate, eventTime, eventEndTime, venueName, dressCode, agenda, rsvpUrl }) {
   const transporter = getTransporter();
   const firstName = (guestName || 'Guest').split(' ')[0];
@@ -124,92 +240,58 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
       })
     : null;
 
-  const agendaHtml = Array.isArray(agenda) && agenda.length > 0
-    ? `
-      <div style="margin-top:20px;text-align:left;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;">Agenda</p>
-        ${agenda.map(a => `
-          <div style="display:flex;gap:12px;margin-bottom:8px;">
-            <span style="font-size:13px;color:#4338CA;font-weight:600;min-width:52px;">${a.time}</span>
-            <div>
-              <p style="margin:0;font-size:14px;font-weight:600;color:#0F172A;">${a.title}</p>
-              ${a.description ? `<p style="margin:2px 0 0;font-size:12px;color:#64748B;">${a.description}</p>` : ''}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    ` : '';
+  const detailsRows = [
+    formattedDate ? detailRow('#8b6dff', 'Date &amp; Time', `${formattedDate}${eventTime ? ` at ${eventTime}` : ''}${eventEndTime ? ` – ${eventEndTime}` : ''}`) : '',
+    venueName && venueName !== 'TBD' ? detailRow('#3ecfb8', 'Venue', venueName) : '',
+    dressCode ? detailRow('#c084fc', 'Dress Code', dressCode) : '',
+  ].filter(Boolean).join('');
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>You're invited to ${eventTitle}</title>
-    </head>
-    <body style="margin:0;padding:0;background:#F8FAFC;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;">
-        <div style="background:#0F172A;padding:20px 28px;">
-          <span style="color:#F8FAFC;font-size:18px;font-weight:700;">PopEyez</span>
-          <span style="color:#475569;font-size:13px;margin-left:8px;">/ Invitation</span>
-        </div>
-        <div style="padding:32px 28px;text-align:center;">
-          <div style="width:56px;height:56px;background:#5b9cf622;border:2px solid #5b9cf644;border-radius:12px;display:inline-block;margin-bottom:16px;"></div>
-          <p style="margin:0 0 6px;font-size:15px;color:#64748B;">Hello ${firstName},</p>
-          <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#0F172A;">You're Invited!</h1>
-          <p style="margin:0 0 20px;font-size:18px;font-weight:700;color:#0F172A;">${eventTitle}</p>
+  const agendaHtml = Array.isArray(agenda) && agenda.length > 0 ? `
+    <p style="margin:24px 0 12px;font-size:12px;font-weight:700;color:rgba(237,233,255,0.35);text-transform:uppercase;letter-spacing:0.08em;">Agenda</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${agenda.map(a => `
+        <tr>
+          <td width="56" style="vertical-align:top;padding:6px 0;">
+            <span style="font-size:12px;color:#8b6dff;font-weight:700;">${a.time}</span>
+          </td>
+          <td style="vertical-align:top;padding:6px 0 6px 8px;">
+            <p style="margin:0;font-size:14px;font-weight:600;color:#ede9ff;">${a.title}</p>
+            ${a.description ? `<p style="margin:2px 0 0;font-size:12px;color:rgba(237,233,255,0.45);">${a.description}</p>` : ''}
+          </td>
+        </tr>
+      `).join('')}
+    </table>
+  ` : '';
 
-          <div style="background:#F8FAFC;border-radius:10px;padding:16px 20px;margin-bottom:24px;text-align:left;">
-            ${formattedDate ? `
-            <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;">
-              <div style="width:8px;height:8px;border-radius:50%;background:#5b9cf6;margin-top:5px;flex-shrink:0;"></div>
-              <div>
-                <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Date &amp; Time</p>
-                <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${formattedDate}${eventTime ? ` at ${eventTime}` : ''}${eventEndTime ? ` – ${eventEndTime}` : ''}</p>
-              </div>
-            </div>` : ''}
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:14px;color:rgba(237,233,255,0.5);">Hello ${firstName},</p>
+    <h1 style="margin:0 0 6px;font-size:28px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;">You're Invited!</h1>
+    <p style="margin:0 0 24px;font-size:17px;font-weight:700;color:#8b6dff;">${eventTitle}</p>
 
-            ${venueName && venueName !== 'TBD' ? `
-            <div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;">
-              <div style="width:8px;height:8px;border-radius:50%;background:#2dd4bf;margin-top:5px;flex-shrink:0;"></div>
-              <div>
-                <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Venue</p>
-                <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${venueName}</p>
-              </div>
-            </div>` : ''}
+    ${detailsRows ? `
+    <div style="background:#0f0f19;border-radius:12px;padding:18px 20px;margin-bottom:24px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${detailsRows}
+      </table>
+    </div>` : ''}
 
-            ${dressCode ? `
-            <div style="display:flex;gap:12px;align-items:flex-start;">
-              <div style="width:8px;height:8px;border-radius:50%;background:#c084fc;margin-top:5px;flex-shrink:0;"></div>
-              <div>
-                <p style="margin:0;font-size:13px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;">Dress Code</p>
-                <p style="margin:2px 0 0;font-size:14px;color:#0F172A;font-weight:600;">${dressCode}</p>
-              </div>
-            </div>` : ''}
-          </div>
+    ${agendaHtml}
 
-          ${agendaHtml}
-
-          <div style="margin-top:28px;">
-            <a href="${rsvpUrl}" style="display:inline-block;padding:14px 36px;background:#0F172A;color:#fff;text-decoration:none;border-radius:10px;font-size:16px;font-weight:700;">
-              Respond to Invitation →
-            </a>
-          </div>
-          <p style="margin:16px 0 0;font-size:12px;color:#94A3B8;">
-            Or copy this link:<br/>
-            <a href="${rsvpUrl}" style="color:#4338CA;word-break:break-all;">${rsvpUrl}</a>
-          </p>
-        </div>
-        <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 28px;text-align:center;">
-          <p style="margin:0;font-size:12px;color:#94A3B8;">
-            You were added as a guest to <strong>${eventTitle}</strong>.
-          </p>
-        </div>
-      </div>
-    </body>
-    </html>
+    <div style="margin-top:28px;text-align:center;">
+      ${ctaBtn(rsvpUrl, 'Respond to Invitation →')}
+    </div>
+    <p style="margin:16px 0 0;font-size:11px;color:rgba(237,233,255,0.28);text-align:center;word-break:break-all;">
+      <a href="${rsvpUrl}" style="color:rgba(139,109,255,0.7);text-decoration:none;">${rsvpUrl}</a>
+    </p>
   `;
+
+  const footerHtml = `
+    <p style="margin:0;font-size:12px;color:rgba(237,233,255,0.35);">
+      You were added as a guest to <strong style="color:rgba(237,233,255,0.6);">${eventTitle}</strong>.
+    </p>
+  `;
+
+  const html = emailShell({ subtitle: 'Invitation', bodyHtml, footerHtml });
 
   await transporter.sendMail({
     from:    `"PopEyez Events" <${process.env.SMTP_USER}>`,
@@ -221,9 +303,7 @@ export async function sendInvitationEmail({ to, guestName, eventTitle, eventDate
 }
 
 
-/**
- * Send RSVP confirmation with embedded QR code (inline, not attachment).
- */
+// ─── RSVP confirmation with QR code ──────────────────────────────────────────
 export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, eventDate, startTime, venueName, dressCode, qrBuffer, qrCode }) {
   const transporter = getTransporter();
   const firstName = (guestName || 'Guest').split(' ')[0];
@@ -234,44 +314,58 @@ export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, ev
       })
     : null;
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"/><title>You're confirmed!</title></head>
-    <body style="margin:0;padding:0;background:#F8FAFC;font-family:system-ui,-apple-system,sans-serif;">
-      <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden;">
-        <div style="background:#0F172A;padding:20px 28px;">
-          <span style="color:#F8FAFC;font-size:18px;font-weight:700;">PopEyez</span>
-          <span style="color:#475569;font-size:13px;margin-left:8px;">/ You're confirmed!</span>
-        </div>
-        <div style="padding:32px 28px;text-align:center;">
-          <div style="width:64px;height:64px;background:#4ade8022;border:2px solid #4ade8044;border-radius:50%;display:inline-block;margin-bottom:16px;"></div>
-          <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#0F172A;">You're going!</h1>
-          <p style="margin:0 0 6px;font-size:16px;font-weight:700;color:#0F172A;">${eventTitle}</p>
-          ${formattedDate ? `<p style="margin:0 0 24px;font-size:14px;color:#64748B;">${formattedDate}${startTime ? ` at ${startTime}` : ''}</p>` : '<p style="margin:0 0 24px;"></p>'}
-          ${venueName && venueName !== 'TBD' ? `<p style="margin:-16px 0 24px;font-size:13px;color:#64748B;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#2dd4bf;vertical-align:middle;margin-right:5px;"></span>${venueName}</p>` : ''}
-          ${dressCode ? `<p style="margin:-12px 0 20px;font-size:13px;color:#64748B;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#c084fc;vertical-align:middle;margin-right:5px;"></span>${dressCode}</p>` : ''}
+  const detailsRows = [
+    formattedDate ? detailRow('#3ecfb8', 'Date &amp; Time', `${formattedDate}${startTime ? ` at ${startTime}` : ''}`) : '',
+    venueName && venueName !== 'TBD' ? detailRow('#8b6dff', 'Venue', venueName) : '',
+    dressCode ? detailRow('#c084fc', 'Dress Code', dressCode) : '',
+  ].filter(Boolean).join('');
 
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:28px 24px;margin-bottom:24px;display:inline-block;">
-            <p style="margin:0 0 18px;font-size:14px;font-weight:700;color:#0F172A;">Your Check-in QR Code</p>
-            <img src="cid:qrcode_checkin" alt="QR Code" style="width:200px;height:200px;display:block;margin:0 auto;border-radius:8px;" />
-            <p style="margin:16px 0 6px;font-size:13px;color:#64748B;line-height:1.5;">
-              Show this at the entrance for <strong>instant check-in</strong>.
-            </p>
-            <p style="margin:0;font-size:11px;color:#94A3B8;font-family:monospace;letter-spacing:0.05em;">${qrCode}</p>
-          </div>
-
-          <p style="margin:0;font-size:13px;color:#94A3B8;">Save this email — you'll need it on event day!</p>
-        </div>
-        <div style="background:#F8FAFC;border-top:1px solid #E2E8F0;padding:16px 28px;text-align:center;">
-          <p style="margin:0;font-size:12px;color:#94A3B8;">
-            You confirmed your attendance at <strong>${eventTitle}</strong>.
-          </p>
-        </div>
+  const bodyHtml = `
+    <div style="text-align:center;margin-bottom:24px;">
+      <!-- Check badge -->
+      <div style="display:inline-block;width:56px;height:56px;border-radius:50%;
+                  background:rgba(62,207,184,0.12);border:2px solid rgba(62,207,184,0.4);
+                  line-height:56px;text-align:center;margin-bottom:16px;">
+        <span style="font-size:26px;line-height:56px;">✓</span>
       </div>
-    </body>
-    </html>
+      <h1 style="margin:0 0 6px;font-size:26px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;">You're going!</h1>
+      <p style="margin:0 0 4px;font-size:16px;font-weight:700;color:#ede9ff;">${eventTitle}</p>
+      ${formattedDate ? `<p style="margin:0;font-size:13px;color:rgba(237,233,255,0.45);">${formattedDate}${startTime ? ` · ${startTime}` : ''}</p>` : ''}
+    </div>
+
+    ${detailsRows ? `
+    <div style="background:#0f0f19;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${detailsRows}
+      </table>
+    </div>` : ''}
+
+    <!-- QR code card -->
+    <div style="background:#0f0f19;border:1px solid rgba(255,255,255,0.08);border-radius:14px;
+                padding:28px 24px;text-align:center;margin-bottom:24px;">
+      <p style="margin:0 0 16px;font-size:13px;font-weight:700;color:rgba(237,233,255,0.6);
+                text-transform:uppercase;letter-spacing:0.08em;">Your Check-in QR Code</p>
+      <img src="cid:qrcode_checkin" alt="QR Code"
+           style="width:200px;height:200px;display:block;margin:0 auto;border-radius:10px;
+                  background:#fff;padding:8px;box-sizing:border-box;"/>
+      <p style="margin:16px 0 6px;font-size:13px;color:rgba(237,233,255,0.52);line-height:1.5;">
+        Show this at the entrance for <strong style="color:#ede9ff;">instant check-in</strong>.
+      </p>
+      <p style="margin:0;font-size:11px;color:rgba(237,233,255,0.28);font-family:monospace;letter-spacing:0.06em;">${qrCode}</p>
+    </div>
+
+    <p style="margin:0;text-align:center;font-size:13px;color:rgba(237,233,255,0.35);">
+      Save this email — you'll need it on event day!
+    </p>
   `;
+
+  const footerHtml = `
+    <p style="margin:0;font-size:12px;color:rgba(237,233,255,0.35);">
+      You confirmed your attendance at <strong style="color:rgba(237,233,255,0.6);">${eventTitle}</strong>.
+    </p>
+  `;
+
+  const html = emailShell({ subtitle: "You're confirmed!", bodyHtml, footerHtml });
 
   await transporter.sendMail({
     from: `"PopEyez Events" <${process.env.SMTP_USER}>`,
@@ -283,15 +377,14 @@ export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, ev
       {
         filename: 'qrcode.png',
         content: qrBuffer,
-        cid: 'qrcode_checkin', // referenced as cid: in html above
+        cid: 'qrcode_checkin',
       },
     ],
   });
 }
 
-/**
- * Check whether SMTP credentials are configured.
- */
+
+// ─── SMTP health check ────────────────────────────────────────────────────────
 export function isEmailConfigured() {
   return Boolean(process.env.SMTP_USER && process.env.SMTP_PASS);
 }

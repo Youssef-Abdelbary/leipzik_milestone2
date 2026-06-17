@@ -3,7 +3,7 @@ import { listGuests }               from '../../services/serviceGuest';
 import { getBroadcasts }            from '../../services/serviceBroadcast';
 import { getEventFeedbackSummary }  from '../../services/serviceFeedback';
 import { EVENT_TYPES }              from '../../utils/constants';
-import { P, STATUS_COLORS, icons }  from '../../utils/theme';
+import { P, STATUS_COLORS, icons, GlassPanel }  from '../../components/componentTheme';
 import SettingsModal                from '../../components/SettingsModal';
 
 function fmtDate(d) {
@@ -26,26 +26,27 @@ function SummaryTile({ icon, label, value, sub, accentColor, glowColor, onClick,
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        flex:       '1 1 150px',
-        background: hov ? `${glowColor}` : P.surface,
-        border:     `1px solid ${hov ? accentColor + '44' : P.border}`,
-        borderRadius: 14,
-        padding:    '20px 18px',
-        cursor:     'pointer',
-        textAlign:  'left',
-        transition: 'all 0.22s cubic-bezier(0.34,1.2,0.64,1)',
-        transform:  hov ? 'translateY(-3px)' : 'none',
-        boxShadow:  hov ? `0 8px 28px ${glowColor}, 0 0 0 1px ${accentColor}22` : '0 1px 4px rgba(0,0,0,0.2)',
-        outline:    'none',
-        fontFamily: 'inherit',
+        flex:         '1 1 150px',
+        background:   hov ? `${glowColor}` : 'rgba(30,30,41,0.55)',
+        backdropFilter: 'blur(18px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+        border:       `1px solid ${hov ? accentColor + '44' : P.border}`,
+        borderRadius: 16,
+        padding:      '20px 18px',
+        cursor:       'pointer',
+        textAlign:    'left',
+        transition:   'all 0.22s cubic-bezier(0.34,1.2,0.64,1)',
+        transform:    hov ? 'translateY(-3px)' : 'none',
+        boxShadow:    hov ? `0 8px 28px ${glowColor}, 0 0 0 1px ${accentColor}22, inset 0 1px 0 rgba(255,255,255,0.04)` : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+        outline:      'none',
+        fontFamily:   'inherit',
       }}
     >
-      {/* Top row: icon + "View →" */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-        <span style={{ color: accentColor, background: glowColor, padding:8, borderRadius:10, display:'flex' }}>
+        <span style={{ color:accentColor, background:glowColor, padding:8, borderRadius:10, display:'flex' }}>
           {icon}
         </span>
-        <span style={{ fontSize:11, color: hov ? accentColor : P.muted, fontWeight:600, letterSpacing:'0.04em', transition:'color 0.15s' }}>
+        <span style={{ fontSize:11, color:hov ? accentColor : P.muted, fontWeight:600, letterSpacing:'0.04em', transition:'color 0.15s' }}>
           View →
         </span>
       </div>
@@ -53,7 +54,7 @@ function SummaryTile({ icon, label, value, sub, accentColor, glowColor, onClick,
       {loading ? (
         <div style={{ height:32, background:P.hover, borderRadius:6, marginBottom:6 }}/>
       ) : (
-        <p style={{ margin:'0 0 4px', fontSize:30, fontWeight:800, color:P.text, lineHeight:1, letterSpacing:'-0.03em' }}>{value}</p>
+        <p style={{ margin:'0 0 4px', fontSize:30, fontWeight:800, color:P.text, lineHeight:1, letterSpacing:'-0.03em', fontFamily:'var(--font-display)' }}>{value}</p>
       )}
       <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:600, color:P.text }}>{label}</p>
       {sub && <p style={{ margin:0, fontSize:12, color:P.sub }}>{sub}</p>}
@@ -65,8 +66,8 @@ function SummaryTile({ icon, label, value, sub, accentColor, glowColor, onClick,
 function DetailRow({ label, value }) {
   return (
     <div>
-      <p style={{ margin:'0 0 4px', fontSize:11, fontWeight:700, color:P.muted, textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</p>
-      <p style={{ margin:0, fontSize:15, fontWeight:600, color:P.text }}>{value || '—'}</p>
+      <p style={{ margin:'0 0 4px', fontSize:10, fontWeight:700, color:P.sub, textTransform:'uppercase', letterSpacing:'0.09em' }}>{label}</p>
+      <p style={{ margin:0, fontSize:14, fontWeight:600, color:P.text }}>{value || <span style={{ color:P.muted }}>—</span>}</p>
     </div>
   );
 }
@@ -123,7 +124,7 @@ export default function TabOverview({ event, onEventUpdate }) {
     : event.status !== 'completed' ? 'After event ends' : 'No responses';
 
   return (
-    <div style={{ maxWidth:880, margin:'0 auto', padding:'32px 24px', fontFamily:'system-ui,sans-serif', color:P.text }}>
+    <div style={{ maxWidth:880, margin:'0 auto', padding:'32px 24px', fontFamily:'var(--font-body)', color:P.text }}>
 
       {/* ── Summary tiles ───────────────────────────────────────────────────── */}
       <div style={{ display:'flex', gap:14, marginBottom:24, flexWrap:'wrap' }}>
@@ -142,8 +143,8 @@ export default function TabOverview({ event, onEventUpdate }) {
           label="Arrivals"
           value={guestStats?.arrived ?? '—'}
           sub={guestStats ? `of ${guestStats.attending} expected` : ''}
-          accentColor={P.green}
-          glowColor={P.greenGlow}
+          accentColor={P.teal}
+          glowColor={P.tealGlow}
           loading={statsLoading}
           onClick={() => navigateTo('day-of')}
         />
@@ -152,8 +153,8 @@ export default function TabOverview({ event, onEventUpdate }) {
           label="Broadcasts"
           value={broadcastCount ?? '—'}
           sub="messages sent"
-          accentColor={P.teal}
-          glowColor={P.tealGlow}
+          accentColor={P.indigo}
+          glowColor={P.indigoGlow}
           loading={statsLoading}
           onClick={() => navigateTo('messages')}
         />
@@ -170,19 +171,19 @@ export default function TabOverview({ event, onEventUpdate }) {
       </div>
 
       {/* ── Event details card ───────────────────────────────────────────────── */}
-      <div style={{ background:P.surface, border:`1px solid ${P.border}`, borderRadius:16, padding:'24px', boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
+      <GlassPanel style={{ padding:'24px' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24, gap:12 }}>
           <div>
-            <h2 style={{ margin:'0 0 8px', fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em' }}>{event.title}</h2>
-            <span style={{ padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:700, background:sc+'1a', color:sc, border:`1px solid ${sc}33` }}>
+            <h2 style={{ margin:'0 0 8px', fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em', fontFamily:'var(--font-display)' }}>{event.title}</h2>
+            <span style={{ padding:'4px 12px', borderRadius:99, fontSize:10, fontWeight:800, background:sc+'22', color:sc, border:`1px solid ${sc}44`, textTransform:'uppercase', letterSpacing:'0.07em' }}>
               {event.status || 'planning'}
             </span>
           </div>
           <button
             onClick={() => setShowEdit(true)}
-            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit', flexShrink:0, transition:'all 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = P.text; e.currentTarget.style.borderColor = P.sub; }}
-            onMouseLeave={e => { e.currentTarget.style.color = P.sub;  e.currentTarget.style.borderColor = P.border; }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:8, border:`1px solid ${P.blue}44`, background:P.blueGlow, color:P.blue, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit', flexShrink:0, transition:'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = P.blue; e.currentTarget.style.color = '#0a0a12'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = P.blueGlow; e.currentTarget.style.color = P.blue; }}
           >
             {icons.edit} Edit
           </button>
@@ -203,7 +204,7 @@ export default function TabOverview({ event, onEventUpdate }) {
             <p style={{ margin:0, fontSize:14, color:P.sub, lineHeight:1.7 }}>{event.description}</p>
           </div>
         )}
-      </div>
+      </GlassPanel>
 
       {showEdit && (
         <SettingsModal

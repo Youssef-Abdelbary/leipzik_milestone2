@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { P, icons } from '../utils/theme';
+import { P, icons, GlassPanel } from '../components/componentTheme';
+import AppHeader from '../components/componentAppHeader';
+import '../components/componentTheme.css';
 
 const DIETARY_PRESETS = [
   'None', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher', 'Nut Allergy', 'Dairy-Free',
@@ -58,8 +60,8 @@ export default function RsvpPage() {
   };
 
   const inp = {
-    width: '100%', padding: '11px 14px', borderRadius: 9,
-    border: `1px solid ${P.border}`, background: P.hover,
+    width: '100%', padding: '11px 14px', borderRadius: 10,
+    border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.7)',
     color: P.text, fontSize: 14, outline: 'none',
     boxSizing: 'border-box', fontFamily: 'inherit',
     transition: 'border-color 0.15s',
@@ -68,8 +70,11 @@ export default function RsvpPage() {
   if (loading) return (
     <div style={s.page}>
       <style>{animations}</style>
-      <div style={{ ...s.card, textAlign: 'center' }}>
-        <div style={{ width: 40, height: 40, border: `3px solid ${P.border}`, borderTopColor: P.blue, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+      <AppHeader crumb="RSVP" />
+      <div style={s.pageInner}>
+        <GlassPanel style={{ ...s.card, textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: `3px solid ${P.border}`, borderTopColor: P.blue, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+        </GlassPanel>
       </div>
     </div>
   );
@@ -78,7 +83,11 @@ export default function RsvpPage() {
   if (result && result.chosen === 'attending') return (
     <div style={s.page}>
       <style>{animations}</style>
-      <div style={{ ...s.card, maxWidth: 520, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+      <AppHeader crumb="RSVP" right={
+        <span style={{ padding:'4px 12px', borderRadius:99, fontSize:11, fontWeight:700, background:P.tealGlow, color:P.teal, border:`1px solid ${P.teal}44` }}>Confirmed ✓</span>
+      }/>
+      <div style={s.pageInner}>
+      <GlassPanel style={{ ...s.card, maxWidth: 520, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
         <div style={{ color: P.amber, display: 'flex', justifyContent: 'center', transform: 'scale(2.4)', marginBottom: 28, animation: 'sparkle 0.6s ease both 0.2s' }}>
           {icons.sparkles}
         </div>
@@ -89,31 +98,28 @@ export default function RsvpPage() {
         </p>
 
         {result.qrDataURL && (
-          <div style={{
-            background: P.surface,
-            border: `1px solid ${P.border}`,
-            borderRadius: 16,
+          <GlassPanel style={{
             padding: '28px 24px',
             margin: '24px 0 20px',
             textAlign: 'center',
             animation: 'cardIn 0.4s ease both 0.15s',
           }}>
-            <p style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: P.text }}>
+            <p style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: P.text, fontFamily: 'var(--font-display)' }}>
               Your Check-in QR Code
             </p>
             <div style={{
               display: 'inline-block',
               padding: 12,
               background: '#ffffff',
-              borderRadius: 12,
-              boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px ${P.border}`,
+              borderRadius: 14,
+              boxShadow: `0 4px 28px rgba(0,0,0,0.45), 0 0 0 1px ${P.border}`,
               marginBottom: 16,
               animation: 'cardIn 0.5s ease both 0.3s',
             }}>
               <img
                 src={result.qrDataURL}
                 alt="Your QR code"
-                style={{ width: 220, height: 220, display: 'block', borderRadius: 6 }}
+                style={{ width: 220, height: 220, display: 'block', borderRadius: 8 }}
               />
             </div>
             <p style={{ margin: '0 0 8px', fontSize: 13, color: P.sub, lineHeight: 1.6 }}>
@@ -122,20 +128,21 @@ export default function RsvpPage() {
             <p style={{ margin: 0, fontSize: 11, color: P.muted, fontFamily: 'monospace', letterSpacing: '0.05em' }}>
               {result.qrCode}
             </p>
-            <div style={{ margin: '14px 0 0', padding: '10px 14px', background: P.blueGlow, border: `1px solid ${P.blue}33`, borderRadius: 8, fontSize: 12, color: P.blue, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ margin: '14px 0 0', padding: '10px 14px', background: P.blueGlow, border: `1px solid ${P.blue}33`, borderRadius: 9, fontSize: 12, color: P.blue, display: 'flex', alignItems: 'center', gap: 8 }}>
               {icons.mail} A copy with this QR code has been sent to your email.
             </div>
-          </div>
+          </GlassPanel>
         )}
 
         <button
           onClick={() => window.print()}
-          style={{ ...s.btn, background: P.surface, color: P.text, border: `1px solid ${P.border}`, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          style={{ ...s.btn, background: 'rgba(19,19,30,0.7)', color: P.text, border: `1px solid ${P.border}`, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           onMouseEnter={e => e.currentTarget.style.borderColor = P.sub}
           onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
         >
           {icons.printer} Save / Print QR Code
         </button>
+      </GlassPanel>
       </div>
     </div>
   );
@@ -144,8 +151,12 @@ export default function RsvpPage() {
   if (result && result.chosen === 'declined') return (
     <div style={s.page}>
       <style>{animations}</style>
-      <div style={{ ...s.card, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <div style={{ color: P.muted, display: 'flex', justifyContent: 'center', transform: 'scale(2.4)', marginBottom: 28 }}>
+      <AppHeader crumb="RSVP" right={
+        <span style={{ padding:'4px 12px', borderRadius:99, fontSize:11, fontWeight:700, background:P.roseGlow, color:P.rose, border:`1px solid ${P.rose}44` }}>Declined</span>
+      }/>
+      <div style={s.pageInner}>
+      <GlassPanel style={{ ...s.card, animation: 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <div style={{ color: P.rose, display: 'flex', justifyContent: 'center', transform: 'scale(2.4)', marginBottom: 28 }}>
           {icons.frown}
         </div>
         <h1 style={s.title}>See you next time!</h1>
@@ -153,6 +164,7 @@ export default function RsvpPage() {
           {result.fullname ? `We're sorry you can't make it, ${result.fullname.split(' ')[0]}.` : "We're sorry you can't make it."}
           {' '}Thanks for letting us know.
         </p>
+      </GlassPanel>
       </div>
     </div>
   );
@@ -160,15 +172,21 @@ export default function RsvpPage() {
   return (
     <div style={s.page}>
       <style>{animations}</style>
-      <div style={{ ...s.card, animation: 'cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+      <AppHeader crumb="RSVP" right={
+        eventInfo?.eventTitle
+          ? <span style={{ fontSize:13, fontWeight:600, color:P.sub, maxWidth:240, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{eventInfo.eventTitle}</span>
+          : null
+      }/>
+      <div style={s.pageInner}>
+      <GlassPanel style={{ ...s.card, animation: 'cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>
         <div style={{ color: P.blue, display: 'flex', justifyContent: 'center', transform: 'scale(2.2)', marginBottom: 20 }}>
           {icons.ticket}
         </div>
         <h1 style={s.title}>You&apos;re Invited!</h1>
 
         {eventInfo && (
-          <div style={{ background: P.surface, border: `1px solid ${P.border}`, borderRadius: 12, padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
-            <p style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700, color: P.text }}>{eventInfo.eventTitle}</p>
+          <GlassPanel style={{ padding: '16px 20px', marginBottom: 24, textAlign: 'left' }}>
+            <p style={{ margin: '0 0 14px', fontSize: 18, fontWeight: 700, color: P.text, fontFamily: 'var(--font-display)' }}>{eventInfo.eventTitle}</p>
             {eventInfo.date && (
               <div style={s.detailRow}>
                 <span style={{ color: P.blue, display: 'flex', flexShrink: 0 }}>{icons.calendar}</span>
@@ -214,11 +232,11 @@ export default function RsvpPage() {
                 ))}
               </div>
             )}
-          </div>
+          </GlassPanel>
         )}
 
         {error && (
-          <div style={{ background: P.redGlow, color: P.red, padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 20, border: `1px solid ${P.red}33`, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ background: P.redGlow, color: P.red, padding: '10px 14px', borderRadius: 9, fontSize: 13, marginBottom: 20, border: `1px solid ${P.red}33`, display: 'flex', alignItems: 'center', gap: 8 }}>
             {icons.warning} {error}
           </div>
         )}
@@ -228,7 +246,7 @@ export default function RsvpPage() {
           <button
             onClick={() => handleSubmit('attending')}
             disabled={submitting}
-            style={{ ...s.btn, background: P.green, color: '#111', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            style={{ ...s.btn, background: `linear-gradient(135deg, ${P.green} 0%, ${P.teal} 100%)`, color: '#0a0a0f', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700 }}
             onMouseEnter={e => { if (!submitting) e.currentTarget.style.opacity = '0.88'; }}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
@@ -284,6 +302,7 @@ export default function RsvpPage() {
             Submitting…
           </p>
         )}
+      </GlassPanel>
       </div>
     </div>
   );
@@ -297,20 +316,23 @@ const animations = `
 
 const s = {
   page: {
-    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: P.bg, padding: 24,
-    fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif",
-    color: P.text,
+    minHeight: '100vh', display: 'flex', flexDirection: 'column',
+    background: 'var(--opal-bg)',
+    fontFamily: 'var(--font-body)',
+    color: 'var(--opal-text)',
+  },
+  pageInner: {
+    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
   },
   card: {
-    background: P.panel, borderRadius: 20, padding: '40px 36px', width: '100%', maxWidth: 500,
-    textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', border: `1px solid ${P.border}`,
+    padding: '40px 36px', width: '100%', maxWidth: 500,
+    textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
   },
-  title:       { fontSize: 26, fontWeight: 800, color: P.text, margin: '0 0 8px', letterSpacing: '-0.02em' },
-  sub:         { fontSize: 15, color: P.sub, margin: '0 0 20px', lineHeight: 1.6 },
+  title:       { fontSize: 26, fontWeight: 800, color: 'var(--opal-text)', margin: '0 0 8px', letterSpacing: '-0.02em', fontFamily: 'var(--font-display)' },
+  sub:         { fontSize: 15, color: 'var(--opal-sub)', margin: '0 0 20px', lineHeight: 1.6 },
   detailRow:   { display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' },
-  detailLabel: { margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.07em' },
-  detailVal:   { margin: 0, fontSize: 14, fontWeight: 600, color: P.text },
-  sectionLabel:{ fontSize: 14, fontWeight: 700, color: P.text, margin: '0 0 10px', textAlign: 'left' },
-  btn:         { width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)' },
+  detailLabel: { margin: '0 0 2px', fontSize: 11, fontWeight: 700, color: 'var(--opal-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' },
+  detailVal:   { margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--opal-text)' },
+  sectionLabel:{ fontSize: 13, fontWeight: 700, color: 'var(--opal-sub)', margin: '0 0 10px', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.06em' },
+  btn:         { width: '100%', padding: '14px 24px', borderRadius: 12, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)' },
 };

@@ -4,7 +4,8 @@ import {
   listGuests, addGuest, updateGuest, deleteGuest,
   sendInvitation,
 } from '../../services/serviceGuest';
-import { P, icons } from '../../utils/theme';
+import { P, icons, GlassPanel } from '../../components/componentTheme';
+import { OpalSelect } from '../../components/componentMenus';
 
 const DIETARY_PRESETS = [
   'None','Vegetarian','Vegan','Gluten-Free','Halal','Kosher','Nut Allergy','Dairy-Free',
@@ -19,28 +20,30 @@ function FilterTile({ label, value, isActive, accentColor, glowColor, onClick })
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        flex:       '1 1 0',
-        minWidth:   72,
-        padding:    '14px 10px',
-        borderRadius: 12,
-        border:     `1px solid ${isActive ? accentColor + '55' : hov ? accentColor + '33' : P.border}`,
-        background: isActive ? glowColor : hov ? `${glowColor}80` : P.surface,
-        cursor:     'pointer',
-        textAlign:  'center',
-        transition: 'all 0.18s ease',
-        transform:  hov && !isActive ? 'translateY(-1px)' : 'none',
-        boxShadow:  isActive ? `0 0 18px ${glowColor}, 0 0 0 1px ${accentColor}22` : 'none',
-        outline:    'none',
-        fontFamily: 'inherit',
+        flex:         '1 1 0',
+        minWidth:     72,
+        padding:      '14px 10px',
+        borderRadius: 14,
+        border:       `1px solid ${isActive ? accentColor + '55' : hov ? accentColor + '33' : P.border}`,
+        background:   isActive ? glowColor : hov ? `${glowColor}80` : 'rgba(30,30,41,0.55)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        cursor:       'pointer',
+        textAlign:    'center',
+        transition:   'all 0.18s ease',
+        transform:    hov && !isActive ? 'translateY(-1px)' : 'none',
+        boxShadow:    isActive ? `0 0 20px ${glowColor}, 0 0 0 1px ${accentColor}22, inset 0 1px 0 rgba(255,255,255,0.06)` : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+        outline:      'none',
+        fontFamily:   'inherit',
       }}
     >
-      <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:800, color: isActive ? accentColor : hov ? accentColor : P.text, letterSpacing:'-0.02em', lineHeight:1 }}>{value}</p>
+      <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:800, color: isActive ? accentColor : hov ? accentColor : P.text, letterSpacing:'-0.02em', lineHeight:1, fontFamily:'var(--font-display)' }}>{value}</p>
       <p style={{ margin:0, fontSize:10, fontWeight:700, color: isActive ? accentColor : P.muted, textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</p>
     </button>
   );
 }
 
-// ─── Tiny toast ───────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ message, type }) {
   return (
     <div style={{
@@ -51,6 +54,7 @@ function Toast({ message, type }) {
       padding:'11px 18px', borderRadius:10, fontSize:13, fontWeight:500,
       display:'flex', alignItems:'center', gap:10,
       boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
+      backdropFilter: 'blur(12px)',
     }}>
       <span style={{ color: type === 'success' ? P.green : P.red, display:'flex' }}>{type === 'success' ? icons.check : icons.x}</span>
       {message}
@@ -90,25 +94,25 @@ function GuestModal({ guest, onSave, onClose }) {
   };
 
   const inp = (key) => ({
-    width:'100%', padding:'11px 14px', borderRadius:8, boxSizing:'border-box',
+    width:'100%', padding:'11px 14px', borderRadius:9, boxSizing:'border-box',
     border: `1px solid ${fieldErrors[key] ? P.red + '66' : P.border}`,
-    background:P.hover, color:P.text, fontSize:14, outline:'none', fontFamily:'inherit',
+    background:'rgba(30,30,41,0.7)', color:P.text, fontSize:14, outline:'none', fontFamily:'inherit',
     transition:'border-color 0.15s',
   });
   const lbl = (key) => ({ display:'block', fontSize:12, fontWeight:600, color:fieldErrors[key] ? P.red : P.sub, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' });
 
   return createPortal(
     <div
-      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }}
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.80)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(10px)' }}
       onClick={onClose}
     >
-      <div
-        style={{ background:P.panel, borderRadius:14, padding:'32px 36px', width:'90%', maxWidth:460, border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }}
+      <GlassPanel
+        style={{ padding:'32px 36px', width:'90%', maxWidth:460, boxShadow:'0 24px 56px rgba(0,0,0,0.75)' }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 style={{ margin:'0 0 24px', fontSize:19, fontWeight:700, color:P.text }}>{isEdit ? 'Edit Guest' : 'Add Guest'}</h2>
+        <h2 style={{ margin:'0 0 24px', fontSize:19, fontWeight:700, color:P.text, fontFamily:'var(--font-display)' }}>{isEdit ? 'Edit Guest' : 'Add Guest'}</h2>
 
-        {error && <div style={{ background:P.redGlow, color:P.red, padding:'10px 14px', borderRadius:8, fontSize:13, marginBottom:16, border:`1px solid ${P.red}33` }}>{error}</div>}
+        {error && <div style={{ background:P.redGlow, color:P.red, padding:'10px 14px', borderRadius:9, fontSize:13, marginBottom:16, border:`1px solid ${P.red}33` }}>{error}</div>}
 
         {[
           { label:'Full Name *', key:'fullname', type:'text', ph:'Jane Doe' },
@@ -122,6 +126,8 @@ function GuestModal({ guest, onSave, onClose }) {
               value={form[f.key]}
               onChange={e => { setForm(p => ({...p,[f.key]:e.target.value})); if(fieldErrors[f.key]) setFieldErrors(p=>({...p,[f.key]:undefined})); }}
               style={inp(f.key)}
+              onFocus={e => e.target.style.borderColor = P.blue}
+              onBlur={e => e.target.style.borderColor = fieldErrors[f.key] ? P.red + '66' : P.border}
             />
             {fieldErrors[f.key] && <p style={{ margin:'4px 0 0', fontSize:12, color:P.red }}>{fieldErrors[f.key]}</p>}
           </div>
@@ -151,12 +157,15 @@ function GuestModal({ guest, onSave, onClose }) {
         </div>
 
         <div style={{ display:'flex', gap:10 }}>
-          <button onClick={onClose} style={{ flex:1, padding:'11px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Cancel</button>
-          <button onClick={handleSubmit} disabled={saving} style={{ flex:1, padding:'11px 0', borderRadius:8, border:'none', background:saving?P.muted:P.blue, color:'#fff', fontWeight:600, fontSize:14, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit' }}>
+          <button onClick={onClose} style={{ flex:1, padding:'11px 0', borderRadius:9, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
+            onMouseLeave={e => { e.currentTarget.style.color=P.sub; e.currentTarget.style.borderColor=P.border; }}
+          >Cancel</button>
+          <button onClick={handleSubmit} disabled={saving} style={{ flex:1, padding:'11px 0', borderRadius:9, border:'none', background:saving?P.hover:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:saving?P.muted:'#0a0a0f', fontWeight:700, fontSize:14, cursor:saving?'not-allowed':'pointer', fontFamily:'inherit', transition:'opacity 0.15s' }}>
             {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Guest'}
           </button>
         </div>
-      </div>
+      </GlassPanel>
     </div>,
     document.body
   );
@@ -169,11 +178,11 @@ function InviteResultModal({ result, onClose }) {
   const copy = () => { navigator.clipboard.writeText(rsvpUrl); setCopied(true); setTimeout(() => setCopied(false), 2200); };
 
   return createPortal(
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={onClose}>
-      <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', width:'90%', maxWidth:460, border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.80)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(10px)' }} onClick={onClose}>
+      <GlassPanel style={{ padding:'32px 36px', width:'90%', maxWidth:460, boxShadow:'0 24px 56px rgba(0,0,0,0.75)' }} onClick={e => e.stopPropagation()}>
 
         {emailSent ? (
-          <div style={{ background:P.greenGlow, border:`1px solid ${P.green}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
+          <div style={{ background:P.greenGlow, border:`1px solid ${P.green}33`, borderRadius:9, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
             <span style={{ color:P.green, flexShrink:0, display:'flex' }}>{icons.mail}</span>
             <div>
               <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.green }}>Invitation email sent!</p>
@@ -181,7 +190,7 @@ function InviteResultModal({ result, onClose }) {
             </div>
           </div>
         ) : (
-          <div style={{ background:P.amberGlow, border:`1px solid ${P.amber}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
+          <div style={{ background:P.amberGlow, border:`1px solid ${P.amber}33`, borderRadius:9, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
             <span style={{ color:P.amber, flexShrink:0, display:'flex' }}>{icons.warning}</span>
             <div>
               <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.amber }}>Email not configured</p>
@@ -190,33 +199,39 @@ function InviteResultModal({ result, onClose }) {
           </div>
         )}
 
-        <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text, display:'flex', alignItems:'center', gap:8 }}><span style={{color:P.blue}}>{icons.ticket}</span>RSVP Link</h2>
+        <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text, display:'flex', alignItems:'center', gap:8, fontFamily:'var(--font-display)' }}><span style={{color:P.blue}}>{icons.ticket}</span>RSVP Link</h2>
         <p style={{ margin:'0 0 16px', fontSize:14, color:P.sub }}>Share with the guest:</p>
 
         <div style={{ display:'flex', gap:8 }}>
-          <input readOnly value={rsvpUrl} style={{ flex:1, padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, fontSize:12, color:P.blue, background:P.hover, outline:'none', fontFamily:'monospace' }}/>
-          <button onClick={copy} style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, background: copied?P.green:P.surface, color: copied?'#111':P.text, fontWeight:600, fontSize:13, cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}>
+          <input readOnly value={rsvpUrl} style={{ flex:1, padding:'10px 14px', borderRadius:9, border:`1px solid ${P.border}`, fontSize:12, color:P.blue, background:'rgba(30,30,41,0.7)', outline:'none', fontFamily:'monospace' }}/>
+          <button onClick={copy} style={{ padding:'10px 14px', borderRadius:9, border:`1px solid ${P.border}`, background: copied?P.green:P.surface, color: copied?'#0a0a0f':P.text, fontWeight:600, fontSize:13, cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}>
             {copied ? <span style={{display:'flex',alignItems:'center',gap:4}}>{icons.check} Copied</span> : 'Copy'}
           </button>
         </div>
 
-        <button onClick={onClose} style={{ width:'100%', marginTop:18, padding:'11px 0', borderRadius:8, border:'none', background:P.blue, color:'#fff', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>
+        <button onClick={onClose} style={{ width:'100%', marginTop:18, padding:'11px 0', borderRadius:9, border:'none', background:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:'#0a0a0f', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>
           Done
         </button>
-      </div>
+      </GlassPanel>
     </div>,
     document.body
   );
 }
 
-// ─── Initials avatar ──────────────────────────────────────────────────────────
-function Avatar({ name, isActive }) {
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+function Avatar({ name, isActive, rsvpStatus }) {
   const init = (name || '?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const bg = isActive
+    ? `linear-gradient(135deg, ${P.teal} 0%, ${P.cyan} 100%)`
+    : rsvpStatus === 'declined'
+      ? P.roseGlow
+      : P.blueGlow;
+  const color = isActive ? '#0a0a0f' : rsvpStatus === 'declined' ? P.rose : P.blue;
   return (
     <div style={{
       width:34, height:34, borderRadius:'50%', flexShrink:0,
-      background: isActive ? P.blueGlow : P.hover,
-      color:      isActive ? P.blue     : P.sub,
+      background: bg, color,
+      border: `1.5px solid ${isActive ? P.teal + '55' : rsvpStatus === 'declined' ? P.rose + '33' : P.blue + '33'}`,
       display:'flex', alignItems:'center', justifyContent:'center',
       fontSize:12, fontWeight:700,
     }}>{init}</div>
@@ -228,7 +243,7 @@ export default function TabGuests({ eventId }) {
   const [guests,       setGuests]       = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [search,       setSearch]       = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');   // tile filter (client-side)
+  const [activeFilter, setActiveFilter] = useState('all');
   const [dietaryFilter,setDietaryFilter]= useState('');
   const [showModal,    setShowModal]    = useState(false);
   const [editingGuest, setEditingGuest] = useState(null);
@@ -245,7 +260,6 @@ export default function TabGuests({ eventId }) {
     setTimeout(() => setToast(null), 3200);
   }, []);
 
-  // ── Fetch (search-only — rsvp filter is client-side via tiles) ────────────
   const load = useCallback(async (searchVal) => {
     setLoading(true);
     try {
@@ -257,23 +271,19 @@ export default function TabGuests({ eventId }) {
       setLoading(false);
     }
   }, [eventId, showToast]);
-  
 
-  // Re-fetch on page visibility
   useEffect(() => {
     const h = () => { if (document.visibilityState === 'visible') load(search); };
     document.addEventListener('visibilitychange', h);
     return () => document.removeEventListener('visibilitychange', h);
   }, [load, search]);
 
-  // Debounced search
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => load(search), 600);
     return () => clearTimeout(debounceRef.current);
   }, [search, load]);
 
-  // ── Stats (from full fetched list, before client filter) ──────────────────
   const stats = useMemo(() => ({
     total:     guests.length,
     attending: guests.filter(g => g.rsvp?.status === 'attending').length,
@@ -282,14 +292,12 @@ export default function TabGuests({ eventId }) {
     invited:   guests.filter(g => g.invitationStatus === 'sent').length,
   }), [guests]);
 
-  // ── Client-side filter based on active tile ───────────────────────────────
   const filtered = useMemo(() => {
     let list = guests;
     if (activeFilter === 'attending') list = list.filter(g => g.rsvp?.status === 'attending');
     else if (activeFilter === 'declined') list = list.filter(g => g.rsvp?.status === 'declined');
     else if (activeFilter === 'pending')  list = list.filter(g => !g.rsvp?.status || g.rsvp.status === 'pending');
     else if (activeFilter === 'invited')  list = list.filter(g => g.invitationStatus === 'sent');
-
     if (dietaryFilter.trim()) {
       const q = dietaryFilter.toLowerCase();
       list = list.filter(g => (g.rsvp?.dietaryPreferences?.join(', ') || '').toLowerCase().includes(q));
@@ -297,16 +305,14 @@ export default function TabGuests({ eventId }) {
     return list;
   }, [guests, activeFilter, dietaryFilter]);
 
-  // ── Tile config ───────────────────────────────────────────────────────────
   const tiles = [
-    { id:'all',       label:'Total',     value:stats.total,     accent:P.text,  glow:`rgba(232,232,232,0.1)` },
-    { id:'attending', label:'Attending', value:stats.attending, accent:P.green, glow:P.greenGlow },
-    { id:'declined',  label:'Declined',  value:stats.declined,  accent:P.red,   glow:P.redGlow   },
-    { id:'pending',   label:'Pending',   value:stats.pending,   accent:P.amber, glow:P.amberGlow },
-    { id:'invited',   label:'Invited',   value:stats.invited,   accent:P.blue,  glow:P.blueGlow  },
+    { id:'all',       label:'Total',     value:stats.total,     accent:P.blue,   glow:P.blueGlow   },
+    { id:'attending', label:'Attending', value:stats.attending, accent:P.teal,   glow:P.tealGlow   },
+    { id:'declined',  label:'Declined',  value:stats.declined,  accent:P.rose,   glow:P.roseGlow   },
+    { id:'pending',   label:'Pending',   value:stats.pending,   accent:P.indigo, glow:P.indigoGlow },
+    { id:'invited',   label:'Invited',   value:stats.invited,   accent:P.cyan,   glow:P.cyanGlow   },
   ];
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
   const handleSave = async (form) => {
     if (editingGuest) {
       const updated = await updateGuest(eventId, editingGuest._id, form);
@@ -363,10 +369,12 @@ export default function TabGuests({ eventId }) {
     showToast(`Invitations sent to ${sent} guest(s)`);
   };
 
-  // ── RSVP badge ────────────────────────────────────────────────────────────
   const rsvpBadge = (status) => {
-    const map = { attending:{ bg:P.greenGlow, text:P.green, dot:P.green }, declined:{ bg:P.redGlow, text:P.red, dot:P.red } };
-    const s = map[status] || { bg:P.amberGlow, text:P.amber, dot:P.amber };
+    const map = {
+      attending:{ bg:P.tealGlow,   text:P.teal,   dot:P.teal   },
+      declined: { bg:P.roseGlow,   text:P.rose,   dot:P.rose   },
+    };
+    const s = map[status] || { bg:P.indigoGlow, text:P.indigo, dot:P.indigo };
     return (
       <span style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:700, background:s.bg, color:s.text, textTransform:'capitalize' }}>
         <span style={{ width:5, height:5, borderRadius:'50%', background:s.dot, flexShrink:0 }}/>
@@ -376,10 +384,23 @@ export default function TabGuests({ eventId }) {
   };
 
   return (
-    <div style={{ maxWidth:1100, margin:'0 auto', padding:'28px 24px', fontFamily:'system-ui,-apple-system,sans-serif', color:P.text }}>
+    <div style={{ maxWidth:1100, margin:'0 auto', padding:'28px 24px', fontFamily:'var(--font-body)', color:P.text }}>
 
-      {/* ── Filter tiles ─────────────────────────────────────────────────── */}
-      <div style={{ display:'flex', gap:10, marginBottom:24, flexWrap:'wrap' }}>
+      {/* Section header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+        <div>
+          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em', display:'flex', alignItems:'center', gap:10, fontFamily:'var(--font-display)' }}>
+            <span style={{ color:P.blue, background:P.blueGlow, padding:7, borderRadius:9, display:'flex' }}>{icons.guests}</span>
+            Guest List
+          </h2>
+          <p style={{ margin:'5px 0 0 46px', fontSize:13, color:P.sub }}>
+            {guests.length} guest{guests.length !== 1 ? 's' : ''} · {stats.attending} attending · {stats.declined} declined
+          </p>
+        </div>
+      </div>
+
+      {/* Filter tiles */}
+      <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap' }}>
         {tiles.map(t => (
           <FilterTile
             key={t.id}
@@ -393,9 +414,8 @@ export default function TabGuests({ eventId }) {
         ))}
       </div>
 
-      {/* ── Controls row ─────────────────────────────────────────────────── */}
+      {/* Controls row */}
       <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
-        {/* Search */}
         <div style={{ flex:'1 1 220px', position:'relative' }}>
           <span style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:P.muted, pointerEvents:'none', display:'flex' }}>
             {icons.search}
@@ -404,50 +424,46 @@ export default function TabGuests({ eventId }) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            style={{ width:'100%', padding:'10px 14px 10px 40px', borderRadius:9, border:`1px solid ${P.border}`, background:P.surface, fontSize:14, color:P.text, outline:'none', boxSizing:'border-box', fontFamily:'inherit', transition:'border-color 0.15s' }}
+            style={{ width:'100%', padding:'10px 14px 10px 42px', borderRadius:10, border:`1px solid ${P.border}`, background:'rgba(30,30,41,0.55)', backdropFilter:'blur(12px)', fontSize:14, color:P.text, outline:'none', boxSizing:'border-box', fontFamily:'inherit', transition:'border-color 0.15s' }}
             onFocus={e => e.target.style.borderColor = P.blue}
             onBlur={e => e.target.style.borderColor = P.border}
           />
         </div>
 
-        {/* Dietary filter */}
-        <input
-          value={dietaryFilter}
-          onChange={e => setDietaryFilter(e.target.value)}
+        <OpalSelect
+          value={dietaryFilter || ''}
+          onChange={v => setDietaryFilter(v)}
+          options={[{ value:'', label:'All Dietary' }, ...DIETARY_PRESETS.map(d => ({ value:d, label:d }))]}
           placeholder="Filter dietary…"
-          style={{ padding:'10px 14px', borderRadius:9, border:`1px solid ${P.border}`, background:P.surface, fontSize:14, color:P.text, outline:'none', minWidth:150, fontFamily:'inherit' }}
-          onFocus={e => e.target.style.borderColor = P.blue}
-          onBlur={e => e.target.style.borderColor = P.border}
+          accent="amber"
+          style={{ minWidth:160 }}
         />
 
-        {/* Add guest */}
         <button
           onClick={() => { setEditingGuest(null); setShowModal(true); }}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:P.blue, color:'#fff', border:'none', borderRadius:9, fontSize:13, fontWeight:600, cursor:'pointer', whiteSpace:'nowrap', fontFamily:'inherit', transition:'opacity 0.15s' }}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:`linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color:'#0a0a0f', border:'none', borderRadius:10, fontSize:13, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', fontFamily:'inherit', transition:'opacity 0.15s' }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
           {icons.plus} Add Guest
         </button>
 
-        {/* Invite all */}
         <button
           onClick={handleInviteAll}
           disabled={sendingAll}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:P.surface, color:P.text, border:`1px solid ${P.border}`, borderRadius:9, fontSize:13, fontWeight:600, cursor:sendingAll?'not-allowed':'pointer', whiteSpace:'nowrap', fontFamily:'inherit', opacity:sendingAll?0.6:1, transition:'all 0.15s' }}
-          onMouseEnter={e => { if(!sendingAll) e.currentTarget.style.borderColor = P.sub; }}
-          onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px', background:'rgba(30,30,41,0.55)', backdropFilter:'blur(12px)', color:P.text, border:`1px solid ${P.border}`, borderRadius:10, fontSize:13, fontWeight:600, cursor:sendingAll?'not-allowed':'pointer', whiteSpace:'nowrap', fontFamily:'inherit', opacity:sendingAll?0.6:1, transition:'all 0.15s' }}
+          onMouseEnter={e => { if(!sendingAll) { e.currentTarget.style.borderColor=`${P.blue}44`; e.currentTarget.style.color=P.blue; }}}
+          onMouseLeave={e => { e.currentTarget.style.borderColor=P.border; e.currentTarget.style.color=P.text; }}
         >
           {icons.mail} {sendingAll ? `Sending… ${inviteProgress}` : 'Invite All'}
         </button>
       </div>
 
-      {/* ── Guest table ───────────────────────────────────────────────────── */}
-      <div style={{ background:P.surface, border:`1px solid ${P.border}`, borderRadius:14, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
-        {/* Table header */}
-        <div style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1.2fr 1fr 1.4fr 120px', gap:0, background:P.panel, borderBottom:`1px solid ${P.border}`, padding:'10px 18px' }}>
+      {/* Guest table */}
+      <GlassPanel style={{ overflow:'hidden', boxShadow:'0 4px 24px rgba(0,0,0,0.3)' }}>
+        <div style={{ display:'grid', gridTemplateColumns:'2fr 2fr 1.2fr 1fr 1.4fr 120px', gap:0, background:'rgba(10,10,18,0.7)', borderBottom:`1px solid ${P.border}`, padding:'11px 18px', borderRadius:'16px 16px 0 0' }}>
           {['Guest','Email','Dietary','RSVP','Invited','Actions'].map(h => (
-            <span key={h} style={{ fontSize:10, fontWeight:700, color:P.muted, textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</span>
+            <span key={h} style={{ fontSize:11, fontWeight:700, color:P.sub, textTransform:'uppercase', letterSpacing:'0.08em' }}>{h}</span>
           ))}
         </div>
 
@@ -473,30 +489,25 @@ export default function TabGuests({ eventId }) {
                   borderBottom: i < filtered.length - 1 ? `1px solid ${P.borderSub}` : 'none',
                   transition:'background 0.15s',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = P.hover}
+                onMouseEnter={e => e.currentTarget.style.background = P.blueGlow}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                {/* Guest */}
                 <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
-                  <Avatar name={guest.fullName} isActive={guest.checkIn?.status==='Arrived'} />
+                  <Avatar name={guest.fullName} isActive={guest.checkIn?.status==='Arrived'} rsvpStatus={guest.rsvp?.status} />
                   <div style={{ minWidth:0 }}>
                     <p style={{ margin:0, fontSize:14, fontWeight:600, color:P.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{guest.fullName}</p>
                     {guest.phone && <p style={{ margin:'2px 0 0', fontSize:11, color:P.muted }}>{guest.phone}</p>}
                   </div>
                 </div>
 
-                {/* Email */}
                 <span style={{ fontSize:12, color:P.sub, fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingRight:8 }}>{guest.email}</span>
 
-                {/* Dietary */}
                 <span style={{ fontSize:13, color: guest.rsvp?.dietaryPreferences?.length ? P.text : P.muted }}>
                   {guest.rsvp?.dietaryPreferences?.join(', ') || 'None'}
                 </span>
 
-                {/* RSVP */}
                 <div>{rsvpBadge(guest.rsvp?.status)}</div>
 
-                {/* Invited */}
                 <div>
                   {isInvited ? (
                     <div>
@@ -518,29 +529,28 @@ export default function TabGuests({ eventId }) {
                     <button
                       onClick={() => handleInvite(guest)}
                       disabled={isSending}
-                      style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:7, border:`1px solid ${P.blue}44`, background:P.blueGlow, color:P.blue, fontWeight:600, fontSize:12, cursor:isSending?'not-allowed':'pointer', fontFamily:'inherit', transition:'all 0.15s', opacity:isSending?0.6:1 }}
+                      style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:8, border:`1px solid ${P.blue}44`, background:P.blueGlow, color:P.blue, fontWeight:600, fontSize:12, cursor:isSending?'not-allowed':'pointer', fontFamily:'inherit', transition:'all 0.15s', opacity:isSending?0.6:1 }}
                     >
                       {icons.mail} {isSending ? '…' : 'Send'}
                     </button>
                   )}
                 </div>
 
-                {/* Actions */}
                 <div style={{ display:'flex', gap:6 }}>
                   <button
                     onClick={() => { setEditingGuest(guest); setShowModal(true); }}
                     title="Edit"
-                    style={{ width:32, height:32, borderRadius:7, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
-                    onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
+                    style={{ width:32, height:32, borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color=P.blue; e.currentTarget.style.borderColor=`${P.blue}44`; e.currentTarget.style.background=P.blueGlow; }}
+                    onMouseLeave={e => { e.currentTarget.style.color=P.sub; e.currentTarget.style.borderColor=P.border; e.currentTarget.style.background='transparent'; }}
                   >
                     {icons.edit}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(guest)}
                     title="Remove"
-                    style={{ width:32, height:32, borderRadius:7, border:`1px solid ${P.border}`, background:'transparent', color:P.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
-                    onMouseEnter={e => { e.currentTarget.style.color=P.red; e.currentTarget.style.borderColor=P.red+'55'; e.currentTarget.style.background=P.redGlow; }}
+                    style={{ width:32, height:32, borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.muted, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color=P.red; e.currentTarget.style.borderColor=`${P.red}44`; e.currentTarget.style.background=P.redGlow; }}
                     onMouseLeave={e => { e.currentTarget.style.color=P.muted; e.currentTarget.style.borderColor=P.border; e.currentTarget.style.background='transparent'; }}
                   >
                     {icons.trash}
@@ -550,14 +560,14 @@ export default function TabGuests({ eventId }) {
             );
           })
         )}
-      </div>
+      </GlassPanel>
 
-      <p style={{ marginTop:10, fontSize:12, color:P.muted }}>
-        Showing {filtered.length} of {guests.length} guest{guests.length !== 1 ? 's' : ''}
-        {activeFilter !== 'all' && <span> — filtered by <strong style={{color:P.text}}>{activeFilter}</strong></span>}
+      <p style={{ marginTop:10, fontSize:12, color:P.sub }}>
+        Showing <strong style={{ color:P.text }}>{filtered.length}</strong> of <strong style={{ color:P.text }}>{guests.length}</strong> guest{guests.length !== 1 ? 's' : ''}
+        {activeFilter !== 'all' && <span> — filtered by <strong style={{ color:P.blue }}>{activeFilter}</strong></span>}
       </p>
 
-      {/* ── Modals ────────────────────────────────────────────────────────── */}
+      {/* Modals */}
       {showModal && (
         <GuestModal
           guest={editingGuest}
@@ -567,18 +577,18 @@ export default function TabGuests({ eventId }) {
       )}
 
       {confirmDelete && createPortal(
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={() => setConfirmDelete(null)}>
-          <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', maxWidth:400, width:'90%', border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width:44, height:44, borderRadius:'50%', background:P.redGlow, border:`1px solid ${P.red}33`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16, color:P.red }}>{icons.warning}</div>
-            <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text }}>Remove guest?</h2>
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.80)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(10px)' }} onClick={() => setConfirmDelete(null)}>
+          <GlassPanel style={{ padding:'32px 36px', maxWidth:400, width:'90%', boxShadow:'0 24px 56px rgba(0,0,0,0.75)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width:44, height:44, borderRadius:'50%', background:P.redGlow, border:`1px solid ${P.red}44`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16, color:P.red }}>{icons.warning}</div>
+            <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text, fontFamily:'var(--font-display)' }}>Remove guest?</h2>
             <p style={{ margin:'0 0 24px', fontSize:14, color:P.sub, lineHeight:1.6 }}>
               <strong style={{color:P.text}}>{confirmDelete.fullName}</strong> will be removed from the guest list. This cannot be undone.
             </p>
             <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ flex:1, padding:'11px 0', borderRadius:8, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Cancel</button>
-              <button onClick={handleDelete} style={{ flex:1, padding:'11px 0', borderRadius:8, border:'none', background:P.red, color:'#fff', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Remove</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ flex:1, padding:'11px 0', borderRadius:9, border:`1px solid ${P.border}`, background:'transparent', color:P.sub, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Cancel</button>
+              <button onClick={handleDelete} style={{ flex:1, padding:'11px 0', borderRadius:9, border:'none', background:P.red, color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Remove</button>
             </div>
-          </div>
+          </GlassPanel>
         </div>,
         document.body
       )}
