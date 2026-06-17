@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   listGuests, addGuest, updateGuest, deleteGuest,
   sendInvitation,
@@ -51,7 +52,7 @@ function Toast({ message, type }) {
       display:'flex', alignItems:'center', gap:10,
       boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
     }}>
-      <span style={{ color: type === 'success' ? P.green : P.red, fontWeight:700 }}>{type === 'success' ? '✓' : '✗'}</span>
+      <span style={{ color: type === 'success' ? P.green : P.red, display:'flex' }}>{type === 'success' ? icons.check : icons.x}</span>
       {message}
     </div>
   );
@@ -96,7 +97,7 @@ function GuestModal({ guest, onSave, onClose }) {
   });
   const lbl = (key) => ({ display:'block', fontSize:12, fontWeight:600, color:fieldErrors[key] ? P.red : P.sub, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' });
 
-  return (
+  return createPortal(
     <div
       style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }}
       onClick={onClose}
@@ -156,7 +157,8 @@ function GuestModal({ guest, onSave, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -166,13 +168,13 @@ function InviteResultModal({ result, onClose }) {
   const [copied, setCopied] = useState(false);
   const copy = () => { navigator.clipboard.writeText(rsvpUrl); setCopied(true); setTimeout(() => setCopied(false), 2200); };
 
-  return (
+  return createPortal(
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={onClose}>
       <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', width:'90%', maxWidth:460, border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
 
         {emailSent ? (
           <div style={{ background:P.greenGlow, border:`1px solid ${P.green}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
-            <span style={{ fontSize:18 }}>✉️</span>
+            <span style={{ color:P.green, flexShrink:0, display:'flex' }}>{icons.mail}</span>
             <div>
               <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.green }}>Invitation email sent!</p>
               <p style={{ margin:0, fontSize:12, color:P.sub }}>Sent to <strong style={{color:P.text}}>{guestEmail}</strong>. Copy the link below as backup.</p>
@@ -180,7 +182,7 @@ function InviteResultModal({ result, onClose }) {
           </div>
         ) : (
           <div style={{ background:P.amberGlow, border:`1px solid ${P.amber}33`, borderRadius:8, padding:'12px 14px', marginBottom:20, display:'flex', gap:10 }}>
-            <span style={{ fontSize:18 }}>⚠️</span>
+            <span style={{ color:P.amber, flexShrink:0, display:'flex' }}>{icons.warning}</span>
             <div>
               <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:P.amber }}>Email not configured</p>
               <p style={{ margin:0, fontSize:12, color:P.sub }}>SMTP not set up — share this link manually.</p>
@@ -188,13 +190,13 @@ function InviteResultModal({ result, onClose }) {
           </div>
         )}
 
-        <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text }}>RSVP Link 🎟</h2>
+        <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text, display:'flex', alignItems:'center', gap:8 }}><span style={{color:P.blue}}>{icons.ticket}</span>RSVP Link</h2>
         <p style={{ margin:'0 0 16px', fontSize:14, color:P.sub }}>Share with the guest:</p>
 
         <div style={{ display:'flex', gap:8 }}>
           <input readOnly value={rsvpUrl} style={{ flex:1, padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, fontSize:12, color:P.blue, background:P.hover, outline:'none', fontFamily:'monospace' }}/>
           <button onClick={copy} style={{ padding:'10px 14px', borderRadius:8, border:`1px solid ${P.border}`, background: copied?P.green:P.surface, color: copied?'#111':P.text, fontWeight:600, fontSize:13, cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}>
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? <span style={{display:'flex',alignItems:'center',gap:4}}>{icons.check} Copied</span> : 'Copy'}
           </button>
         </div>
 
@@ -202,7 +204,8 @@ function InviteResultModal({ result, onClose }) {
           Done
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -497,7 +500,7 @@ export default function TabGuests({ eventId }) {
                 <div>
                   {isInvited ? (
                     <div>
-                      <span style={{ fontSize:12, color:P.green, fontWeight:600 }}>✓ Sent</span>
+                      <span style={{ fontSize:12, color:P.green, fontWeight:600, display:'flex', alignItems:'center', gap:4 }}>{icons.check} Sent</span>
                       {guest.invitationSentAt && (
                         <p style={{ margin:'2px 0 0', fontSize:10, color:P.muted }}>
                           {new Date(guest.invitationSentAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}
@@ -563,10 +566,10 @@ export default function TabGuests({ eventId }) {
         />
       )}
 
-      {confirmDelete && (
+      {confirmDelete && createPortal(
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.78)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:200, backdropFilter:'blur(8px)' }} onClick={() => setConfirmDelete(null)}>
           <div style={{ background:P.panel, borderRadius:14, padding:'32px 36px', maxWidth:400, width:'90%', border:`1px solid ${P.border}`, boxShadow:'0 20px 48px rgba(0,0,0,0.7)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ width:44, height:44, borderRadius:'50%', background:P.redGlow, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16, fontSize:20 }}>⚠️</div>
+            <div style={{ width:44, height:44, borderRadius:'50%', background:P.redGlow, border:`1px solid ${P.red}33`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:16, color:P.red }}>{icons.warning}</div>
             <h2 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:P.text }}>Remove guest?</h2>
             <p style={{ margin:'0 0 24px', fontSize:14, color:P.sub, lineHeight:1.6 }}>
               <strong style={{color:P.text}}>{confirmDelete.fullName}</strong> will be removed from the guest list. This cannot be undone.
@@ -576,7 +579,8 @@ export default function TabGuests({ eventId }) {
               <button onClick={handleDelete} style={{ flex:1, padding:'11px 0', borderRadius:8, border:'none', background:P.red, color:'#fff', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit' }}>Remove</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {inviteResult && <InviteResultModal result={inviteResult} onClose={() => setInviteResult(null)} />}

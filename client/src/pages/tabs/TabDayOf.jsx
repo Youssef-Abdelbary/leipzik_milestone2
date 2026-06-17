@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { listGuests } from '../../services/serviceGuest';
-import { P } from '../../utils/theme';
+import { P, icons } from '../../utils/theme';
 
 // ─── Stat Card Component ──────────────────────────────────────────────────────
 function StatCard({ label, value, color, sub }) {
@@ -39,6 +40,7 @@ const RSVP_STYLES = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function TabDayOf({ eventId }) {
+  const navigate = useNavigate();
   const [guests, setGuests]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -154,20 +156,27 @@ export default function TabDayOf({ eventId }) {
       {/* Header */}
       <div style={s.hdr}>
         <div>
-          <h2 style={s.h1}>📅 Day-of Dashboard</h2>
+          <h2 style={{ ...s.h1, display:'flex', alignItems:'center', gap:10 }}><span style={{color:P.blue}}>{icons.dayof}</span> Day-of Dashboard</h2>
           <p style={s.sub}>Live check-in tracking — auto-refreshes every 30s</p>
         </div>
-        <button 
-          style={s.refreshBtn} 
-          onClick={load}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = P.sub; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = P.border; }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
-          </svg>
-          Refresh
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate('/staff/qr-scanner')}
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: P.blue, fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#fff', transition: 'opacity 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            {icons.qr} QR Scanner
+          </button>
+          <button 
+            style={s.refreshBtn} 
+            onClick={load}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = P.sub; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = P.border; }}
+          >
+            {icons.refresh} Refresh
+          </button>
+        </div>
       </div>
 
       {/* Metric Cards */}
@@ -182,7 +191,7 @@ export default function TabDayOf({ eventId }) {
       {/* Info Note */}
       {declined > 0 && (
         <div style={s.note}>
-          <span style={{ fontSize: 16 }}>ℹ️</span>
+          <span style={{ color: P.blue, flexShrink: 0, display:'flex' }}>{icons.info}</span>
           <div>
             <strong>{declined} guest{declined !== 1 ? 's' : ''} declined</strong> the invitation — they are excluded from the arrival percentage and "Still Expected" count. The progress bar tracks exactly <strong>{expectedTotal} expected guest{expectedTotal !== 1 ? 's' : ''}</strong>.
           </div>
@@ -247,8 +256,9 @@ export default function TabDayOf({ eventId }) {
                       fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8,
                       background: isArrived ? 'rgba(63, 185, 80, 0.15)' : P.surface,
                       color:      isArrived ? P.green : P.sub,
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
                     }}>
-                      {isArrived ? '✓ In' : 'Pending'}
+                      {isArrived ? <>{icons.check} In</> : 'Pending'}
                     </span>
                   )}
                 </div>

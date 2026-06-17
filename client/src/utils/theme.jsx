@@ -129,4 +129,74 @@ export const icons = {
   info: ic(
     <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>
   ),
+
+  // Additional icons
+  ticket: ic(
+    <><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><line x1="9" y1="12" x2="9.01" y2="12" strokeWidth="2"/><line x1="12" y1="12" x2="12.01" y2="12" strokeWidth="2"/><line x1="15" y1="12" x2="15.01" y2="12" strokeWidth="2"/></>
+  ),
+  clock: ic(
+    <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>
+  ),
+  mapPin: ic(
+    <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>
+  ),
+  tag: ic(
+    <><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>
+  ),
+  printer: ic(
+    <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>
+  ),
+  camera: ic(
+    <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>
+  ),
+  keyboard: ic(
+    <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></>
+  ),
+  bell: ic(
+    <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>
+  ),
+  megaphone: ic(
+    <><path d="M3 11l19-9v18L3 13"/><path d="M11 13v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5"/></>
+  ),
+  clipboard: ic(
+    <><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></>
+  ),
+  frown: ic(
+    <><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></>
+  ),
+  sparkles: ic(
+    <><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 1l.75 2.25L22 4l-2.25.75L19 7l-.75-2.25L16 4l2.25-.75L19 1z"/><path d="M5 17l.5 1.5L7 19l-1.5.5L5 21l-.5-1.5L3 19l1.5-.5L5 17z"/></>
+  ),
+  wrench: ic(
+    <><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></>
+  ),
+  utensils: ic(
+    <><line x1="3" y1="2" x2="3" y2="12"/><line x1="7" y1="2" x2="7" y2="12"/><path d="M3 12a4 4 0 0 0 4 4v6"/><path d="M21 2v18a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5V12a4 4 0 0 0-4-4V2"/></>
+  ),
+  building2: ic(
+    <><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><line x1="10" y1="6" x2="10" y2="6.01"/><line x1="14" y1="6" x2="14" y2="6.01"/><line x1="10" y1="10" x2="10" y2="10.01"/><line x1="14" y1="10" x2="14" y2="10.01"/><line x1="10" y1="14" x2="10" y2="14.01"/><line x1="14" y1="14" x2="14" y2="14.01"/><line x1="10" y1="18" x2="14" y2="18"/></>
+  ),
+  arrowRight: ic(<><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>),
+  checkCircle: ic(<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>),
+  xCircle: ic(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>),
+  chevronUp: ic(<><polyline points="18 15 12 9 6 15"/></>),
+  videoOff: ic(<><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34"/><path d="M23 7l-7 5 7 5V7z"/><line x1="1" y1="1" x2="23" y2="23"/></>),
+  shieldOff: ic(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v4.09c0 5.52 3.44 10.08 8 11.91z"/><line x1="9" y1="9" x2="15" y2="15"/></>),
 };
+
+// ─── Parametric star icon (variable size + fill) for rating components ────────
+export const icStar = (size = 20, filled = false) => (
+  <svg
+    width={size} height={size}
+    viewBox="0 0 24 24"
+    fill={filled ? 'currentColor' : 'none'}
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ display: 'block', flexShrink: 0 }}
+    aria-hidden="true"
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);

@@ -3,10 +3,10 @@ import { getBroadcasts, sendBroadcast, getUnseenRecipients } from '../../service
 import { P, icons } from '../../utils/theme';
 
 const MESSAGE_TYPES = [
-  { value:'announcement', label:'📢 Announcement' },
-  { value:'reminder',     label:'🔔 Reminder'     },
-  { value:'update',       label:'📝 Update'        },
-  { value:'followup',     label:'↩ Follow-up'     },
+  { value:'announcement', label:'Announcement', icon: 'megaphone' },
+  { value:'reminder',     label:'Reminder',     icon: 'bell'      },
+  { value:'update',       label:'Update',       icon: 'clipboard' },
+  { value:'followup',     label:'Follow-up',    icon: 'refresh'   },
 ];
 
 const RSVP_TARGETS = [
@@ -96,14 +96,14 @@ function RecipientTable({ recipients }) {
               </td>
               <td style={{ padding:'9px 12px', fontSize:12, color:P.sub, textTransform:'capitalize' }}>{r.rsvpStatus}</td>
               <td style={{ padding:'9px 12px' }}>
-                {r.deliveryMethod==='email' && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.blueGlow, color:P.blue, fontWeight:600 }}>📧 Email</span>}
-                {r.deliveryMethod==='in_app'&& <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600 }}>🔔 In-app</span>}
+              {r.deliveryMethod==='email' && <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.blueGlow, color:P.blue, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.mail} Email</span>}
+              {r.deliveryMethod==='in_app'&& <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.bell} In-app</span>}
                 {r.deliveryMethod==='none'  && <span style={{ fontSize:11, color:P.muted }}>—</span>}
               </td>
               <td style={{ padding:'9px 12px', fontSize:12, color:P.sub }}>{r.sentAt ? fmtDate(r.sentAt) : <span style={{color:P.muted}}>Not sent</span>}</td>
               <td style={{ padding:'9px 12px' }}>
                 {r.readAt
-                  ? <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600 }}>✓ {fmtDate(r.readAt)}</span>
+                  ? <span style={{ fontSize:11, padding:'2px 8px', borderRadius:99, background:P.greenGlow, color:P.green, fontWeight:600, display:'inline-flex', alignItems:'center', gap:4 }}>{icons.check} {fmtDate(r.readAt)}</span>
                   : r.sentAt ? <span style={{ fontSize:12, color:P.muted }}>Not yet</span> : <span style={{ fontSize:12, color:P.muted }}>—</span>
                 }
               </td>
@@ -200,11 +200,11 @@ export default function TabMessages({ eventId }) {
   );
 
   const contextHint = isTargeted
-    ? `📎 Sending to ${form.specificGuestIds.length} guest${form.specificGuestIds.length!==1?'s':''} who haven't read the original.`
-    : form.rsvpFilter==='all'       ? '📨 Goes to all guests via email (if configured) and in-app for those with accounts.'
-    : form.rsvpFilter==='attending' ? '✅ Only confirmed attendees — good for logistics like venue directions.'
-    : form.rsvpFilter==='pending'   ? '⏳ Guests who haven\'t responded — good for RSVP deadline nudges.'
-    : '↩ Guests who declined — use sparingly (e.g. date change or re-invitation).';
+    ? <><span style={{display:'flex',flexShrink:0}}>{icons.users}</span>Sending to {form.specificGuestIds.length} guest{form.specificGuestIds.length!==1?'s':''} who haven&apos;t read the original.</>
+    : form.rsvpFilter==='all'       ? <><span style={{display:'flex',flexShrink:0}}>{icons.send}</span>Goes to all guests via email (if configured) and in-app for those with accounts.</>
+    : form.rsvpFilter==='attending' ? <><span style={{display:'flex',flexShrink:0}}>{icons.check}</span>Only confirmed attendees — good for logistics like venue directions.</>
+    : form.rsvpFilter==='pending'   ? <><span style={{display:'flex',flexShrink:0}}>{icons.clock}</span>Guests who haven&apos;t responded — good for RSVP deadline nudges.</>
+    : <><span style={{display:'flex',flexShrink:0}}>{icons.refresh}</span>Guests who declined — use sparingly (e.g. date change or re-invitation).</>;
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto', padding:'28px 24px', fontFamily:'system-ui,-apple-system,sans-serif', color:P.text }}>
@@ -212,7 +212,7 @@ export default function TabMessages({ eventId }) {
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
         <div>
-          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text }}>💬 Guest Messages</h2>
+          <h2 style={{ margin:0, fontSize:22, fontWeight:800, color:P.text, display:'flex', alignItems:'center', gap:10 }}><span style={{color:P.teal}}>{icons.messages}</span> Guest Messages</h2>
           <p style={{ margin:'5px 0 0', fontSize:13, color:P.sub }}>Broadcast announcements via email and in-app notifications.</p>
         </div>
         {!showCompose && (
@@ -244,7 +244,7 @@ export default function TabMessages({ eventId }) {
           {/* Success */}
           {sendResult && (
             <div style={{ background:P.greenGlow, color:P.green, border:`1px solid ${P.green}33`, borderRadius:8, padding:'14px', fontSize:13, marginBottom:14 }}>
-              <p style={{ margin:'0 0 4px', fontWeight:700 }}>✓ Broadcast sent!</p>
+              <p style={{ margin:'0 0 4px', fontWeight:700, display:'flex', alignItems:'center', gap:6 }}>{icons.check} Broadcast sent!</p>
               <p style={{ margin:0 }}>
                 Sent to {sendResult.recipientCount} guest(s) · Delivered to {sendResult.deliveredCount}
                 {!sendResult.emailEnabled && <span style={{ color:P.amber }}> (email not configured — in-app only)</span>}
@@ -306,7 +306,10 @@ export default function TabMessages({ eventId }) {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {t.label}
+                        <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ display:'flex' }}>{icons[t.icon]}</span>
+                          {t.label}
+                        </span>
                       </button>
                     );
                   })}
@@ -318,8 +321,8 @@ export default function TabMessages({ eventId }) {
                 {fieldLabel('Send To')}
                 {isTargeted ? (
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <div style={{ flex:1, padding:'11px 14px', borderRadius:9, border:`1px solid ${P.purple}44`, background:P.purpleGlow, fontSize:14, color:P.purple, fontWeight:600 }}>
-                      📎 {form.specificGuestIds.length} specific guest{form.specificGuestIds.length!==1?'s':''} (unseen recipients)
+                    <div style={{ flex:1, padding:'11px 14px', borderRadius:9, border:`1px solid ${P.purple}44`, background:P.purpleGlow, fontSize:14, color:P.purple, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+                      {icons.users} {form.specificGuestIds.length} specific guest{form.specificGuestIds.length!==1?'s':''} (unseen recipients)
                     </div>
                     <button
                       onClick={() => set('specificGuestIds', null)}
@@ -328,7 +331,7 @@ export default function TabMessages({ eventId }) {
                       onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
                       onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
                     >
-                      ✕ Remove
+                      <span style={{ display:'flex', alignItems:'center', gap:5 }}>{icons.x} Remove</span>
                     </button>
                   </div>
                 ) : (
@@ -363,7 +366,7 @@ export default function TabMessages({ eventId }) {
               </div>
 
               {/* Context hint */}
-              <div style={{ padding:'10px 14px', background:P.panel, borderRadius:8, fontSize:12, color:P.sub, marginBottom:18, lineHeight:1.5 }}>
+              <div style={{ padding:'10px 14px', background:P.panel, borderRadius:8, fontSize:12, color:P.sub, marginBottom:18, lineHeight:1.5, display:'flex', alignItems:'flex-start', gap:8 }}>
                 {contextHint}
               </div>
 
@@ -394,7 +397,7 @@ export default function TabMessages({ eventId }) {
         <p style={{ color:P.muted, fontSize:14 }}>Loading messages…</p>
       ) : broadcasts.length === 0 ? (
         <div style={{ textAlign:'center', padding:'60px 20px', background:P.surface, borderRadius:14, border:`1px solid ${P.border}` }}>
-          <p style={{ fontSize:36, margin:'0 0 12px' }}>💬</p>
+          <div style={{ color:P.muted, display:'flex', justifyContent:'center', transform:'scale(2)', marginBottom:20 }}>{icons.messages}</div>
           <p style={{ fontWeight:600, color:P.text, fontSize:16, margin:'0 0 8px' }}>No messages sent yet</p>
           <p style={{ color:P.sub, fontSize:14 }}>Use broadcasts to communicate with guests on the day of the event.</p>
         </div>
@@ -418,8 +421,8 @@ export default function TabMessages({ eventId }) {
                   style={{ display:'flex', alignItems:'center', gap:12, padding:'15px 18px', cursor:'pointer' }}
                   onClick={() => setExpanded(isOpen ? null : bc._id)}
                 >
-                  <span style={{ padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:700, background:tc.bg, color:tc.text, flexShrink:0, whiteSpace:'nowrap' }}>
-                    {MESSAGE_TYPES.find(t=>t.value===bc.type)?.label || bc.type}
+                  <span style={{ padding:'3px 10px', borderRadius:99, fontSize:11, fontWeight:700, background:tc.bg, color:tc.text, flexShrink:0, whiteSpace:'nowrap', display:'inline-flex', alignItems:'center', gap:5 }}>
+                    {(() => { const mt = MESSAGE_TYPES.find(t=>t.value===bc.type); return mt ? <><span style={{display:'flex'}}>{icons[mt.icon]}</span>{mt.label}</> : bc.type; })()}
                   </span>
                   <div style={{ flex:1, minWidth:0 }}>
                     <p style={{ margin:0, fontSize:14, fontWeight:700, color:P.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bc.title}</p>
@@ -437,11 +440,11 @@ export default function TabMessages({ eventId }) {
                       disabled={isFetching}
                       style={{ padding:'5px 12px', borderRadius:7, border:`1px solid ${P.red}44`, background:P.redGlow, color: isFetching?P.muted:P.red, fontSize:12, fontWeight:600, cursor:isFetching?'not-allowed':'pointer', whiteSpace:'nowrap', flexShrink:0, fontFamily:'inherit', transition:'all 0.15s' }}
                     >
-                      {isFetching ? '⟳ Loading…' : `↩ Follow-up (${unseenCount})`}
+                      <span style={{ display:'flex', alignItems:'center', gap:5 }}>{isFetching ? <>{icons.refresh} Loading…</> : <>{icons.refresh} Follow-up ({unseenCount})</>}</span>
                     </button>
                   )}
 
-                  <span style={{ color:P.muted, fontSize:14, flexShrink:0 }}>{isOpen ? '▲' : '▼'}</span>
+                  <span style={{ color:P.muted, display:'flex', transition:'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink:0 }}>{icons.chevronDown}</span>
                 </div>
 
                 {/* Expanded */}
@@ -458,7 +461,10 @@ export default function TabMessages({ eventId }) {
                         onMouseEnter={e => { e.currentTarget.style.color=P.text; e.currentTarget.style.borderColor=P.sub; }}
                         onMouseLeave={e => { e.currentTarget.style.color=P.sub;  e.currentTarget.style.borderColor=P.border; }}
                       >
-                        {showRecips ? '▲ Hide recipients' : `▼ Show recipients (${bc.recipients?.length||0})`}
+                        <span style={{ display:'flex', alignItems:'center', gap:6, transition:'all 0.2s' }}>
+                          <span style={{ display:'flex', transition:'transform 0.2s', transform: showRecips ? 'rotate(180deg)' : 'rotate(0deg)' }}>{icons.chevronDown}</span>
+                          {showRecips ? 'Hide recipients' : `Show recipients (${bc.recipients?.length||0})`}
+                        </span>
                       </button>
                     </div>
                     {showRecips && <RecipientTable recipients={bc.recipients}/>}

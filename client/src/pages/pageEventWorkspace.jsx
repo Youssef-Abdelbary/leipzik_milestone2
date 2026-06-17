@@ -19,7 +19,7 @@ const TABS = [
   { id: 'day-of',    label: 'Day-of',    icon: icons.dayof     },
   { id: 'messages',  label: 'Messages',  icon: icons.messages  },
   { id: 'feedback',  label: 'Feedback',  icon: icons.feedback  },
-  { id: 'venue',     label: 'Venue',     icon: icons.venue     },
+  { id: 'venue',     label: 'Venue',     icon: icons.building2 },
   { id: 'vendors',   label: 'Vendors',   icon: icons.vendors   },
   { id: 'budget',    label: 'Budget',    icon: icons.budget    },
   { id: 'team',      label: 'Team',      icon: icons.team      },
@@ -154,11 +154,17 @@ function DockSep() {
 export default function EventWorkspace() {
   const { eventId }  = useParams();
   const navigate     = useNavigate();
-  const [event,       setEvent]        = useState(null);
-  const [activeTab,   setActiveTab]    = useState('overview');
-  const [loading,     setLoading]      = useState(true);
-  const [error,       setError]        = useState(null);
-  const [showSettings,setShowSettings] = useState(false);
+  const [event,        setEvent]       = useState(null);
+  const [activeTab,    setActiveTab]   = useState('overview');
+  const [visitedTabs,  setVisitedTabs] = useState(() => new Set(['overview']));
+  const [loading,      setLoading]     = useState(true);
+  const [error,        setError]       = useState(null);
+  const [showSettings, setShowSettings]= useState(false);
+
+  const switchTab = (tabId) => {
+    setActiveTab(tabId);
+    setVisitedTabs(prev => new Set([...prev, tabId]));
+  };
 
   useEffect(() => {
     getEvent(eventId)
@@ -169,7 +175,7 @@ export default function EventWorkspace() {
 
   // Let child tabs navigate the dock (e.g. Overview tile clicks)
   useEffect(() => {
-    const h = e => setActiveTab(e.detail);
+    const h = e => switchTab(e.detail);
     window.addEventListener('workspace-tab', h);
     return () => window.removeEventListener('workspace-tab', h);
   }, []);
@@ -292,29 +298,41 @@ export default function EventWorkspace() {
           </button>
         </div>
 
-        {/* ── Tab panels ──────────────────────────────────────────────────────── */}
+        {/* ── Tab panels — keep-alive: mount on first visit, hide with CSS ─── */}
         <div style={{ minHeight: 'calc(100vh - 54px - 130px)' }}>
-          {activeTab === 'overview' && (
-            <div className="tab-panel"><TabOverview event={event} onEventUpdate={setEvent} /></div>
+          {visitedTabs.has('overview') && (
+            <div className={activeTab === 'overview' ? 'tab-panel' : ''} style={{ display: activeTab === 'overview' ? 'block' : 'none' }}>
+              <TabOverview event={event} onEventUpdate={setEvent} />
+            </div>
           )}
-          {activeTab === 'guests' && (
-            <div className="tab-panel"><TabGuests eventId={eventId} /></div>
+          {visitedTabs.has('guests') && (
+            <div style={{ display: activeTab === 'guests' ? 'block' : 'none' }}>
+              <TabGuests eventId={eventId} />
+            </div>
           )}
-          {activeTab === 'day-of' && (
-            <div className="tab-panel"><TabDayOf eventId={eventId} event={event} /></div>
+          {visitedTabs.has('day-of') && (
+            <div style={{ display: activeTab === 'day-of' ? 'block' : 'none' }}>
+              <TabDayOf eventId={eventId} event={event} />
+            </div>
           )}
-          {activeTab === 'messages' && (
-            <div className="tab-panel"><TabMessages eventId={eventId} /></div>
+          {visitedTabs.has('messages') && (
+            <div style={{ display: activeTab === 'messages' ? 'block' : 'none' }}>
+              <TabMessages eventId={eventId} />
+            </div>
           )}
-          {activeTab === 'feedback' && (
-            <div className="tab-panel"><TabFeedback eventId={eventId} event={event} /></div>
+          {visitedTabs.has('feedback') && (
+            <div style={{ display: activeTab === 'feedback' ? 'block' : 'none' }}>
+              <TabFeedback eventId={eventId} event={event} />
+            </div>
           )}
-          {activeTab === 'budget' && (
-            <div className="tab-panel"><BudgetManagement /></div>
+          {visitedTabs.has('budget') && (
+            <div style={{ display: activeTab === 'budget' ? 'block' : 'none' }}>
+              <BudgetManagement />
+            </div>
           )}
           {!['overview','guests','day-of','messages','feedback','budget'].includes(activeTab) && (
             <div className="tab-panel" style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:400, flexDirection:'column', gap:12 }}>
-              <span style={{ fontSize:36 }}>🚧</span>
+              <div style={{ color:P.muted, display:'flex', transform:'scale(1.8)', marginBottom:4 }}>{icons.wrench}</div>
               <p style={{ color:P.sub, fontSize:14, margin:0 }}>
                 {TABS.find(t => t.id === activeTab)?.label} — coming soon
               </p>
@@ -359,7 +377,7 @@ export default function EventWorkspace() {
                     key={tabId}
                     tab={tab}
                     isActive={activeTab === tabId}
-                    onClick={() => setActiveTab(tabId)}
+                    onClick={() => switchTab(tabId)}
                   />
                 );
               })}

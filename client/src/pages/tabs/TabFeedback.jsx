@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getEventFeedbackSummary } from '../../services/serviceFeedback';
-import { P } from '../../utils/theme';
+import { P, icons, icStar } from '../../utils/theme';
 
 const CATS = [
-  { key:'experience',   label:'Overall Experience', icon:'✨' },
-  { key:'food',         label:'Food & Drinks',       icon:'🍕' },
-  { key:'venue',        label:'Venue & Space',       icon:'🏛'  },
-  { key:'organisation', label:'Organisation',        icon:'📋' },
+  { key:'experience',   label:'Overall Experience', icon: icons.sparkles  },
+  { key:'food',         label:'Food & Drinks',       icon: icons.utensils  },
+  { key:'venue',        label:'Venue & Space',       icon: icons.building2 },
+  { key:'organisation', label:'Organisation',        icon: icons.clipboard },
 ];
 
 function Stars({ value, size = 18 }) {
@@ -14,7 +14,9 @@ function Stars({ value, size = 18 }) {
   return (
     <div style={{ display:'flex', gap:3 }}>
       {[1,2,3,4,5].map(n => (
-        <span key={n} style={{ fontSize:size, color: n<=Math.round(value) ? P.amber : P.muted, transition:'color 0.15s', lineHeight:1 }}>★</span>
+        <span key={n} style={{ color: n<=Math.round(value) ? P.amber : P.muted, transition:'color 0.15s', lineHeight:1, display:'flex' }}>
+          {icStar(size, n <= Math.round(value))}
+        </span>
       ))}
     </div>
   );
@@ -24,7 +26,9 @@ function DistributionBar({ label, count, total }) {
   const pct = total > 0 ? Math.round((count/total)*100) : 0;
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
-      <span style={{ fontSize:13, fontWeight:600, color:P.sub, width:28, flexShrink:0 }}>{label}</span>
+      <span style={{ fontSize:13, fontWeight:600, color:P.sub, width:36, flexShrink:0, display:'flex', alignItems:'center', gap:3 }}>
+        {label}<span style={{ color:P.amber, display:'flex' }}>{icStar(12, true)}</span>
+      </span>
       <div style={{ flex:1, background:P.hover, borderRadius:99, height:8, overflow:'hidden' }}>
         <div style={{ width:`${pct}%`, height:'100%', background:P.amber, borderRadius:99, transition:'width 0.8s ease' }}/>
       </div>
@@ -64,7 +68,7 @@ export default function TabFeedback({ eventId, event }) {
   if (!data || data.count === 0) return (
     <div style={{ maxWidth:900, margin:'0 auto', padding:'32px 24px' }}>
       <div style={{ ...card, textAlign:'center', padding:'64px' }}>
-        <div style={{ fontSize:48, marginBottom:16 }}>⭐</div>
+        <div style={{ color:P.amber, display:'flex', justifyContent:'center', transform:'scale(2.2)', marginBottom:28 }}>{icons.star}</div>
         <h3 style={{ margin:'0 0 8px', color:P.text, fontWeight:700 }}>No feedback yet</h3>
         <p style={{ color:P.sub, fontSize:14, margin:0 }}>
           {event?.status === 'completed'
@@ -81,7 +85,7 @@ export default function TabFeedback({ eventId, event }) {
     <div style={{ maxWidth:900, margin:'0 auto', padding:'32px 24px', color:P.text, fontFamily:'system-ui,-apple-system,sans-serif' }}>
 
       <div style={{ marginBottom:28 }}>
-        <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em' }}>⭐ Guest Feedback</h2>
+        <h2 style={{ margin:'0 0 6px', fontSize:22, fontWeight:800, color:P.text, letterSpacing:'-0.02em', display:'flex', alignItems:'center', gap:10 }}><span style={{color:P.amber}}>{icons.star}</span> Guest Feedback</h2>
         <p style={{ margin:0, color:P.sub, fontSize:13 }}>
           {data.count} response{data.count!==1?'s':''} · {responseRate}% response rate ({data.count} of {data.total} attending guests)
         </p>
@@ -107,7 +111,7 @@ export default function TabFeedback({ eventId, event }) {
         <div style={card}>
           <p style={sectionLabel}>Experience Rating Distribution</p>
           {[5,4,3,2,1].map(n => (
-            <DistributionBar key={n} label={`${n}★`} count={data.distribution?.[n]||0} total={data.count} />
+            <DistributionBar key={n} label={n} count={data.distribution?.[n]||0} total={data.count} />
           ))}
         </div>
       </div>
@@ -118,7 +122,7 @@ export default function TabFeedback({ eventId, event }) {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:14 }}>
           {CATS.map(cat => (
             <div key={cat.key} style={{ background:P.panel, padding:'18px', borderRadius:12, textAlign:'center', border:`1px solid ${P.border}` }}>
-              <div style={{ fontSize:24, marginBottom:10 }}>{cat.icon}</div>
+              <div style={{ color:P.sub, display:'flex', justifyContent:'center', marginBottom:10 }}>{cat.icon}</div>
               <p style={{ fontSize:10, fontWeight:700, color:P.muted, marginBottom:6, textTransform:'uppercase', letterSpacing:'0.08em' }}>{cat.label}</p>
               <p style={{ fontSize:24, fontWeight:800, color:P.text, margin:'0 0 8px' }}>{data.averages?.[cat.key] ?? '—'}</p>
               <Stars value={data.averages?.[cat.key]} size={14} />
