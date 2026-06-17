@@ -25,6 +25,8 @@ import InvoiceVendorPage from "./pages/pageInvoicesVendor";
 import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
 import StaffTasks from "./pages/pageStaffTasks";
+import Layout from "./pages/layout";
+import ProfilePage from "./pages/pageProfile";
 
 function getCurrentUserId() {
   try {
@@ -44,7 +46,6 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/staff/guestlist" element={<GuestList />} />
         <Route path="/register" element={<Register />} />
         <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
         <Route path="/organizer/deactivate" element={<UserDeactivation />} />

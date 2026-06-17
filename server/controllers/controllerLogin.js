@@ -45,10 +45,12 @@ export const login = async (req, res) => {
       refreshToken: refreshToken,
       user: {
         id: user._id,
-        fullName: user.fullName,
+        fullname: user.fullname,
+        phone: user.phone,
         email: user.email,
         role: user.role,
         status: user.status,
+        createdAt: user.createdAt,
       },
     });
 
