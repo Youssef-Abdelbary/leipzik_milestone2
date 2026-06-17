@@ -20,12 +20,13 @@ import notificationRoute from "./routes/routeNotification.js";
 import browseVendorRoutes from "./routes/routeBrowseVendor.js";
 import workflowRoutes from "./routes/routeWorkFlow.js";
 import budgetRoutes from "./routes/routeBudget.js";
+import routeReplyVenue from './routes/routeReplyVenue.js';
 import broadcastReadRoute from './routes/routeBroadcastRead.js';
 import feedbackRoutes from './routes/routeFeedback.js';
 import loginRoute from "./routes/routeLogin.js";
 import VendorTrackingRoutes from './routes/routeVendorTracking.js';
-
-
+import teamRoutes from "./routes/routeTeam.js";
+import staffTasksRoutes from "./routes/routeStaffTasks.js";
 import { setServers } from "node:dns/promises";
 import invoiceRoutes from "./routes/routeInvoices.js";
 
@@ -68,8 +69,9 @@ app.use('/api/broadcasts', broadcastReadRoute);
 app.use('/api/feedback', feedbackRoutes);
 app.use("/api/auth", loginRoute);
 app.use('/api/vendorRequests', VendorTrackingRoutes);
-// Login route
-
+app.use("/api/team", teamRoutes);
+app.use('/api/reply-venue', routeReplyVenue);
+app.use("/api/staff-tasks", staffTasksRoutes);
 
 // Connect to DB then start server
 const connectToDatabase = async () => {

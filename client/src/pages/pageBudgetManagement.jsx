@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./pageBudgetManagement.css";
 
-function BudgetManagement() {
-  const { eventId } = useParams();
+function BudgetManagement({ eventId: propEventId }) {
+  const { eventId: routeEventId } = useParams();
+  const eventId = propEventId || routeEventId;
   const [selectedEventId, setSelectedEventId] = useState(eventId);
   const [budgetData, setBudgetData] = useState(null);
   const [loading, setLoading] = useState(false);

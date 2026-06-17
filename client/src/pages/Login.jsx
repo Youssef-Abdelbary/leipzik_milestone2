@@ -38,7 +38,7 @@ function Login() {
         navigate("/organizer/workflow");
       }
       if (data.user.role === "staff") {
-        navigate("/staff/shared-layout");
+        navigate("/staff/dashboard");
       }
 
     } else {
