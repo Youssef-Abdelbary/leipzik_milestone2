@@ -27,6 +27,7 @@ import loginRoute from "./routes/routeLogin.js";
 import VendorTrackingRoutes from './routes/routeVendorTracking.js';
 import teamRoutes from "./routes/routeTeam.js";
 import staffTasksRoutes from "./routes/routeStaffTasks.js";
+import userRoutes from "./routes/routeProfile.js";
 import { setServers } from "node:dns/promises";
 import invoiceRoutes from "./routes/routeInvoices.js";
 import staffDayOfRoutes from "./routes/routeStaffDayOf.js";
@@ -76,6 +77,7 @@ app.use('/api/reply-venue', routeReplyVenue);
 app.use("/api/staff-tasks", staffTasksRoutes);
 app.use("/api/staff-dayof", staffDayOfRoutes);
 app.use("/api/events/:eventId", eventReportRoutes);
+app.use("/api/users/profile", userRoutes);
 // Connect to DB then start server
 const connectToDatabase = async () => {
   try {

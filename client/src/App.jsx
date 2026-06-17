@@ -25,6 +25,8 @@ import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
 import StaffTasks from "./pages/pageStaffTasks";
 import VendorDashboard from "./pages/pageVendorDashboard";
+import Layout from "./pages/layout";
+import ProfilePage from "./pages/pageProfile";
 
 function getCurrentUserId() {
   try {
@@ -36,41 +38,52 @@ function getCurrentUserId() {
     return null;
   }
 }
+
 function App() {
   const currentUserId = getCurrentUserId();
 
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Routes without Layout */}
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/staff/guestlist" element={<GuestList />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
-        <Route path="/organizer/deactivate" element={<UserDeactivation />} />
-        <Route path="/venueowner/venues" element={<VenuesPage />} />
-        <Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
-        <Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
-        <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
-        <Route path="/venueowner/venuereports" element={<VenueReports />} />
-        <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
-        <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
-        <Route path="/organizer/events" element={<Events />} />
-        <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
-        <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
-        <Route path="/notificationsview" element={<NotificationsPage />} />
-        <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
-        <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
-        <Route path="/organizer/budget" element={<BudgetManagement />} />
-        <Route path="/organizer/reply" element={<PageReplyVenue />} />
-        <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
-        <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
-        <Route path="/vendor/invoices" element={<Navigate to="/vendor/dashboard?tab=invoices" replace />} />
-        <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
-        <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
 
-        <Route path="/staff/dashboard" element={<StaffTasks />} />
-        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+        {/* Protected/Private Routes wrapped in Layout */}
+        <Route element={<Layout />}>
+          <Route path="/register" element={<Register />} />
+          <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
+          <Route path="/organizer/deactivate" element={<UserDeactivation />} />
+          <Route path="/venueowner/venues" element={<VenuesPage />} />
+          <Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
+          <Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
+          <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
+          <Route path="/venueowner/venuereports" element={<VenueReports />} />
+          <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
+          <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
+          <Route path="/organizer/events" element={<Events />} />
+          <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
+          <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
+          <Route path="/notificationsview" element={<NotificationsPage />} />
+          <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
+          <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
+          <Route path="/organizer/budget" element={<BudgetManagement />} />
+          <Route path="/organizer/reply" element={<PageReplyVenue />} />
+          <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
+          <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+          <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
+          <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
+          <Route path="/staff/dashboard" element={<StaffTasks />} />
+          <Route path="/pageProfile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          
+          {/* Merged Routes from vendor-fixes */}
+          <Route path="/staff/guestlist" element={<GuestList />} />
+          <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+          
+          {/* Note: Kept the vendor-fixes redirect to the new Dashboard. */}
+          <Route path="/vendor/invoices" element={<Navigate to="/vendor/dashboard?tab=invoices" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
