@@ -59,6 +59,16 @@ function StaffSharedLayout() {
     loadSharedLayouts();
   }, []);
 
+  function getLayoutEventName(layout) {
+    return (
+      layout.eventId?.title ||
+      layout.eventId?.name ||
+      layout.eventTitle ||
+      layout.eventName ||
+      "Venue Layout"
+    );
+  }
+
   const selectedElements = selectedLayout?.elements || [];
 
   return (
@@ -82,7 +92,7 @@ function StaffSharedLayout() {
           >
             {layouts.map((layout) => (
               <option key={layout._id} value={layout._id}>
-                {layout.title || "Venue Layout"}
+                {getLayoutEventName(layout)}
               </option>
             ))}
           </select>
@@ -134,7 +144,7 @@ function StaffSharedLayout() {
           <GlassPanel className="shared-layout-panel">
             <div className="shared-layout-panel-header">
               <div>
-                <h2>{selectedLayout.title || "Venue Layout"}</h2>
+                <h2>{getLayoutEventName(selectedLayout)}</h2>
                 <p>Organizer-approved floor plan for this event.</p>
               </div>
 

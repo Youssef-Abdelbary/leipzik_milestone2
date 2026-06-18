@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { VscHome, VscMail, VscCalendar, VscBell, VscPerson } from "react-icons/vsc";
+import { VscHome, VscMail, VscCalendar, VscBell, VscPerson, VscLayout  } from "react-icons/vsc";
 
 import Dock from "../components/componentDock.jsx";
 import AppHeader from "../components/componentAppHeader.jsx";
@@ -56,6 +56,7 @@ const Profile = () => {
 
     const isOwner = user.role === "venue_owner";
     const isOrganizer = user.role === "organizer";
+    const isStaff = user.role === "staff";
 
     const dockItems = [
         {
@@ -91,6 +92,30 @@ const Profile = () => {
         icon: <VscCalendar size={26} />,
         label: "Events",
         onClick: () => navigate("/organizer/events"),
+    },
+    {
+        icon: <VscPerson size={26} />,
+        label: "Profile",
+        active: true,
+        onClick: () => navigate("/profile"),
+    },
+    ];
+
+    const staffDockItems = [
+    {
+        icon: <VscHome size={26} />,
+        label: "Tasks",
+        onClick: () => navigate("/staff/dashboard"),
+    },
+    {
+        icon: <VscLayout  size={26} />,
+        label: "Layout",
+        onClick: () => navigate("/staff/dashboard"),
+    },
+    {
+        icon: <VscCalendar size={26} />,
+        label: "Day-Of",
+        onClick: () => navigate("/staff/dashboard"),
     },
     {
         icon: <VscPerson size={26} />,
@@ -158,13 +183,21 @@ const Profile = () => {
         transition: "border-color 0.15s",
     };
 
-    const inp = (value, onChange, placeholder, extraStyle = {}) => (
+    const inp = (value, onChange, placeholder, extraStyle = {}, disabled = false) => (
         <input
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
+            disabled={disabled}
             style={{
                 ...inputStyle,
+                ...(disabled
+                    ? {
+                        background: "rgba(255,255,255,0.04)",
+                        color: P.muted,
+                        cursor: "not-allowed",
+                    }
+                    : {}),
                 ...extraStyle,
             }}
         />
@@ -311,6 +344,17 @@ const Profile = () => {
                 />
             )}
 
+            {isStaff && (
+                <AppHeader
+                    crumb="My Profile"
+                    right={
+                    <div className="staff-dashboard-pill">
+                        Staff Dashboard
+                    </div>
+                    }
+                />
+            )}
+
             <div
                 style={{
                     maxWidth: 1100,
@@ -343,6 +387,18 @@ const Profile = () => {
                     >
                         Manage your account details, contact information, and profile settings.
                     </p>
+                    {isStaff && (
+                        <p
+                            style={{
+                                margin: "10px 0 0",
+                                fontSize: 13,
+                                color: P.muted,
+                                fontWeight: 600,
+                            }}
+                        >
+                            Staff profiles are view-only. Contact an organizer to update your details.
+                        </p>
+                    )}
                 </div>
 
                 {section(
@@ -359,7 +415,9 @@ const Profile = () => {
                             {inp(
                                 formData.fullname,
                                 (value) => handleChange("fullname", value),
-                                "Enter full name"
+                                "Enter full name",
+                                {},
+                                isStaff
                             )}
                         </div>
 
@@ -398,7 +456,9 @@ const Profile = () => {
                             {inp(
                                 formData.email,
                                 (value) => handleChange("email", value),
-                                "owner@email.com"
+                                "owner@email.com",
+                                {},
+                                isStaff
                             )}
                         </div>
 
@@ -407,7 +467,9 @@ const Profile = () => {
                             {inp(
                                 formData.phone,
                                 (value) => handleChange("phone", value),
-                                "+20 10 ..."
+                                "+20 10 ...",
+                                {},
+                                isStaff
                             )}
                         </div>
                     </div>
@@ -454,24 +516,26 @@ const Profile = () => {
                         flexWrap: "wrap",
                     }}
                 >
-                    <button
-                        onClick={handleSaveClick}
-                        disabled={saving}
-                        style={{
-                            padding: "11px 28px",
-                            background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
-                            border: "none",
-                            borderRadius: 10,
-                            color: "#0a0a12",
-                            fontWeight: 700,
-                            fontSize: 14,
-                            cursor: saving ? "not-allowed" : "pointer",
-                            fontFamily: "inherit",
-                            opacity: saving ? 0.7 : 1,
-                        }}
-                    >
-                        {saving ? "Saving..." : "Save Profile"}
-                    </button>
+                    {!isStaff && (
+                        <button
+                            onClick={handleSaveClick}
+                            disabled={saving}
+                            style={{
+                                padding: "11px 28px",
+                                background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
+                                border: "none",
+                                borderRadius: 10,
+                                color: "#0a0a12",
+                                fontWeight: 700,
+                                fontSize: 14,
+                                cursor: saving ? "not-allowed" : "pointer",
+                                fontFamily: "inherit",
+                                opacity: saving ? 0.7 : 1,
+                            }}
+                        >
+                            {saving ? "Saving..." : "Save Profile"}
+                        </button>
+                    )}
 
                     <button
                         onClick={handleLogout}
@@ -506,6 +570,7 @@ const Profile = () => {
 
             {isOwner && <Dock items={dockItems} />}
             {isOrganizer && <Dock items={organizerDockItems} />}
+            {isStaff && <Dock items={staffDockItems} />}
         </div>
     );
 };

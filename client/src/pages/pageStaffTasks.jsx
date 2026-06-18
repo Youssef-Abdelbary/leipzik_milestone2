@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import "./pageStaffTasks.css";
 import "../components/componentTheme.css";
-
+import { useNavigate } from "react-router-dom";
 import TabStaffDayOf from "./tabs/TabStaffDayOf";
 import StaffSharedLayout from "./StaffSharedLayout";
 
 import Dock from "../components/componentDock";
 import AppHeader from "../components/componentAppHeader";
 import { icons } from "../components/componentTheme";
+import { VscHome, VscCalendar, VscPerson, VscLayout } from "react-icons/vsc";
 
 const STAFF_TABS = [
-  { id: "tasks", label: "Tasks", icon: icons.overview },
-  { id: "layout", label: "Layout", icon: icons.building2 },
-  { id: "dayof", label: "Day-Of", icon: icons.dayof },
+  { id: "tasks", label: "Tasks", icon: <VscHome size={26} /> },
+  { id: "layout", label: "Layout", icon: <VscLayout size={26} /> },
+  { id: "dayof", label: "Day-Of", icon: <VscCalendar size={26} /> },
+  { id: "profile", label: "Profile", icon: <VscPerson size={26} /> },
 ];
 
 function DockTabIcon({ icon }) {
@@ -35,6 +37,7 @@ export default function StaffTasks() {
   const [loading, setLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [selectedEventTitle, setSelectedEventTitle] = useState("");
+  const navigate = useNavigate();
   
 useEffect(() => {
   const loggedInUser =
@@ -168,15 +171,35 @@ useEffect(() => {
   ).length;
 
   const dockItems = STAFF_TABS.map((tab) => ({
-    icon: <DockTabIcon icon={tab.icon} />,
+    icon: tab.icon,
     label: tab.label,
     active: activeTab === tab.id,
-    onClick: () => setActiveTab(tab.id),
+    onClick: () => {
+      if (tab.id === "profile") {
+        navigate("/profile");
+        return;
+      }
+
+      setActiveTab(tab.id);
+    },
   }));
 
   return (
     <div className="staff-workspace-page">
-    
+      <AppHeader
+        crumb={
+          activeTab === "tasks"
+            ? "My Tasks"
+            : activeTab === "layout"
+            ? "My Layouts"
+            : "Day-Of"
+        }
+        right={
+          <div className="staff-dashboard-pill">
+            Staff Dashboard
+          </div>
+        }
+      />
         <div className="staff-tab-content">
         {activeTab === "tasks" && (
             <>

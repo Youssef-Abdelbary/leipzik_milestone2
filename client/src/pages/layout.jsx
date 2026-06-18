@@ -23,8 +23,8 @@ const Layout = () => {
     const user = getStoredUser();
     const initials = getUserInitials();
     const showAvatar = user?.role !== "venue_owner";
-    const hideHeader = location.pathname.startsWith('/venueowner') || location.pathname.startsWith('/organizer') 
-        || ((location.pathname === '/pageProfile' || location.pathname === '/profile') && (user?.role === 'venue_owner' || user?.role === 'organizer'))
+    const hideHeader = location.pathname.startsWith('/venueowner') || location.pathname.startsWith('/organizer') || location.pathname.startsWith('/staff')
+        || ((location.pathname === '/pageProfile' || location.pathname === '/profile') && (user?.role === 'venue_owner' || user?.role === 'organizer' || user?.role === 'staff'))
         || location.pathname === '/notificationsview';
 
     return (
