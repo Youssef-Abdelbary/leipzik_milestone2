@@ -3,11 +3,11 @@ import Register from "./pages/pageRegister";
 import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
 import Login from "./pages/Login";
-import VenuesPage from "./pages/pageVenue";
-import BrowseVenuesPage from "./pages/pageBrowseVenue";
-import VenueLayoutDesigner from "./pages/organizer/VenueLayoutDesigner";
+import VenuesPage from "./pages/pageVenue.jsx";
+//import BrowseVenuesPage from "./pages/tabs/pageBrowseVenue.jsx";
+//import VenueLayoutDesigner from "./pages/tabs/TabLayoutDesigner.jsx";
 import GuestList from "./pages/pageGuestList";
-import PageResponseVenue from "./pages/PageResponseVenue";
+import PageResponseVenue from "./pages/pageResponseVenue.jsx";
 import BookingCalendar from "./pages/pageBookingCalendar";
 import VenueReports from "./pages/pageVenueReports";
 import StaffSharedLayout from "./pages/StaffSharedLayout";
@@ -18,7 +18,7 @@ import NotificationsPage from "./pages/pageNotificationsView";
 import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
-import PageReplyVenue from './pages/pageReplyVenue.jsx';
+//import PageReplyVenue from './pages/tabs/pageReplyVenue.jsx';
 import FeedbackPage from './pages/pageFeedback';
 import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
 import VendorTrackingPage from "./pages/pageVendorTracking";
@@ -54,6 +54,7 @@ function App() {
         <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
         <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
         <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+<<<<<<< HEAD
         <Route path="/register" element={<Register />} />
         <Route path="/venueowner/venues" element={<VenuesPage />} />
         <Route path="/venueowner/venuereports" element={<VenueReports />} />
@@ -74,9 +75,34 @@ function App() {
         <Route path="/staff/dashboard" element={<StaffTasks />} />
         <Route path="/pageProfile" element={<ProfilePage />} />
         <Route path="/profile" element={<ProfilePage />} />
+=======
+        <Route element={<Layout />}>
+          <Route path="/register" element={<Register />} />
+          <Route path="/staff/guestlist" element={<GuestList />} />
+          <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
+          <Route path="/organizer/deactivate" element={<UserDeactivation />} />
+          <Route path="/venueowner/venues" element={<VenuesPage />} />
+          <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
+          <Route path="/venueowner/venuereports" element={<VenueReports />} />
+          <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
+          <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
+          <Route path="/notificationsview" element={<NotificationsPage />} />
+          <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
+          <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
+          <Route path="/organizer/budget" element={<BudgetManagement />} />
+          <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+          <Route path="/staff/dashboard" element={<StaffTasks />} />
+          <Route path="/pageProfile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+>>>>>>> 54f13e1 (mid changes 2)
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
+
+//<Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
+//<Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
+//<Route path="/organizer/reply" element={<PageReplyVenue />} />

@@ -23,7 +23,86 @@ function deliveryBadge(status) {
   };
 }
 
-export default function TabVendorTracking({ eventId }) {
+// Minimal thread viewer — read-only
+function ClarificationThread({ messages = [], currentUserId }) {
+  const [open, setOpen] = useState(false);
+  if (messages.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', padding: 0,
+          cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 12, fontWeight: 600,
+          color: open ? P.violet : P.sub,
+          transition: 'color 0.15s',
+        }}
+      >
+        <span style={{ fontSize: 13 }}>💬</span>
+        {messages.length} Clarification Message{messages.length !== 1 ? 's' : ''}
+        <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.7 }}>
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {open && (
+        <div style={{
+          marginTop: 8,
+          background: 'rgba(255,255,255,0.03)',
+          border: `1px solid ${P.borderSub}`,
+          borderRadius: 8,
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          maxHeight: 200,
+          overflowY: 'auto',
+        }}>
+          {messages.map((msg, idx) => {
+            const isMine = currentUserId && String(msg.senderId) === String(currentUserId);
+            return (
+              <div
+                key={msg._id || idx}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: isMine ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <div style={{
+                  maxWidth: '85%',
+                  background: isMine
+                    ? 'rgba(139,92,246,0.18)'
+                    : 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${isMine ? 'rgba(139,92,246,0.3)' : P.borderSub}`,
+                  borderRadius: isMine ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
+                  padding: '6px 10px',
+                  fontSize: 12,
+                  color: P.text,
+                  lineHeight: 1.45,
+                  wordBreak: 'break-word',
+                }}>
+                  {msg.message}
+                </div>
+                <span style={{ fontSize: 10, color: P.muted, marginTop: 3 }}>
+                  {new Date(msg.sentAt).toLocaleString([], {
+                    month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function TabVendorTracking({ eventId, currentUserId }) {
   const [requests,     setRequests]     = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [updatingId,   setUpdatingId]   = useState(null);
@@ -82,6 +161,7 @@ export default function TabVendorTracking({ eventId }) {
         @keyframes cardIn  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes skpulse { 0%,100%{opacity:1} 50%{opacity:.3} }
       `}</style>
+
       {/* Header + filter */}
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
         <p style={{ margin: 0, fontSize: 14, color: P.sub }}>
@@ -133,6 +213,7 @@ export default function TabVendorTracking({ eventId }) {
               }}
             >
               <div>
+                {/* Vendor name + badge */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                   <div>
                     <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: P.text }}>
@@ -186,6 +267,7 @@ export default function TabVendorTracking({ eventId }) {
                   </div>
                 </div>
 
+                {/* Dates */}
                 <div style={{ fontSize: 12, color: P.sub, marginBottom: 4, display: 'flex', gap: 6 }}>
                   <span style={{ color: P.muted }}>Target Window:</span>
                   <span style={{ fontWeight: 500, color: P.text }}>
@@ -202,8 +284,17 @@ export default function TabVendorTracking({ eventId }) {
                     </span>
                   </div>
                 )}
+
+                {/* ── Clarification thread ── */}
+                <div style={{ marginTop: 12, borderTop: `1px solid ${P.borderSub}`, paddingTop: 10 }}>
+                  <ClarificationThread
+                    messages={req.clarificationMessages || []}
+                    currentUserId={currentUserId}
+                  />
+                </div>
               </div>
 
+              {/* Action */}
               <div style={{ marginTop: 14, borderTop: `1px solid ${P.borderSub}`, paddingTop: 14 }}>
                 {req.delivery?.status === 'delivered' ? (
                   <div style={{ width: '100%', padding: '9px 0', borderRadius: 8, background: 'rgba(62,207,184,0.1)', color: P.teal, fontSize: 13, fontWeight: 600, textAlign: 'center', border: `1px solid ${P.teal}33` }}>

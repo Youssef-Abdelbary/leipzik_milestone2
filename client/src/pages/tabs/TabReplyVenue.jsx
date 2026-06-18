@@ -1,21 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    VscHome, VscMail, VscCalendar,
-} from 'react-icons/vsc';
-import {
     fetchMyVenueReplies,
     fetchBookingMessages,
     fetchVenueAvailability,
     sendBookingMessage,
     sendCounterProposal,
     matchCounterProposal,
-//    applyVenueToEvent,
-} from '../services/serviceReplyVenue.js';
-import AppHeader from '../components/componentAppHeader.jsx';
-import Dock from '../components/componentDock.jsx';
-import CalendarAvailability from '../components/componentCalendar.jsx';
-import MiniCalendar from '../components/componentMiniCalendar.jsx';
-import '../components/componentTheme.css';
+} from '../../services/serviceReplyVenue.js';
+import CalendarAvailability from '../../components/componentCalendar.jsx';
+import MiniCalendar from '../../components/componentMiniCalendar.jsx';
+import { P, icons, GlassPanel } from '../../components/componentTheme';
+import '../../components/componentTheme.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // ─── Decode user_id from stored JWT ──────────────────────────────────────────
@@ -32,16 +27,15 @@ function getUserIdFromToken() {
     }
 }
 
-// ─── Status map (lowercase keys to match backend) ────────────────────────────
+// ─── Status map ───────────────────────────────────────────────────────────────
 const STATUS = {
-    pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Pending' },
-    approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)',   label: 'Approved' },
-    declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)',    label: 'Declined' },
+    pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Pending'   },
+    approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)',   label: 'Approved'  },
+    declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)',    label: 'Declined'  },
     countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Countered' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function Avatar({ name = '?', size = 36 }) {
     const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return (
@@ -94,6 +88,54 @@ function Btn({ label, color, textColor = '#0a0a0f', onClick, disabled, style = {
     );
 }
 
+// ─── Stat tile — matches TabDayOf StatCard ────────────────────────────────────
+function StatCard({ label, value, color, sub, isActive, onClick }) {
+    return (
+        <button
+            onClick={onClick}
+            style={{
+                padding: '18px 20px',
+                flex: '1 1 130px',
+                background: isActive
+                    ? `linear-gradient(135deg, ${color}22 0%, ${color}10 100%)`
+                    : 'rgba(19,19,30,0.72)',
+                backdropFilter: 'blur(18px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+                border: `1px solid ${isActive ? color + '55' : 'rgba(255,255,255,0.08)'}`,
+                borderBottom: isActive ? `2px solid ${color}` : '2px solid transparent',
+                borderRadius: 14,
+                cursor: 'pointer',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+                transition: 'all 0.2s cubic-bezier(0.34,1.2,0.64,1)',
+                transform: isActive ? 'translateY(-3px)' : 'none',
+                boxShadow: isActive
+                    ? `0 0 0 1px ${color}22, 0 8px 24px ${color}22, inset 0 1px 0 rgba(255,255,255,0.06)`
+                    : 'inset 0 1px 0 rgba(255,255,255,0.04)',
+                outline: 'none',
+            }}
+            onMouseEnter={e => {
+                if (!isActive) {
+                    e.currentTarget.style.background = `linear-gradient(135deg, ${color}16 0%, ${color}08 100%)`;
+                    e.currentTarget.style.borderColor = `${color}33`;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                }
+            }}
+            onMouseLeave={e => {
+                if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(19,19,30,0.72)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.transform = 'none';
+                }
+            }}
+        >
+            <p style={{ margin: 0, fontSize: 30, fontWeight: 900, color, letterSpacing: '-0.04em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>{value}</p>
+            <p style={{ margin: '7px 0 0', fontSize: 11, fontWeight: 700, color: isActive ? color : P.text, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
+            {sub && <p style={{ margin: '3px 0 0', fontSize: 11, color: isActive ? color : P.sub }}>{sub}</p>}
+        </button>
+    );
+}
+
 const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 const fmtTime = d => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
@@ -113,8 +155,7 @@ function GlassCard({ children, style = {}, ...rest }) {
     );
 }
 
-// ─── Chat bubble ─────────────────────────────────────────────────────────────
-
+// ─── Chat bubble ──────────────────────────────────────────────────────────────
 function Bubble({ msg, isMine }) {
     const isCP = msg.type === 'counter_proposal';
     const cp   = msg.counterProposal;
@@ -162,25 +203,23 @@ function Bubble({ msg, isMine }) {
 }
 
 // ─── Message thread ───────────────────────────────────────────────────────────
-
 function MessageThread({ booking, currentUserId, onBookingUpdate }) {
-    const [messages,   setMessages]  = useState(booking.messages ?? []);
-    const [text,       setText]      = useState('');
-    const [isCP,       setIsCP]      = useState(false);
-    const [cpPrice,    setCpPrice]   = useState('');
-    const [cpDates,    setCpDates]   = useState([]);
-    const [calOpen,    setCalOpen]   = useState(false);
-    const [sending,    setSending]   = useState(false);
+    const [messages,   setMessages]   = useState(booking.messages ?? []);
+    const [text,       setText]       = useState('');
+    const [isCP,       setIsCP]       = useState(false);
+    const [cpPrice,    setCpPrice]    = useState('');
+    const [cpDates,    setCpDates]    = useState([]);
+    const [calOpen,    setCalOpen]    = useState(false);
+    const [sending,    setSending]    = useState(false);
     const [matchedIds, setMatchedIds] = useState(new Set());
     const bottomRef = useRef(null);
     const calBtnRef = useRef(null);
 
-    // Close calendar if CP mode is turned off
     useEffect(() => { if (!isCP) setCalOpen(false); }, [isCP]);
 
-    const incomingCounters  = booking.incomingCounterProposals ?? [];
-    const latestCounter     = incomingCounters[incomingCounters.length - 1];
-    const latestIsMatched   = latestCounter && matchedIds.has(latestCounter._id);
+    const incomingCounters = booking.incomingCounterProposals ?? [];
+    const latestCounter    = incomingCounters[incomingCounters.length - 1];
+    const latestIsMatched  = latestCounter && matchedIds.has(latestCounter._id);
 
     const load = useCallback(async () => {
         if (!booking?._id) return;
@@ -254,8 +293,6 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
         padding: '9px 12px', fontFamily: 'var(--font-body)', outline: 'none',
         boxSizing: 'border-box',
     };
-
-    // pill-button style reused for price input + calendar button
     const pillActive = {
         fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
         borderRadius: 8, padding: '4px 10px',
@@ -264,8 +301,6 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-
-            {/* ── Incoming counter-proposal banner ── */}
             {latestCounter && (
                 <div style={{ padding: '14px 20px 0' }}>
                     <GlassCard style={{
@@ -291,19 +326,12 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                                 color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
                             }}>✓ Matched</span>
                         ) : (
-                            <Btn
-                                label="Match this offer"
-                                color="var(--opal-amber)"
-                                onClick={handleMatch}
-                                disabled={sending}
-                                style={{ padding: '6px 14px', fontSize: 12 }}
-                            />
+                            <Btn label="Match this offer" color="var(--opal-amber)" onClick={handleMatch} disabled={sending} style={{ padding: '6px 14px', fontSize: 12 }} />
                         )}
                     </GlassCard>
                 </div>
             )}
 
-            {/* ── Messages ── */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 24px' }}>
                 {messages.length === 0 && (
                     <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 32 }}>
@@ -317,20 +345,16 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                 <div ref={bottomRef} />
             </div>
 
-            {/* ── Composer ── */}
             <div style={{
                 padding: '14px 20px', borderTop: '1px solid var(--opal-border)',
                 background: 'rgba(21,21,29,0.6)', display: 'flex', flexDirection: 'column', gap: 10,
                 position: 'relative',
             }}>
-                {/* MiniCalendar popover — floats upward */}
                 {isCP && calOpen && (
                     <div style={{ position: 'absolute', bottom: '100%', left: 20, marginBottom: 8, zIndex: 50 }}>
                         <MiniCalendar selectedDates={cpDates} onChange={setCpDates} />
                     </div>
                 )}
-
-                {/* Counter toggle + price input + dates button */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => setIsCP(p => !p)} style={{
                         ...pillActive,
@@ -338,17 +362,11 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                         background: isCP ? 'var(--opal-amber-dim)' : 'transparent',
                         border:     `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                         cursor: 'pointer',
-                    }}>
-                        ↩ Counter-proposal
-                    </button>
-
+                    }}>↩ Counter-proposal</button>
                     {isCP && (
                         <>
-                            {/* Price — styled as a pill button */}
                             <input
-                                type="number"
-                                placeholder="💵 Price"
-                                value={cpPrice}
+                                type="number" placeholder="💵 Price" value={cpPrice}
                                 onChange={e => setCpPrice(e.target.value)}
                                 style={{
                                     ...pillActive,
@@ -358,26 +376,18 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                                     cursor: 'text', width: 110, outline: 'none',
                                 }}
                             />
-
-                            {/* Calendar toggle */}
-                            <button
-                                ref={calBtnRef}
-                                onClick={() => setCalOpen(o => !o)}
-                                style={{
-                                    ...pillActive,
-                                    color:      calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
-                                    background: calOpen || cpDates.length > 0 ? 'var(--opal-amber-dim)' : 'transparent',
-                                    border:     `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
-                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                                }}
-                            >
+                            <button ref={calBtnRef} onClick={() => setCalOpen(o => !o)} style={{
+                                ...pillActive,
+                                color:      calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                background: calOpen || cpDates.length > 0 ? 'var(--opal-amber-dim)' : 'transparent',
+                                border:     `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+                            }}>
                                 📅 {cpDates.length > 0 ? `${cpDates.length} date${cpDates.length > 1 ? 's' : ''}` : 'Dates'}
                             </button>
                         </>
                     )}
                 </div>
-
-                {/* Textarea + send */}
                 <div style={{ display: 'flex', gap: 8 }}>
                     <textarea
                         rows={2}
@@ -404,12 +414,9 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
 }
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
-
-const DOCK_HEIGHT = 120;
-
-function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvailability, eventId }) {
-    const [tab, setTab] = useState('details');
-    const [applying, setApplying] = useState(false);
+function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
+    const [tab,        setTab]        = useState('details');
+    const [applying,   setApplying]   = useState(false);
     const [applyError, setApplyError] = useState(null);
 
     useEffect(() => {
@@ -425,8 +432,8 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
         </div>
     );
 
-    const venue    = booking.venueId;
-    const venueId  = venue?._id ?? venue;
+    const venue   = booking.venueId;
+    const venueId = venue?._id ?? venue;
 
     const fields = [
         { label: 'Venue',      value: venue?.name },
@@ -443,7 +450,6 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
         setApplying(true);
         setApplyError(null);
         try {
-//           await applyVenueToEvent(booking._id, eventId);
             onBookingUpdate(booking._id, { appliedToEvent: true });
         } catch (err) {
             setApplyError(err?.message || 'Failed to apply venue to event');
@@ -454,7 +460,7 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
 
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            {/* Header */}
+            {/* Panel header */}
             <div style={{ padding: '20px 24px 0', borderBottom: '1px solid var(--opal-border)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 12, flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -463,12 +469,9 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
                             <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--opal-text)', letterSpacing: -0.3, fontFamily: 'var(--font-display)' }}>
                                 {venue?.name}
                             </p>
-                            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>
-                                {booking.eventType}
-                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>{booking.eventType}</p>
                         </div>
                     </div>
-
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         {booking.status === 'approved' && eventId && (
                             booking.appliedToEvent ? (
@@ -479,23 +482,13 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
                                     color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
                                 }}>✓ Applied to Event</span>
                             ) : (
-                                <Btn
-                                    label={applying ? 'Applying…' : '✓ Apply to Event'}
-                                    color="var(--opal-teal)"
-                                    onClick={handleApplyToEvent}
-                                    disabled={applying}
-                                    style={{ padding: '6px 14px', fontSize: 12 }}
-                                />
+                                <Btn label={applying ? 'Applying…' : '✓ Apply to Event'} color="var(--opal-teal)" onClick={handleApplyToEvent} disabled={applying} style={{ padding: '6px 14px', fontSize: 12 }} />
                             )
                         )}
                         <Badge status={booking.status} />
                     </div>
                 </div>
-
-                {applyError && (
-                    <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--opal-red)' }}>{applyError}</p>
-                )}
-
+                {applyError && <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--opal-red)' }}>{applyError}</p>}
                 <div style={{ display: 'flex', gap: 0 }}>
                     {['details', 'messages'].map(t => (
                         <button key={t} onClick={() => setTab(t)} style={{
@@ -510,9 +503,7 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
                                 <span style={{
                                     marginLeft: 6, background: 'var(--opal-red)', color: '#0a0a0f',
                                     borderRadius: 20, fontSize: 10, fontWeight: 700, padding: '1px 6px',
-                                }}>
-                                    {booking.unreadCount}
-                                </span>
+                                }}>{booking.unreadCount}</span>
                             )}
                         </button>
                     ))}
@@ -521,11 +512,7 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
 
             {/* Details tab */}
             {tab === 'details' && (
-                <div style={{
-                    flex: 1, overflowY: 'auto',
-                    padding: `20px 24px ${DOCK_HEIGHT + 16}px`,
-                    display: 'flex', flexDirection: 'column', gap: 16,
-                }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden', flexShrink: 0 }}>
                         {fields.map(({ label, value }, i) => (
                             <div key={label} style={{
@@ -533,15 +520,12 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
                                 borderRight: i % 2 === 0 ? '1px solid var(--opal-border)' : 'none',
                                 borderBottom: i < fields.length - (fields.length % 2 === 0 ? 2 : 1) ? '1px solid var(--opal-border)' : 'none',
                             }}>
-                                <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color: 'var(--opal-muted)', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                                    {label}
-                                </p>
+                                <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color: 'var(--opal-muted)', letterSpacing: 0.8, textTransform: 'uppercase' }}>{label}</p>
                                 <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--opal-text)' }}>{value ?? '—'}</p>
                             </div>
                         ))}
                     </GlassCard>
 
-                    {/* Calendar — fix: pass fetchVenueAvailability directly from prop */}
                     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexShrink: 0 }}>
                         <div style={{ flexShrink: 0 }}>
                             <CalendarAvailability
@@ -550,21 +534,14 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
                                 fetchAvailability={fetchVenueAvailability}
                             />
                         </div>
-
                         {booking.specialRequirements ? (
                             <GlassCard style={{ flex: 1, padding: '16px 18px', display: 'flex', flexDirection: 'column', alignSelf: 'stretch' }}>
-                                <p style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: 'var(--opal-muted)', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-                                    Special Requirements
-                                </p>
-                                <p style={{ margin: 0, fontSize: 14, color: 'rgba(232,230,240,0.75)', lineHeight: 1.65, flex: 1 }}>
-                                    {booking.specialRequirements}
-                                </p>
+                                <p style={{ margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: 'var(--opal-muted)', letterSpacing: 0.8, textTransform: 'uppercase' }}>Special Requirements</p>
+                                <p style={{ margin: 0, fontSize: 14, color: 'rgba(232,230,240,0.75)', lineHeight: 1.65, flex: 1 }}>{booking.specialRequirements}</p>
                             </GlassCard>
                         ) : (
                             <GlassCard style={{ flex: 1, padding: '16px 18px', alignSelf: 'stretch', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <p style={{ margin: 0, fontSize: 13, color: 'var(--opal-muted)', fontStyle: 'italic' }}>
-                                    No special requirements
-                                </p>
+                                <p style={{ margin: 0, fontSize: 13, color: 'var(--opal-muted)', fontStyle: 'italic' }}>No special requirements</p>
                             </GlassCard>
                         )}
                     </div>
@@ -577,12 +554,8 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
 
             {/* Messages tab */}
             {tab === 'messages' && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: DOCK_HEIGHT }}>
-                    <MessageThread
-                        booking={booking}
-                        currentUserId={currentUserId}
-                        onBookingUpdate={onBookingUpdate}
-                    />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <MessageThread booking={booking} currentUserId={currentUserId} onBookingUpdate={onBookingUpdate} />
                 </div>
             )}
         </div>
@@ -590,11 +563,11 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvaila
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
-
-export default function PageReplyVenue() {
+export default function PageReplyVenue({ onNavigate }) {
     const currentUserId = getUserIdFromToken();
-    const navigate = useNavigate();
-    const { eventId } = useParams();
+    const navigate      = useNavigate();
+    const { eventId }   = useParams();
+
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
     const [filter,   setFilter]   = useState('All');
@@ -611,13 +584,12 @@ export default function PageReplyVenue() {
         setSelected(prev => prev?._id === bookingId ? { ...prev, ...patch } : prev);
     }, []);
 
-    // countered is grouped under Pending in the sidebar tab filter, but keeps its own badge label
     const sidebarLabel = (b) => {
         if (b.status === 'countered') return 'Pending';
         return STATUS[b.status]?.label ?? 'Pending';
     };
 
-    const tabs = ['All', 'Pending', 'Approved', 'Declined'];
+    const tabs   = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
         All:      bookings.length,
         Pending:  bookings.filter(b => sidebarLabel(b) === 'Pending').length,
@@ -626,114 +598,192 @@ export default function PageReplyVenue() {
     };
     const filtered = filter === 'All' ? bookings : bookings.filter(b => sidebarLabel(b) === filter);
 
-    const stats = [
-        { label: 'Total',    value: counts.All,      color: 'var(--opal-violet)' },
-        { label: 'Pending',  value: counts.Pending,  color: 'var(--opal-amber)' },
-        { label: 'Approved', value: counts.Approved, color: 'var(--opal-teal)' },
-        { label: 'Declined', value: counts.Declined, color: 'var(--opal-red)' },
-    ];
+    const toggleFilter = (key) => setFilter(prev => prev === key ? 'All' : key);
+
+    // Map filter keys → StatCard colors matching Opal palette
+    const TILE_COLOR = {
+        All:      P.blue ?? 'var(--opal-violet)',
+        Pending:  P.amber ?? 'var(--opal-amber)',
+        Approved: P.teal  ?? 'var(--opal-teal)',
+        Declined: P.rose  ?? 'var(--opal-red)',
+    };
+    const TILE_SUB = {
+        All:      'all requests',
+        Pending:  'awaiting response',
+        Approved: 'confirmed',
+        Declined: 'rejected',
+    };
 
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
-            <AppHeader crumb="Venue Replies" right={<Avatar name="Account" size={32} />} />
+        <div style={{ minHeight: '100vh', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
 
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-                {/* Sidebar */}
-                                <div style={{ width: 300, borderRight: '1px solid var(--opal-border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                    <div style={{ padding: '14px 14px 0', display: 'flex', flexDirection: 'column', gap: 7 }}>
-                        <Btn
-                            label="Venue Layout"
-                            color="var(--opal-amber)"
-                            onClick={() => navigate('/organizer/venuelayout')}
-                            style={{ width: '100%', padding: '8px 0', fontSize: 12, textAlign: 'center' }}
-                        /> 
-                        <Btn
-                            label="Browse Venues"
-                            color="var(--opal-teal)"
-                            onClick={() => navigate('/organizer/browsevenues')}
-                            style={{ width: '100%', padding: '8px 0', fontSize: 12, textAlign: 'center' }}
+            {/* ── Page header (matches TabDayOf header row) ── */}
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+                    <div>
+                        <h2 style={{
+                            margin: 0, fontSize: 24, fontWeight: 800,
+                            color: 'var(--opal-text)', letterSpacing: '-0.02em',
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            fontFamily: 'var(--font-display)',
+                        }}>
+                            <span style={{
+                                color: P.violet ?? 'var(--opal-violet)',
+                                background: 'rgba(124,92,252,0.12)',
+                                padding: 7, borderRadius: 9, display: 'flex', fontSize: 18,
+                            }}>
+                                🏛️
+                            </span>
+                            Venue Bookings
+                        </h2>
+                        <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--opal-sub)' }}>
+                            Manage your venue requests and negotiations
+                        </p>
+                    </div>
+
+                    {/* Action buttons — same pattern as TabDayOf */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <button
+                            onClick={() => onNavigate?.('layout')}
+                            style={{
+                                padding: '8px 16px', borderRadius: 9, border: 'none',
+                                background: `linear-gradient(135deg, var(--opal-amber) 0%, var(--opal-teal) 100%)`,
+                                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                                color: '#0a0a0f', transition: 'opacity 0.15s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                        >
+                            Venue Layout
+                        </button>
+                        <button
+                            onClick={() => onNavigate?.('browse')}
+                            style={{
+                                padding: '8px 16px', borderRadius: 9,
+                                border: '1px solid var(--opal-border)',
+                                background: 'transparent',
+                                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                                color: 'var(--opal-text)', transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,92,252,0.1)'; e.currentTarget.style.borderColor = 'rgba(124,92,252,0.4)'; e.currentTarget.style.color = 'var(--opal-violet)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--opal-border)'; e.currentTarget.style.color = 'var(--opal-text)'; }}
+                        >
+                            Browse Venues
+                        </button>
+                    </div>
+                </div>
+
+                {/* ── Stat tiles (clickable filters) ── */}
+                <div style={{ display: 'flex', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
+                    {tabs.map(t => (
+                        <StatCard
+                            key={t}
+                            label={t === 'All' ? 'Total' : t}
+                            value={counts[t]}
+                            color={TILE_COLOR[t]}
+                            sub={TILE_SUB[t]}
+                            isActive={filter === t}
+                            onClick={() => toggleFilter(t)}
+                        />
+                    ))}
+                </div>
+
+                {/* Active filter pill */}
+                {filter !== 'All' && (
+                    <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 12, color: 'var(--opal-sub)' }}>Filtering by</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,0.06)', color: 'var(--opal-text)', border: '1px solid var(--opal-border)' }}>
+                            {filter} · {filtered.length} booking{filtered.length !== 1 ? 's' : ''}
+                        </span>
+                        <button
+                            onClick={() => setFilter('All')}
+                            style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: 'transparent', border: '1px solid var(--opal-border)', color: 'var(--opal-sub)', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--opal-red)'; e.currentTarget.style.borderColor = 'var(--opal-red)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--opal-sub)'; e.currentTarget.style.borderColor = 'var(--opal-border)'; }}
+                        >
+                            ✕ Clear
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Split panel (sidebar + detail) inside max-width container ── */}
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 32px' }}>
+                <GlassPanel style={{
+                    display: 'flex',
+                    height: 'calc(100vh - 260px)',
+                    minHeight: 500,
+                    overflow: 'hidden',
+                    padding: 0,
+                }}>
+                    {/* Sidebar list */}
+                    <div style={{ width: 280, borderRight: '1px solid var(--opal-border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                        <div style={{ padding: '14px 12px 8px', borderBottom: '1px solid var(--opal-border)', flexShrink: 0 }}>
+                            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: 'var(--opal-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                {filter === 'All' ? 'All Venues' : filter} · {filtered.length}
+                            </p>
+                        </div>
+
+                        <div style={{ overflowY: 'auto', flex: 1, padding: '8px' }}>
+                            {loading && (
+                                <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>Loading…</p>
+                            )}
+                            {!loading && filtered.length === 0 && (
+                                <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>No conversations</p>
+                            )}
+                            {filtered.map(b => {
+                                const isActive = selected?._id === b._id;
+                                const s        = STATUS[b.status] ?? STATUS.pending;
+                                return (
+                                    <button
+                                        key={b._id}
+                                        onClick={() => setSelected(b)}
+                                        style={{
+                                            width: '100%', textAlign: 'left',
+                                            background: isActive ? 'var(--opal-violet-dim)' : 'transparent',
+                                            border: isActive ? '1px solid rgba(124,92,252,0.22)' : '1px solid transparent',
+                                            borderRadius: 11, padding: '11px 12px', cursor: 'pointer',
+                                            marginBottom: 3, display: 'flex', alignItems: 'center', gap: 10,
+                                            transition: 'all 0.15s',
+                                        }}
+                                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                                        onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                        <Avatar name={b.venueId?.name ?? 'V'} size={36} />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                                                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--opal-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {b.venueId?.name}
+                                                </p>
+                                                {b.unreadCount > 0 && (
+                                                    <span style={{ fontSize: 10, fontWeight: 700, color: '#0a0a0f', background: 'var(--opal-red)', borderRadius: 20, padding: '1px 6px', flexShrink: 0, marginLeft: 4 }}>
+                                                        {b.unreadCount}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p style={{ margin: 0, fontSize: 12, color: 'var(--opal-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {b.eventType}
+                                            </p>
+                                            <span style={{ fontSize: 10, fontWeight: 600, color: s.text, marginTop: 4, display: 'block' }}>
+                                                ● {s.label}
+                                            </span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Detail panel */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+                        <DetailPanel
+                            booking={selected}
+                            currentUserId={currentUserId}
+                            onBookingUpdate={handleBookingUpdate}
+                            eventId={eventId}
                         />
                     </div>
-                    <div style={{ padding: '16px 14px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
-                        {stats.map(s => (
-                            <GlassCard key={s.label} style={{ padding: '11px 13px' }}>
-                                <p style={{ margin: 0, fontSize: 21, fontWeight: 700, color: s.color, letterSpacing: -0.5, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-display)' }}>{s.value}</p>
-                                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--opal-muted)' }}>{s.label}</p>
-                            </GlassCard>
-                        ))}
-                    </div>
-
-                    <div style={{ padding: '0 14px 10px', display: 'flex', gap: 3 }}>
-                        {tabs.map(t => (
-                            <button key={t} onClick={() => setFilter(t)} style={{
-                                flex: 1, padding: '5px 0', borderRadius: 7, border: 'none', cursor: 'pointer',
-                                background: filter === t ? 'var(--opal-violet-dim)' : 'transparent',
-                                color:      filter === t ? 'var(--opal-violet)' : 'var(--opal-muted)',
-                                fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-body)',
-                                letterSpacing: 0.3, transition: 'all 0.15s',
-                            }}>{t}</button>
-                        ))}
-                    </div>
-
-                    <div style={{ overflowY: 'auto', flex: 1, padding: '0 8px 112px' }}>
-                        {loading && (
-                            <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>Loading…</p>
-                        )}
-                        {!loading && filtered.length === 0 && (
-                            <p style={{ textAlign: 'center', color: 'var(--opal-muted)', fontSize: 13, marginTop: 24 }}>No conversations</p>
-                        )}
-                        {filtered.map(b => {
-                            const isActive = selected?._id === b._id;
-                            const s        = STATUS[b.status] ?? STATUS.pending;
-                            const listS    = s;  // was: b.status === 'countered' ? STATUS.pending : s
-                            return (
-                                <button key={b._id} onClick={() => setSelected(b)} style={{
-                                    width: '100%', textAlign: 'left',
-                                    background: isActive ? 'var(--opal-violet-dim)' : 'transparent',
-                                    border: isActive ? '1px solid rgba(124,92,252,0.22)' : '1px solid transparent',
-                                    borderRadius: 11, padding: '11px 12px', cursor: 'pointer',
-                                    marginBottom: 3, display: 'flex', alignItems: 'center', gap: 10,
-                                    transition: 'all 0.15s',
-                                }}>
-                                    <Avatar name={b.venueId?.name ?? 'V'} size={36} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                                            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--opal-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {b.venueId?.name}
-                                            </p>
-                                            {b.unreadCount > 0 && (
-                                                <span style={{
-                                                    fontSize: 10, fontWeight: 700, color: '#0a0a0f',
-                                                    background: 'var(--opal-red)', borderRadius: 20,
-                                                    padding: '1px 6px', flexShrink: 0, marginLeft: 4,
-                                                }}>
-                                                    {b.unreadCount}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p style={{ margin: 0, fontSize: 12, color: 'var(--opal-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {b.eventType}
-                                        </p>
-                                        <span style={{ fontSize: 10, fontWeight: 600, color: listS.text, marginTop: 4, display: 'block' }}>
-                                            ● {listS.label}
-                                        </span>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Detail panel */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <DetailPanel
-                        booking={selected}
-                        currentUserId={currentUserId}
-                        onBookingUpdate={handleBookingUpdate}
-                        fetchVenueAvailability={fetchVenueAvailability}
-                        eventId={eventId}
-                    />
-                </div>
+                </GlassPanel>
             </div>
         </div>
     );

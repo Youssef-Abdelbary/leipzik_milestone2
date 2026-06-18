@@ -7,11 +7,11 @@ import {
   deactivateVenue,
   fetchNotifications,
   markNotificationsRead,
-} from "../services/serviceVenue";
+} from "../services/serviceVenue.js";
 import {
   VscHome, VscMail, VscCalendar, VscBell, VscPerson,
 } from 'react-icons/vsc';
-import { getConfirmedBookings } from "../services/serviceBookingCalendar";
+import { getConfirmedBookings } from "../services/serviceBookingCalendar.js";
 import MiniCalendar from "../components/componentMiniCalendar.jsx";
 import { OpalSelect } from "../components/componentMenus.jsx";
 import Dock from "../components/componentDock.jsx";
