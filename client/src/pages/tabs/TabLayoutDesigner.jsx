@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { apiFetch } from "../../utils/apiFetch";
 
 const P = {
   bg: "#0a0a0f",
@@ -205,19 +206,9 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
       }
 
       try {
-        const response = await fetch(
-          `http://localhost:5001/api/layouts/event/${selectedEventId}`
-        );
+        const data = await apiFetch(`/layouts/event/${selectedEventId}`);
 
-        if (response.status === 404) {
-          setItems([]);
-          setCurrentLayoutId(null);
-          return;
-        }
-
-        const data = await response.json();
-
-        if (!response.ok || !data || !data.elements) {
+        if (!data || !data.elements) {
           setItems([]);
           setCurrentLayoutId(null);
           return;
@@ -313,9 +304,8 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
     }
 
     try {
-      const response = await fetch("http://localhost:5001/api/layouts", {
+      const data = await apiFetch("/layouts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventId: selectedEventId,
           title: getLayoutTitle(),
@@ -333,18 +323,11 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to save layout");
-        return;
-      }
-
       setCurrentLayoutId(data.layout._id);
       alert("Layout saved successfully!");
     } catch (error) {
       console.error("Save layout error:", error);
-      alert("Something went wrong while saving the layout.");
+      alert(error.message || "Something went wrong while saving the layout.");
     }
   }
 
@@ -355,9 +338,8 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
     }
 
     try {
-      const saveResponse = await fetch("http://localhost:5001/api/layouts", {
+      const saveData = await apiFetch("/layouts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           eventId: selectedEventId,
           title: getLayoutTitle(),
@@ -375,26 +357,10 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         }),
       });
 
-      const saveData = await saveResponse.json();
-
-      if (!saveResponse.ok) {
-        alert(saveData.message || "Failed to save layout");
-        return;
-      }
-
       const layoutId = saveData.layout._id;
       setCurrentLayoutId(layoutId);
 
-      const tasksResponse = await fetch(
-        `http://localhost:5001/api/team/events/${selectedEventId}/tasks`
-      );
-
-      const tasksData = await tasksResponse.json();
-
-      if (!tasksResponse.ok) {
-        alert(tasksData.message || "Failed to load event staff members");
-        return;
-      }
+      const tasksData = await apiFetch(`/team/events/${selectedEventId}/tasks`);
 
       const staffIds = [
         ...new Set(
@@ -413,26 +379,15 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         return;
       }
 
-      const shareResponse = await fetch(
-        `http://localhost:5001/api/layouts/${layoutId}/share`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ staffIds }),
-        }
-      );
-
-      const shareData = await shareResponse.json();
-
-      if (!shareResponse.ok) {
-        alert(shareData.message || "Failed to share layout");
-        return;
-      }
+      await apiFetch(`/layouts/${layoutId}/share`, {
+        method: "PATCH",
+        body: JSON.stringify({ staffIds }),
+      });
 
       alert(`Layout shared with ${staffIds.length} staff member(s)!`);
     } catch (error) {
       console.error("Share layout error:", error);
-      alert("Something went wrong while sharing the layout.");
+      alert(error.message || "Something went wrong while sharing the layout.");
     }
   }
 

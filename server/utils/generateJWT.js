@@ -5,7 +5,7 @@ const SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 export function generateToken(user_id, role) {
-  return jwt.sign({ user_id, role }, SECRET, { expiresIn: "1m" });
+  return jwt.sign({ user_id, role }, SECRET, { expiresIn: "15m" });
 }
 
 export function generateRefreshToken(user_id) {

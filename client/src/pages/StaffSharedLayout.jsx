@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./StaffSharedLayout.css";
 import "../components/componentTheme.css";
 import { P, icons, GlassPanel } from "../components/componentTheme";
+import { apiFetch, getUserIdFromToken } from "../utils/apiFetch";
 
 function StaffSharedLayout() {
   const [layouts, setLayouts] = useState([]);
@@ -29,18 +30,12 @@ function StaffSharedLayout() {
           return;
         }
 
-        const staffId = loggedInUser._id || loggedInUser.id;
+        const staffId =
+          getUserIdFromToken() ||
+          loggedInUser._id ||
+          loggedInUser.id;
 
-        const response = await fetch(
-          `http://localhost:5001/api/layouts/shared/${staffId}`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          setMessage(data.message || "Failed to load shared layouts.");
-          return;
-        }
+        const data = await apiFetch(`/layouts/shared/${staffId}`);
 
         setLayouts(data);
 

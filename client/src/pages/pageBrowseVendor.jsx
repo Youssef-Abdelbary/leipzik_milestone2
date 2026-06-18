@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchVendors, submitVendorRequest } from "../services/serviceBrowseVendors";
+import { getUserIdFromToken } from "../utils/apiFetch";
 
-const PLACEHOLDER_EVENT_ID = "665000000000000000000016";
-const PLACEHOLDER_ORGANIZER_ID = "665000000000000000000001";
-
-function SourcingRequestModal({ vendor, onClose }) {
+function SourcingRequestModal({ vendor, eventId, organizerId, onClose }) {
   const [items, setItems] = useState(
     (vendor.pricingList || []).map((p) => ({ itemName: p.itemName, quantity: "", unit: p.unit, notes: "" }))
   );
@@ -28,10 +27,15 @@ function SourcingRequestModal({ vendor, onClose }) {
     const filled = items.filter((i) => i.itemName.trim() && i.quantity);
     if (!filled.length) { setError("Add at least one item with a name and quantity."); return; }
 
+    if (!eventId || !organizerId) {
+      setError("Missing event context. Open this page from an event workspace or add ?eventId=... to the URL.");
+      return;
+    }
+
     setSubmitting(true);
     const payload = {
-      eventId: PLACEHOLDER_EVENT_ID,
-      organizerId: PLACEHOLDER_ORGANIZER_ID,
+      eventId,
+      organizerId,
       vendorId: vendor._id,
       requestedItems: filled.map((i) => ({ ...i, quantity: Number(i.quantity), notes: i.notes.trim() || null })),
       deliveryDate: new Date(deliveryDate).toISOString(),
@@ -140,6 +144,9 @@ function SourcingRequestModal({ vendor, onClose }) {
 }
 
 export default function VendorListPage() {
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get("eventId") || "";
+  const organizerId = getUserIdFromToken() || "";
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -177,6 +184,11 @@ export default function VendorListPage() {
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#0F172A", letterSpacing: "-0.03em" }}>Vendors</h1>
           <p style={{ margin: "4px 0 0", fontSize: 14, color: "#64748B" }}>View vendor details and pricing.</p>
+          {!eventId && (
+            <p style={{ margin: "8px 0 0", fontSize: 13, color: "#B45309" }}>
+              Add <code>?eventId=YOUR_EVENT_ID</code> to the URL to send sourcing requests.
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: 20, maxWidth: 360 }}>
@@ -235,7 +247,14 @@ export default function VendorListPage() {
         )}
       </div>
 
-      {selectedVendor && <SourcingRequestModal vendor={selectedVendor} onClose={() => setSelectedVendor(null)} />}
+      {selectedVendor && (
+        <SourcingRequestModal
+          vendor={selectedVendor}
+          eventId={eventId}
+          organizerId={organizerId}
+          onClose={() => setSelectedVendor(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./pageStaffTasks.css";
 import "../components/componentTheme.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import TabStaffDayOf from "./tabs/TabStaffDayOf";
 import StaffSharedLayout from "./StaffSharedLayout";
 
@@ -11,6 +11,11 @@ import { icons } from "../components/componentTheme";
 import { VscHome, VscCalendar, VscPerson, VscLayout } from "react-icons/vsc";
 import { FaQrcode } from "react-icons/fa";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
+import {
+  fetchStaffEvents,
+  fetchStaffTasks,
+  updateStaffTaskProgress,
+} from "../services/serviceStaffTasks";
 
 const STAFF_TABS = [
   { id: "tasks", label: "Tasks", icon: <VscHome size={26} /> },
@@ -42,6 +47,13 @@ export default function StaffTasks() {
   const [selectedEventTitle, setSelectedEventTitle] = useState("");
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state?.activeTab]);
 
   useEffect(() => {
     const loggedInUser =
@@ -81,52 +93,25 @@ export default function StaffTasks() {
   }, [staffId, selectedStatus, selectedEventId]);
 
   async function loadAllStaffEvents() {
-    const response = await fetch(
-      `http://localhost:5001/api/staff-tasks/events/${staffId}`
-    );
-
-    const data = await response.json();
+    const data = await fetchStaffEvents(staffId);
     setAllEvents(data);
   }
 
   async function loadStaffEvents() {
-    const query = selectedDate ? `?date=${selectedDate}` : "";
-
-    const response = await fetch(
-      `http://localhost:5001/api/staff-tasks/events/${staffId}${query}`
-    );
-
-    const data = await response.json();
+    const data = await fetchStaffEvents(staffId, selectedDate || undefined);
     setEvents(data);
   }
 
   async function loadAllStaffTasks() {
-    const response = await fetch(
-      `http://localhost:5001/api/staff-tasks/tasks/${staffId}`
-    );
-
-    const data = await response.json();
+    const data = await fetchStaffTasks(staffId);
     setAllTasks(data);
   }
 
   async function loadStaffTasks() {
-    const params = new URLSearchParams();
-
-    if (selectedStatus) {
-      params.append("status", selectedStatus);
-    }
-
-    if (selectedEventId) {
-      params.append("eventId", selectedEventId);
-    }
-
-    const query = params.toString() ? `?${params.toString()}` : "";
-
-    const response = await fetch(
-      `http://localhost:5001/api/staff-tasks/tasks/${staffId}${query}`
-    );
-
-    const data = await response.json();
+    const data = await fetchStaffTasks(staffId, {
+      status: selectedStatus || undefined,
+      eventId: selectedEventId || undefined,
+    });
     setTasks(data);
   }
 
@@ -134,25 +119,13 @@ export default function StaffTasks() {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `http://localhost:5001/api/staff-tasks/tasks/${taskId}/progress`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status,
-            progressPercent: Number(progressPercent),
-          }),
-        }
-      );
+      const data = await updateStaffTaskProgress(taskId, {
+        status,
+        progressPercent: Number(progressPercent),
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to update task");
-        return;
+      if (data.message) {
+        alert(data.message);
       }
 
       loadAllStaffEvents();
@@ -161,7 +134,7 @@ export default function StaffTasks() {
       loadStaffTasks();
     } catch (error) {
       console.error("Update task error:", error);
-      alert("Something went wrong while updating the task.");
+      alert(error.message || "Something went wrong while updating the task.");
     } finally {
       setLoading(false);
     }

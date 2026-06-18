@@ -8,6 +8,12 @@ import { icons, GlassPanel } from "../components/componentTheme";
 import Dock from "../components/componentDock";
 import { VscHome, VscCalendar, VscPerson, VscPersonAdd, VscTrash } from "react-icons/vsc";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
+import {
+  fetchWorkflowSummary,
+  fetchWorkflowEvents,
+  fetchWorkflowTasks,
+} from "../services/serviceWorkflow";
+import { getUserIdFromToken } from "../utils/apiFetch";
 
 function formatFeedback(value) {
   if (value == null || Number.isNaN(Number(value)) || Number(value) === 0) {
@@ -74,45 +80,27 @@ function OrganizerWorkflow() {
 
   const navigate = useNavigate();
 
-  async function fetchJson(url) {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("Failed URL:", url);
-      console.error("Backend returned:", text);
-      throw new Error(`Request failed: ${url}`);
-    }
-
-    return response.json();
-  }
-
   useEffect(() => {
     async function loadWorkflowData() {
       try {
-        const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+        const organizerId =
+          getUserIdFromToken() ||
+          JSON.parse(localStorage.getItem("loggedInUser") || "{}")?._id ||
+          JSON.parse(localStorage.getItem("loggedInUser") || "{}")?.id;
 
-        if (!loggedInUser?._id && !loggedInUser?.id) {
+        if (!organizerId) {
           setSummaryState("no-auth");
           return;
         }
 
-        const organizerId = loggedInUser._id || loggedInUser.id;
-
-        const summaryData = await fetchJson(
-          `http://localhost:5001/api/workflow/summary/${organizerId}`
-        );
+        const summaryData = await fetchWorkflowSummary(organizerId);
         setSummary(summaryData);
         setSummaryState("ready");
 
-        const eventsData = await fetchJson(
-          `http://localhost:5001/api/workflow/events/${organizerId}`
-        );
+        const eventsData = await fetchWorkflowEvents(organizerId);
         setEvents(Array.isArray(eventsData) ? eventsData : []);
 
-        const tasksData = await fetchJson(
-          `http://localhost:5001/api/workflow/tasks/${organizerId}`
-        );
+        const tasksData = await fetchWorkflowTasks(organizerId);
         setTasks(Array.isArray(tasksData) ? tasksData : []);
 
         fetchNotifications(organizerId).then((data) =>

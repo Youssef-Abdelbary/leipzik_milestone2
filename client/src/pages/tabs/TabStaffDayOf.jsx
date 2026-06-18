@@ -4,6 +4,7 @@ import {
   getEventVendorsForStaff,
   markVendorArrived,
 } from "../../services/serviceStaffDayOf";
+import { fetchStaffEvents } from "../../services/serviceStaffTasks";
 import { icons, GlassPanel } from "../../components/componentTheme";
 import "../../components/componentTheme.css";
 import "./TabStaffDayOf.css";
@@ -70,11 +71,7 @@ export default function TabStaffDayOf() {
   }, [staffId, selectedEventId]);
 
   async function loadStaffEvents() {
-    const response = await fetch(
-      `http://localhost:5001/api/staff-tasks/events/${staffId}`
-    );
-
-    const data = await response.json();
+    const data = await fetchStaffEvents(staffId);
     setEvents(data);
   }
 

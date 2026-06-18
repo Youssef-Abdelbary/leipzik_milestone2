@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 import "../components/componentTheme.css";
 import { icons, GlassPanel } from "../components/componentTheme";
-import CurvedLoop from "../components/CurvedLoop";
+import CurvedLoop from "../components/curvedloop";
 
 function Login() {
   const [email, setEmail] = useState("");

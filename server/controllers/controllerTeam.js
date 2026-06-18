@@ -29,7 +29,8 @@ export async function getStaffMembers(req, res) {
 
         return {
           _id: staffUser._id,
-          fullName: staffUser.fullName,
+          fullName: staffUser.fullname,
+          fullname: staffUser.fullname,
           email: staffUser.email,
           phone: staffUser.phone,
           employmentType: staffProfile?.employmentType || "Not specified",

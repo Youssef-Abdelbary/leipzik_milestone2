@@ -21,6 +21,7 @@ import "./Profile.css";
 import "./pageEvents.css";
 import "./pageStaffTasks.css";
 import "./pageOrganizerDashboard.css";
+import { apiFetch } from "../utils/apiFetch";
 
 const roleLabels = {
     vendor: "Vendor",
@@ -278,14 +279,8 @@ const Profile = () => {
             setError("");
             setSuccess("");
 
-            const token = localStorage.getItem("token");
-
-            const response = await fetch("http://localhost:5001/api/users/profile", {
+            const data = await apiFetch("/users/profile", {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
                 body: JSON.stringify({
                     fullname: formData.fullname,
                     email: formData.email,
@@ -293,12 +288,6 @@ const Profile = () => {
                     venueName: formData.venueName,
                 }),
             });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to update profile");
-            }
 
             const updatedUser = {
                 ...user,

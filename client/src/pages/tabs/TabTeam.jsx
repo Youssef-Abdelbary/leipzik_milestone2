@@ -3,6 +3,7 @@ import "./TabTeam.css";
 import "./workspaceTabShell.css";
 import "../../components/componentTheme.css";
 import { GlassPanel, icons, P } from "../../components/componentTheme";
+import { apiFetch } from "../../utils/apiFetch";
 
 function TeamStatCard({ label, value, icon, accent }) {
   const colors = {
@@ -72,36 +73,27 @@ export default function TabTeam({ eventId }) {
       return;
     }
 
-    const response = await fetch(
-      `http://localhost:5001/api/team/events/${eventId}/tasks`,
-      {
+    try {
+      await apiFetch(`/team/events/${eventId}/tasks`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(taskForm),
-      }
-    );
+      });
 
-    const data = await response.json();
+      setTaskForm({
+        title: "",
+        description: "",
+        category: "",
+        priority: "medium",
+        dueDate: "",
+      });
 
-    if (!response.ok) {
-      alert(data.message || "Failed to create task");
-      return;
+      setShowTaskForm(false);
+
+      loadAllTasks();
+      loadTasks();
+    } catch (error) {
+      alert(error.message || "Failed to create task");
     }
-
-    setTaskForm({
-      title: "",
-      description: "",
-      category: "",
-      priority: "medium",
-      dueDate: "",
-    });
-
-    setShowTaskForm(false);
-
-    loadAllTasks();
-    loadTasks();
   }
 
   async function loadStaffMembers() {
@@ -117,40 +109,30 @@ export default function TabTeam({ eventId }) {
 
     const query = params.toString() ? `?${params.toString()}` : "";
 
-    const response = await fetch(`http://localhost:5001/api/team/staff${query}`);
-    const data = await response.json();
-
+    const data = await apiFetch(`/team/staff${query}`);
     setStaffMembers(data);
   }
 
   async function loadTasks() {
     const query = taskStatusFilter ? `?status=${taskStatusFilter}` : "";
 
-    const response = await fetch(
-      `http://localhost:5001/api/team/events/${eventId}/tasks${query}`
-    );
-
-    const data = await response.json();
+    const data = await apiFetch(`/team/events/${eventId}/tasks${query}`);
     setTasks(data);
   }
 
   async function assignTask(taskId, staffId) {
     if (!staffId) return;
 
-    const response = await fetch(`http://localhost:5001/api/team/tasks/${taskId}/assign`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ staffId }),
-    });
+    try {
+      await apiFetch(`/team/tasks/${taskId}/assign`, {
+        method: "PATCH",
+        body: JSON.stringify({ staffId }),
+      });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to assign task");
-      return;
+      loadTasks();
+    } catch (error) {
+      alert(error.message || "Failed to assign task");
     }
-
-    loadTasks();
   }
 
   function getStaffName(staffId) {
@@ -169,21 +151,14 @@ export default function TabTeam({ eventId }) {
   }
 
   async function loadAllStaffMembers() {
-    const response = await fetch("http://localhost:5001/api/team/staff");
-    const data = await response.json();
-
+    const data = await apiFetch("/team/staff");
     setAllStaffMembers(data);
   }
 
   async function loadAllTasks() {
     if (!eventId) return;
 
-    const response = await fetch(
-      `http://localhost:5001/api/team/events/${eventId}/tasks`
-    );
-
-    const data = await response.json();
-
+    const data = await apiFetch(`/team/events/${eventId}/tasks`);
     setAllTasks(data);
   }
 

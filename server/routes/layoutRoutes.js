@@ -7,16 +7,17 @@ import {
   getSharedLayoutsForStaff,
   getLayoutByEvent,
 } from "../controllers/layoutController.js";
+import { authenticate } from "../middleware/authMiddleware.js";
+import { requireRoles, requireSelfParam } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/staff", getActiveStaff);
+router.use(authenticate);
 
-router.post("/", saveLayout);
-
-router.patch("/:layoutId/share", shareLayout);
-
-router.get("/shared/:staffId", getSharedLayoutsForStaff);
-router.get("/event/:eventId", getLayoutByEvent);
+router.get("/staff", requireRoles("organizer"), getActiveStaff);
+router.post("/", requireRoles("organizer"), saveLayout);
+router.patch("/:layoutId/share", requireRoles("organizer"), shareLayout);
+router.get("/shared/:staffId", requireRoles("staff"), requireSelfParam("staffId"), getSharedLayoutsForStaff);
+router.get("/event/:eventId", requireRoles("organizer"), getLayoutByEvent);
 
 export default router;

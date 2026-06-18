@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, useAnimation, useMotionValue } from 'motion/react';
-import './componentLogoMark.css';
+import './componentLogomark.css';
 
 // ─── Rotation helpers (from CircularText) ─────────────────────────────────
 

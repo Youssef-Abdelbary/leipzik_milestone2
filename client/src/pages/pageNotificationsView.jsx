@@ -5,9 +5,7 @@ import Dock from "../components/componentDock.jsx";
 import AppHeader from "../components/componentAppHeader.jsx";
 import "./pageOrganizerDashboard.css";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
-
-// TODO: replace with the actual logged-in user's id (e.g. from auth context)
-const CURRENT_USER_ID = "665000000000000000000001";
+import { getUserIdFromToken } from "../utils/apiFetch";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
@@ -15,7 +13,13 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotifications(CURRENT_USER_ID)
+    const userId = getUserIdFromToken();
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchNotifications(userId)
       .then((data) => {
         setNotifications(data.data || []);
         setLoading(false);

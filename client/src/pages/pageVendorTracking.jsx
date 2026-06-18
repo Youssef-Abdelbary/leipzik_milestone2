@@ -1,22 +1,27 @@
 // src/pages/VendorTrackingPage.jsx
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchEventVendorRequests, updateDeliveryStatus } from "../services/serviceBrowseVendors";
 
-const PLACEHOLDER_EVENT_ID = "665000000000000000000016";
-
 export default function VendorTrackingPage() {
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get("eventId") || "";
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
-    loadTrackingData();
-  }, []);
+    if (eventId) {
+      loadTrackingData();
+    } else {
+      setLoading(false);
+    }
+  }, [eventId]);
 
   async function loadTrackingData() {
     try {
-      const data = await fetchEventVendorRequests(PLACEHOLDER_EVENT_ID);
+      const data = await fetchEventVendorRequests(eventId);
       setRequests(data.data || []);
     } catch (err) {
       console.error("Failed to load tracking records:", err);
@@ -100,6 +105,10 @@ export default function VendorTrackingPage() {
 
         {loading ? (
           <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>Loading tracking data...</div>
+        ) : !eventId ? (
+          <div style={{ padding: "48px 0", textAlign: "center", color: "#B45309", fontSize: 14 }}>
+            Add <code>?eventId=YOUR_EVENT_ID</code> to the URL to load vendor deliveries.
+          </div>
         ) : filteredRequests.length === 0 ? (
           <div style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8", fontSize: 14 }}>No deliveries found under this filter option.</div>
         ) : (

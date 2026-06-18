@@ -59,8 +59,6 @@ app.use('/api/bookings', routeMangeBookings);
 app.use("/api/events", eventRoutes);
 app.use("/api", guestRoutes);
 app.use("/api/notifications", notificationRoute);
-app.use("/api/venues", venueRoutes);
-app.use("/api/browseVenues", browseVenueRoutes);
 app.use("/api/browseVendors", browseVendorRoutes);
 app.use("/api/browseVendors/request", browseVendorRoutes);
 app.use("/api/workflow", workflowRoutes);

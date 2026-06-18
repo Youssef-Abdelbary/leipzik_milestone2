@@ -404,10 +404,10 @@ function DetailPanel({ booking, onApprove, onDecline, currentUserId }) {
             <div style={{ padding: '20px 24px 0', borderBottom: '1px solid var(--opal-border)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <Avatar name={booking.organizerId?.name ?? 'User'} size={44} />
+                        <Avatar name={booking.organizerId?.fullname ?? booking.organizerId?.fullName ?? 'User'} size={44} />
                         <div>
                             <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--opal-text)', letterSpacing: -0.3, fontFamily: 'var(--font-display)' }}>
-                                {booking.organizerId?.name}
+                                {booking.organizerId?.fullname ?? booking.organizerId?.fullName ?? 'User'}
                             </p>
                             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>
                                 {booking.organizerId?.email}
@@ -620,11 +620,11 @@ export default function PageResponseVenue() {
                                     marginBottom: 3, display: 'flex', alignItems: 'center', gap: 10,
                                     transition: 'all 0.15s',
                                 }}>
-                                    <Avatar name={b.organizerId?.name ?? 'U'} size={36} />
+                                    <Avatar name={b.organizerId?.fullname ?? b.organizerId?.fullName ?? 'U'} size={36} />
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                                             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--opal-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {b.organizerId?.name}
+                                                {b.organizerId?.fullname ?? b.organizerId?.fullName ?? 'User'}
                                             </p>
                                             <span style={{ fontSize: 10, color: 'var(--opal-muted)', flexShrink: 0, marginLeft: 4 }}>
                                                 {fmtDate(b.eventDate)}

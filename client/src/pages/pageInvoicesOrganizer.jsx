@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchInvoices, reviewInvoice } from "../services/serviceInvoices";
-
-// TODO: replace with the actual logged-in organizer's id (e.g. from auth context)
-const CURRENT_USER_ID = "665000000000000000000001";
+import { fetchInvoices, reviewInvoice, getUserIdFromToken } from "../services/serviceInvoices";
 
 const STATUS_COLORS = {
   pending_review: { bg: "#FFFBEB", text: "#92400E" },
@@ -16,7 +13,13 @@ export default function OrganizerInvoicesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInvoices(CURRENT_USER_ID)
+    const organizerId = getUserIdFromToken();
+    if (!organizerId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchInvoices(organizerId)
       .then((data) => {
         setInvoices(data.data || []);
         setLoading(false);

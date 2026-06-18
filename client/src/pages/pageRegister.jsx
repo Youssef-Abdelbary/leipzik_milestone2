@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { VscLock, VscPerson, VscDeviceMobile } from "react-icons/vsc";
 import "../components/componentTheme.css";
 import "./Login.css";
-import CurvedLoop from "../components/CurvedLoop";
+import CurvedLoop from "../components/curvedloop";
 import { icons, GlassPanel } from "../components/componentTheme";
 
 const ROLE_ICONS = {
