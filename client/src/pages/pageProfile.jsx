@@ -6,6 +6,9 @@ import {
     VscCalendar,
     VscPerson,
     VscLayout,
+    VscAccount,
+    VscPersonAdd,
+    VscTrash
 } from "react-icons/vsc";
 import { FaQrcode } from "react-icons/fa";
 
@@ -93,12 +96,26 @@ const Profile = () => {
         {
             icon: <VscHome size={26} />,
             label: "Home",
+            active: false,
             onClick: () => navigate("/organizer/workflow"),
         },
         {
             icon: <VscCalendar size={26} />,
             label: "Events",
+            active: false,
             onClick: () => navigate("/organizer/events"),
+        },
+        {
+            icon: <VscTrash size={26} />,
+            label: "Users",
+            active: false,
+            onClick: () => navigate("/organizer/deactivate"),
+        },
+        {
+        icon: <VscPersonAdd size={26} />,
+        label: "Create",
+        active: false,
+        onClick: () => navigate("/organizer/registerothers"),
         },
         {
             icon: <VscPerson size={26} />,
@@ -106,7 +123,7 @@ const Profile = () => {
             active: true,
             onClick: () => navigate("/profile"),
         },
-    ];
+        ];
 
     const staffDockItems = [
         {

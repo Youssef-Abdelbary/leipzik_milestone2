@@ -5,7 +5,9 @@ import "../components/componentTheme.css";
 import AppHeader from "../components/componentAppHeader";
 import { P, icons, GlassPanel } from "../components/componentTheme";
 import Dock from "../components/componentDock";
-import { VscHome, VscCalendar, VscPerson } from "react-icons/vsc";
+import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
+import UserManagement from "./pageDeactivate";
+import RegisterForOthers from "./pageRegisterOthers";
 
 
 function DockTabIcon({ icon }) {
@@ -27,6 +29,7 @@ function OrganizerWorkflow() {
   const [showEvents, setShowEvents] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const navigate = useNavigate();
 
@@ -176,6 +179,18 @@ function OrganizerWorkflow() {
       label: "Events",
       active: false,
       onClick: () => navigate("/organizer/events"),
+    },
+    {
+      icon: <VscTrash size={26} />,
+      label: "Users",
+      active: false,
+      onClick: () => navigate("/organizer/deactivate"),
+    },
+    {
+      icon: <VscPersonAdd size={26} />,
+      label: "Create",
+      active: false,
+      onClick: () => navigate("/organizer/registerothers"),
     },
     {
       icon: <VscPerson size={26} />,

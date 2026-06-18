@@ -8,7 +8,7 @@ import AppHeader from '../components/componentAppHeader';
 import SettingsModal from '../components/SettingsModal';
 import '../components/componentTheme.css';
 import Dock from "../components/componentDock";
-import { VscHome, VscCalendar, VscPerson } from "react-icons/vsc";
+import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
 import './pageEvents.css';
 
 
@@ -108,6 +108,18 @@ export default function Events() {
       label: "Events",
       active: true,
       onClick: () => navigate("/organizer/events"),
+    },
+    {
+      icon: <VscTrash size={26} />,
+      label: "Users",
+      active: false,
+      onClick: () => navigate("/organizer/deactivate"),
+    },
+    {
+      icon: <VscPersonAdd size={26} />,
+      label: "Create",
+      active: false,
+      onClick: () => navigate("/organizer/registerothers"),
     },
     {
       icon: <VscPerson size={26} />,
