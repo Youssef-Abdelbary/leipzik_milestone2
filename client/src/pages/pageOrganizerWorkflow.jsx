@@ -13,7 +13,14 @@ function formatFeedback(value) {
   if (value == null || Number.isNaN(Number(value)) || Number(value) === 0) {
     return "—";
   }
-  return Number(value).toFixed(2);
+  return Number(value).toFixed(1);
+}
+
+function feedbackStatSub(count, label) {
+  if (!count) {
+    return `No ${label} reviews yet`;
+  }
+  return `${count} ${label} review${count === 1 ? "" : "s"}`;
 }
 
 function IconBadge({ icon, accent = "violet" }) {
@@ -287,22 +294,14 @@ function OrganizerWorkflow() {
           <WorkflowStatCard
             label="Avg Positive Feedback"
             value={formatFeedback(summary?.averagePositiveFeedback)}
-            sub={
-              summary?.feedbackReviewCount
-                ? `${summary.feedbackReviewCount} review${summary.feedbackReviewCount === 1 ? "" : "s"}`
-                : "No reviews yet"
-            }
+            sub={feedbackStatSub(summary?.positiveFeedbackReviewCount, "positive")}
             icon={icons.feedback}
             accent="teal"
           />
           <WorkflowStatCard
             label="Avg Negative Feedback"
             value={formatFeedback(summary?.averageNegativeFeedback)}
-            sub={
-              summary?.feedbackReviewCount
-                ? `${summary.feedbackReviewCount} review${summary.feedbackReviewCount === 1 ? "" : "s"}`
-                : "No reviews yet"
-            }
+            sub={feedbackStatSub(summary?.negativeFeedbackReviewCount, "negative")}
             icon={icons.frown}
             accent="orange"
           />

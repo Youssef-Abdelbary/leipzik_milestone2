@@ -14,19 +14,33 @@ export function feedbackOverallScore(feedback) {
   return total / scores.length;
 }
 
+function roundScore(value) {
+  return Math.round(value * 10) / 10;
+}
+
+function averageScores(scores) {
+  if (!scores.length) {
+    return 0;
+  }
+
+  return roundScore(scores.reduce((sum, value) => sum + value, 0) / scores.length);
+}
+
 export function computeEventFeedbackStats(feedbacks) {
   const submitted = feedbacks.filter((feedback) => feedback.submittedAt != null);
 
   if (submitted.length === 0) {
     return {
       count: 0,
+      positiveReviewCount: 0,
+      negativeReviewCount: 0,
       averagePositiveFeedback: 0,
       averageNegativeFeedback: 0,
     };
   }
 
-  let positiveCount = 0;
-  let negativeCount = 0;
+  const positiveScores = [];
+  const negativeScores = [];
 
   submitted.forEach((feedback) => {
     const overall = feedbackOverallScore(feedback);
@@ -34,18 +48,18 @@ export function computeEventFeedbackStats(feedbacks) {
       return;
     }
     if (overall >= 4) {
-      positiveCount += 1;
+      positiveScores.push(overall);
     }
     if (overall <= 2) {
-      negativeCount += 1;
+      negativeScores.push(overall);
     }
   });
 
-  const count = submitted.length;
-
   return {
-    count,
-    averagePositiveFeedback: count > 0 ? positiveCount / count : 0,
-    averageNegativeFeedback: count > 0 ? negativeCount / count : 0,
+    count: submitted.length,
+    positiveReviewCount: positiveScores.length,
+    negativeReviewCount: negativeScores.length,
+    averagePositiveFeedback: averageScores(positiveScores),
+    averageNegativeFeedback: averageScores(negativeScores),
   };
 }

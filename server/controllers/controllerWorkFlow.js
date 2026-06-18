@@ -91,6 +91,8 @@ export async function getWorkflowSummary(req, res) {
       averagePositiveFeedback: feedbackStats.averagePositiveFeedback,
       averageNegativeFeedback: feedbackStats.averageNegativeFeedback,
       feedbackReviewCount: feedbackStats.count,
+      positiveFeedbackReviewCount: feedbackStats.positiveReviewCount,
+      negativeFeedbackReviewCount: feedbackStats.negativeReviewCount,
     });
   } catch (error) {
     console.error("Get workflow summary error:", error);

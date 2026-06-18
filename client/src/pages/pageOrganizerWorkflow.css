@@ -189,25 +189,23 @@
   line-height: 1.5;
 }
 
+.collapsible-chevron {
+  color: var(--opal-muted);
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
 .collapsible-title {
   cursor: pointer;
   user-select: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
+  width: fit-content;
+  max-width: 100%;
   transition: color 0.15s ease;
-  margin: 0 0 5px;
-  color: var(--opal-text);
-  font-size: 21px;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  font-family: var(--font-display);
-}
-
-.section-title-static {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   margin: 0 0 5px;
   color: var(--opal-text);
   font-size: 21px;
@@ -220,12 +218,18 @@
   color: #4de7e3;
 }
 
-.collapsible-chevron {
-  margin-left: auto;
-  color: var(--opal-muted);
-  display: grid;
-  place-items: center;
-  line-height: 0;
+.section-title-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 5px;
+  color: var(--opal-text);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
 }
 
 .workflow-icon-badge {
