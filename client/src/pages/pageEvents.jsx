@@ -7,11 +7,23 @@ import { OpalSelect } from '../components/componentMenus';
 import AppHeader from '../components/componentAppHeader';
 import SettingsModal from '../components/SettingsModal';
 import '../components/componentTheme.css';
+import Dock from "../components/componentDock";
+import { VscHome, VscCalendar, VscPerson } from "react-icons/vsc";
+import './pageEvents.css';
+
 
 const BLANK_EVENT = {
   title: '', description: '', date: '', startTime: '09:00',
   endTime: '', eventType: '', expectedAttendees: '', location: '', dressCode: '',
 };
+
+function DockTabIcon({ icon }) {
+  return (
+    <div style={{ transform: "scale(1.25)", display: "flex" }}>
+      {icon}
+    </div>
+  );
+}
 
 function fmtDate(d) {
   if (!d) return 'No date set';
@@ -83,6 +95,27 @@ export default function Events() {
       setLoading(false);
     }
   }, []);
+
+  const dockItems = [
+    {
+      icon: <VscHome size={26} />,
+      label: "Home",
+      active: false,
+      onClick: () => navigate("/organizer/workflow"),
+    },
+    {
+      icon: <VscCalendar size={26} />,
+      label: "Events",
+      active: true,
+      onClick: () => navigate("/organizer/events"),
+    },
+    {
+      icon: <VscPerson size={26} />,
+      label: "Profile",
+      active: false,
+      onClick: () => navigate("/profile"),
+    },
+  ];
 
   useEffect(() => {
     let ignore = false;
@@ -188,16 +221,24 @@ export default function Events() {
       `}</style>
 
       <AppHeader
-        back={{ label: 'Workflow', onClick: () => navigate('/organizer/workflow') }}
         crumb="My Events"
         right={
-          <button
-            className="new-event-btn"
-            onClick={() => setShowCreate(true)}
-            style={{ background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color: '#0a0a12' }}
-          >
-            {icons.plus} New Event
-          </button>
+          <div className="events-header-actions">
+            <button
+              className="new-event-btn"
+              onClick={() => setShowCreate(true)}
+              style={{
+                background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
+                color: "#0a0a12",
+              }}
+            >
+              {icons.plus} New Event
+            </button>
+
+            <div className="organizer-dashboard-pill">
+              Organizer Dashboard
+            </div>
+          </div>
         }
       />
 
@@ -426,6 +467,7 @@ export default function Events() {
           loading={deleting}
         />
       )}
+      <Dock items={dockItems} />
     </div>
   );
 }

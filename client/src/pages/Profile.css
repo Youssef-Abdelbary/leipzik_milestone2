@@ -513,3 +513,15 @@
 .profile-logout-btn:hover {
     background-color: #b91c1c;
 }
+
+.organizer-dashboard-pill {
+  color: #9b7cff;
+  font-size: 13px;
+  font-weight: 900;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(139, 109, 255, 0.12);
+  border: 1px solid rgba(139, 109, 255, 0.32);
+}
