@@ -15,7 +15,7 @@ import AppHeader from '../components/componentAppHeader.jsx';
 import CalendarAvailability from '../components/componentCalendar.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import '../components/componentTheme.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // ─── Decode user_id from stored JWT (reads payload only — auth is server-side) ──
 function getUserIdFromToken() {
@@ -537,6 +537,9 @@ export default function PageResponseVenue() {
         setSelected(prev => prev?._id === id ? { ...prev, status: 'Declined' } : prev);
     };
 
+    const location = useLocation();
+    const isRequestsActive = location.pathname === '/venueowner/venueresponse';
+
     const tabs = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
         All: bookings.length,
@@ -554,11 +557,11 @@ export default function PageResponseVenue() {
     ];
 
     const dockItems = [
-        { icon: <VscMail size={26} />, label: "Requests", onClick: () => navigate("/venueowner/venueresponse") },
-        { icon: <VscBell size={26} />, label: "Notifications", onClick: () => navigate("/notificationsview") },
-        { icon: <VscHome size={26} />, label: "Home", active: true, onClick: () => navigate("/venueowner/venues") },
-        { icon: <VscCalendar size={26} />, label: "Reports", onClick: () => navigate("/venueowner/venuereports") },
-        { icon: <VscPerson size={26} />, label: "Owner Profile", onClick: () => navigate("/pageProfile") },
+        { icon: <VscMail size={26} />, label: "Requests", active: isRequestsActive, onClick: () => navigate("/venueowner/venueresponse") },
+        { icon: <VscBell size={26} />, label: "Notifications", active: location.pathname === '/notificationsview', onClick: () => navigate("/notificationsview") },
+        { icon: <VscHome size={26} />, label: "Home", active: location.pathname === '/venueowner/venues', onClick: () => navigate("/venueowner/venues") },
+        { icon: <VscCalendar size={26} />, label: "Reports", active: location.pathname === '/venueowner/venuereports', onClick: () => navigate("/venueowner/venuereports") },
+        { icon: <VscPerson size={26} />, label: "Owner Profile", active: location.pathname === '/pageProfile', onClick: () => navigate("/pageProfile") },
     ];
 
     return (
