@@ -18,8 +18,8 @@ function getTransporter() {
 
 // ─── Shared email shell ───────────────────────────────────────────────────────
 // All emails share this outer wrapper so the brand stays consistent.
-function emailShell({ subtitle, bodyHtml, footerHtml }) {
-  return `
+function emailShell({ subtitle, bodyHtml, footerHtml, footerNote }) {
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,8 +103,7 @@ function emailShell({ subtitle, bodyHtml, footerHtml }) {
               </tr>
             </table>
             <p style="margin:0;font-size:11px;color:rgba(237,233,255,0.25);">
-              You received this because you were added to an event · powered by the opal platform
-            </p>
+              ${footerNote || 'You received this because you were added to an event · powered by the opal platform'}            </p>
           </td>
         </tr>
 
@@ -130,6 +129,40 @@ function ctaBtn(href, label) {
         </td>
       </tr>
     </table>`;
+}
+// ─── Glass panel with gradient border (email-safe table wrapper) ──────────────
+function glassPanel(innerHtml) {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="background:linear-gradient(135deg,#8b6dff 0%,#3ecfb8 100%);border-radius:14px;padding:1px;">
+          <div style="background:#0f0f19;border-radius:13px;padding:20px 22px;">
+            ${innerHtml}
+          </div>
+        </td>
+      </tr>
+    </table>`;
+}
+// ─── Credential field (label + highlighted value block) ───────────────────────
+function credentialField(label, value, { accent = '#8b6dff', monospace = false, href = null } = {}) {
+  const valueHtml = href
+    ? `<a href="${href}" style="color:${accent};text-decoration:none;word-break:break-all;">${value}</a>`
+    : value;
+  const valueStyle = monospace
+    ? `margin:8px 0 0;font-size:15px;font-weight:700;color:#ede9ff;
+       font-family:Consolas,Menlo,Monaco,'Courier New',monospace;letter-spacing:0.05em;
+       background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+       border-radius:8px;padding:10px 14px;word-break:break-all;display:block;`
+    : `margin:8px 0 0;font-size:14px;font-weight:600;color:#ede9ff;word-break:break-all;display:block;`;
+  return `
+    <div style="margin-bottom:18px;">
+      <p style="margin:0;font-size:11px;font-weight:700;color:rgba(237,233,255,0.35);
+                text-transform:uppercase;letter-spacing:0.08em;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                     background:${accent};margin-right:8px;vertical-align:middle;"></span>${label}
+      </p>
+      <span style="${valueStyle}">${valueHtml}</span>
+    </div>`;
 }
 
 // ─── Detail row (icon dot + label + value) ────────────────────────────────────
@@ -380,6 +413,71 @@ export async function sendRsvpConfirmationWithQR({ to, guestName, eventTitle, ev
         cid: 'qrcode_checkin',
       },
     ],
+  });
+}
+
+
+// ─── Staff account welcome ────────────────────────────────────────────────────
+export async function sendStaffWelcomeEmail({ to, fullname, email, password, loginUrl }) {
+  const transporter = getTransporter();
+  const firstName = (fullname || 'Staff member').split(' ')[0];
+ const credentialsHtml = [
+    credentialField('Login URL', loginUrl, { accent: '#8b6dff', href: loginUrl }),
+    credentialField('Email / Username', email, { accent: '#3ecfb8', monospace: true }),
+    credentialField('Temporary Password', password, { accent: '#c084fc', monospace: true }),
+  ].join('');
+  const bodyHtml = `
+    <p style="margin:0 0 6px;font-size:14px;color:rgba(237,233,255,0.5);">Hi ${firstName},</p>
+
+    <h1 style="margin:0 0 16px;font-size:28px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;line-height:1.2;">    </h1>
+    <p style="margin:0 0 24px;font-size:14px;color:rgba(237,233,255,0.52);line-height:1.7;">
+      An event organizer created a PopEyez staff account for you. Use the credentials below to sign in.
+    </p>
+    <div style="margin-bottom:24px;">
+      <p style="margin:0 0 12px;font-size:12px;font-weight:700;color:rgba(237,233,255,0.35);
+                text-transform:uppercase;letter-spacing:0.08em;">Your login credentials</p>
+      ${glassPanel(credentialsHtml)}
+    </div>
+ <!-- Security notice -->
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.22);
+                border-radius:10px;padding:14px 16px;margin-bottom:24px;">
+      <p style="margin:0;font-size:13px;color:rgba(237,233,255,0.65);line-height:1.6;">
+        <strong style="color:#f5a623;">Keep this email private</strong> — it contains your temporary password.
+        Change your password after your first sign-in.
+      </p>
+    </div>
+    <p style="margin:0 0 12px;font-size:12px;font-weight:700;color:rgba(237,233,255,0.35);
+              text-transform:uppercase;letter-spacing:0.08em;">How to log in</p>
+    <div style="background:#0f0f19;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
+      <ol style="margin:0;padding-left:20px;font-size:14px;color:rgba(237,233,255,0.65);line-height:1.9;">
+        <li style="margin-bottom:4px;">Open the login page using the link above.</li>
+        <li style="margin-bottom:4px;">Enter your email address and the temporary password.</li>
+        <li>After signing in, change your password from your profile if prompted.</li>
+      </ol>
+    </div>
+    <div style="text-align:center;">
+      ${ctaBtn(loginUrl, 'Go to Login →')}
+    </div>
+        <p style="margin:16px 0 0;font-size:11px;color:rgba(237,233,255,0.28);text-align:center;word-break:break-all;">
+      <a href="${loginUrl}" style="color:rgba(139,109,255,0.7);text-decoration:none;">${loginUrl}</a>
+    </p>
+  `;
+  const footerHtml = `
+    <p style="margin:0;font-size:12px;color:rgba(237,233,255,0.35);">
+      Keep this email secure — it contains your login password.
+    </p>
+  `;
+  const html = emailShell({
+    subtitle: 'Staff Account',
+    bodyHtml,
+    footerHtml,
+    footerNote: 'You received this because a staff account was created for you · powered by the opal platform',
+  });  await transporter.sendMail({
+    from:    `"PopEyez Events" <${process.env.SMTP_USER}>`,
+    to,
+    subject: 'Your PopEyez staff account login details',
+    text:    `Hi ${firstName},\n\nYour staff account has been created.\n\nLogin URL: ${loginUrl}\nEmail: ${email}\nTemporary password: ${password}\n\nSign in with your email and password, then update your password from your profile if needed.\n\n— PopEyez Events`,
+    html,
   });
 }
 

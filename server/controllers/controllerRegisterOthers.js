@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import modelUser from "../models/modelUser.js";
 import Vendor from "../models/modelVendor.js";
 import { generateToken, generateRefreshToken } from "../utils/generateJWT.js";
+import { sendStaffWelcomeEmail, isEmailConfigured } from "../utils/emailUtil.js";
 
 const ALLOWED_ROLES = ["vendor", "staff"];
 
@@ -55,8 +56,33 @@ export const register = async (req, res) => {
         const token = generateToken(user._id, user.role);
         const refreshToken = generateRefreshToken(user._id);
 
-        return res.status(201).json({
-            message: "User registered successfully",
+ let emailSent = false;
+        let emailWarning = null;
+        if (role === "staff") {
+            const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+            const loginUrl = `${clientUrl}/login`;
+            if (isEmailConfigured()) {
+                try {
+                    await sendStaffWelcomeEmail({
+                        to: email,
+                        fullname,
+                        email,
+                        password,
+                        loginUrl,
+                    });
+                    emailSent = true;
+                } catch (emailErr) {
+                    console.error("Failed to send staff welcome email:", emailErr.message);
+                    emailWarning = "Account created, but the login email could not be sent. Share the credentials manually.";
+                }
+            } else {
+                emailWarning = "Account created, but email is not configured. Share the login credentials manually.";
+            }
+        }
+        const response = {
+            message: role === "staff" && emailSent
+                ? "Staff account created and login details emailed"
+                : "User registered successfully",
             token,
             refreshToken,
             user: {
@@ -69,8 +95,15 @@ export const register = async (req, res) => {
                 createdAt: user.createdAt,
                 createdBy,
             },
-        });
-
+        };
+ if (role === "staff") {
+            response.emailSent = emailSent;
+            response.staffEmail = user.email;
+            if (emailWarning) {
+                response.emailWarning = emailWarning;
+            }
+        }
+        return res.status(201).json(response);
     } catch (error) {
         return res.status(500).json({ message: "Server error", error: error.message });
     }

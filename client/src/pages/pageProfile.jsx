@@ -18,6 +18,9 @@ import { P, GlassPanel } from "../components/componentTheme";
 
 import "../components/componentTheme.css";
 import "./Profile.css";
+import "./pageEvents.css";
+import "./pageStaffTasks.css";
+import "./pageOrganizerDashboard.css";
 
 const roleLabels = {
     vendor: "Vendor",
@@ -316,12 +319,21 @@ const Profile = () => {
 
     return (
         <div
-            style={{
-                minHeight: "100vh",
-                background: "var(--opal-bg)",
-                color: P.text,
-                fontFamily: "var(--font-body)",
-            }}
+                       className={
+                isOrganizer || isOwner                    ? "organizer-dashboard-page"
+                    : isStaff
+                      ? "staff-workspace-page"
+                      : undefined
+            }
+            style={
+                isOrganizer || isStaff || isOwner                    ? undefined
+                    : {
+                          minHeight: "100vh",
+                          background: "var(--opal-bg)",
+                          color: P.text,
+                          fontFamily: "var(--font-body)",
+                      }
+            }
         >
             <style>{`
                 @keyframes pageIn {
@@ -391,12 +403,23 @@ const Profile = () => {
             )}
 
             <div
-                style={{
-                    maxWidth: 1100,
-                    margin: "0 auto",
-                    padding: "28px 24px 140px",
-                    animation: "pageIn 0.3s ease",
-                }}
+ className={
+                    isOrganizer || isOwner
+                                           ? "organizer-dashboard-content"
+                        : isStaff
+                          ? "staff-tab-content"
+                          : undefined
+                }
+                style={
+                    isOrganizer || isStaff || isOwner
+                                            ? undefined
+                        : {
+                           maxWidth: 1100,
+                              margin: "0 auto",
+                              padding: "28px 24px 140px",
+                              animation: "pageIn 0.3s ease",
+                          }
+                }
             >
                 <div style={{ marginBottom: 24 }}>
                     <h1

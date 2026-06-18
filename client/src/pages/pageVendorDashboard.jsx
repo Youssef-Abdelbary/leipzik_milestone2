@@ -372,10 +372,10 @@ function ProfileEditor({ onSaved, onLogout }) {
 
     useEffect(() => { loadProfile(); }, []);
 
-    async function loadProfile() {
-        try {
-            setLoading(true);
-            setError(null);
+    async function loadProfile(attempt = 0) {  setLoading(true);
+        setError(null);
+      try {
+            
             const res = await fetchMyVendorProfile();
             const p = res.data || EMPTY_PROFILE;
             setProfile(p);
@@ -386,9 +386,13 @@ function ProfileEditor({ onSaved, onLogout }) {
                 pricingList: (p.pricingList || []).map(r => ({ ...r })),
                 contactInfo: { contactPerson: p.contactInfo?.contactPerson || '', phone: p.contactInfo?.phone || '', email: p.contactInfo?.email || '' },
             });
+                        setLoading(false);
         } catch (err) {
+                if (attempt < 1 && /not found/i.test(err.message || '')) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                return loadProfile(attempt + 1);
+            }
             setError(err.message || 'Could not load profile.');
-        } finally {
             setLoading(false);
         }
     }

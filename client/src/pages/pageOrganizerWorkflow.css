@@ -486,9 +486,6 @@
 }
 
 @media (max-width: 700px) {
-  .workflow-content {
-    padding: 24px 14px 48px;
-  }
 
   .workflow-heading,
   .section-header {

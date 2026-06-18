@@ -19,8 +19,8 @@ export default function RegisterForOthers() {
   });
 
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [successInfo, setSuccessInfo] = useState(null);
+    const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -47,8 +47,15 @@ export default function RegisterForOthers() {
 
     try {
       const { confirmPassword, ...payload } = formData;
-      await registerForOthers(payload);
-      setSuccess(true);
+      const createdRole = payload.role;
+      const createdEmail = payload.email;
+      const result = await registerForOthers(payload);
+      setSuccessInfo({
+        role: createdRole,
+        email: createdEmail,
+        emailSent: Boolean(result.emailSent),
+        emailWarning: result.emailWarning || null,
+      });
       setFormData({
         fullname: "",
         email: "",
@@ -109,17 +116,37 @@ return (
       />
 
       <div className="organizer-dashboard-content">
-        {success ? (
-          <GlassPanel style={styles.card}>
+        {successInfo ? (          <GlassPanel style={styles.card}>
             <div style={styles.successIcon}>✓</div>
 
-            <h2 style={styles.title}>User created</h2>
-
-            <p style={styles.subtitle}>
-              The account has been created successfully.
-            </p>
-
-            <button style={styles.button} onClick={() => setSuccess(false)}>
+             <h2 style={styles.title}>
+              {successInfo.role === "staff" ? "Staff account created" : "User created"}
+            </h2>
+            {successInfo.role === "staff" && successInfo.emailSent ? (
+              <>
+                <p style={styles.subtitle}>
+                  Login details were emailed to{" "}
+                  <strong style={{ color: "#ede9ff" }}>{successInfo.email}</strong>, including
+                  the temporary password and step-by-step login instructions.
+                </p>
+                <p style={styles.successNote}>
+                  The staff member can sign in at the login page using their email and the password
+                  you set.
+                </p>
+              </>
+            ) : successInfo.role === "staff" && successInfo.emailWarning ? (
+              <>
+                <p style={styles.subtitle}>
+                  The staff account was created, but the login email could not be sent.
+                </p>
+                <div style={styles.warning}>{successInfo.emailWarning}</div>
+              </>
+            ) : (
+              <p style={styles.subtitle}>
+                The account has been created successfully.
+              </p>
+            )}
+            <button style={styles.button} onClick={() => setSuccessInfo(null)}>
               Create another
             </button>
           </GlassPanel>
@@ -369,5 +396,24 @@ const styles = {
     fontSize: "24px",
     fontWeight: 950,
     marginBottom: "20px",
+  },
+
+
+  successNote: {
+    margin: "14px 0 0",
+    fontSize: "13px",
+    color: "rgba(237,233,255,0.45)",
+    lineHeight: 1.6,
+  },
+  warning: {
+    marginTop: "16px",
+    background: "rgba(245,166,35,0.12)",
+    color: "#f5a623",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    fontSize: "13px",
+    fontWeight: 700,
+    border: "1px solid rgba(245,166,35,0.32)",
+    lineHeight: 1.5,
   },
 };

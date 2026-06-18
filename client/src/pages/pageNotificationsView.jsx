@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { VscHome, VscMail, VscCalendar, VscBell, VscPerson } from "react-icons/vsc";
 import Dock from "../components/componentDock.jsx";
 import AppHeader from "../components/componentAppHeader.jsx";
+import "./pageOrganizerDashboard.css";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 
 // TODO: replace with the actual logged-in user's id (e.g. from auth context)
@@ -40,8 +41,8 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => n.status === "unread").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a12", color: "#E8E6F0", fontFamily: "system-ui, -apple-system, sans-serif", padding: "24px 24px 140px" }}>
-      <AppHeader
+    <div className="organizer-dashboard-page">
+            <AppHeader
         crumb="Notifications"
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
@@ -50,8 +51,8 @@ export default function NotificationsPage() {
           </div>
         }
       />
-      <div style={{ maxWidth: 900, margin: "0 auto", paddingTop: 12 }}>
-        <div style={{ marginBottom: 28 }}>
+      <div className="organizer-dashboard-content">
+                <div style={{ marginBottom: 28 }}>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#F8FAFC", letterSpacing: "-0.03em" }}>Notifications</h1>
           <p style={{ margin: "6px 0 0", fontSize: 14, color: "rgba(232,230,240,0.68)" }}>
             {notifications.filter((n) => n.status === "unread").length > 0

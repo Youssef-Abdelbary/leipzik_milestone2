@@ -37,8 +37,7 @@ export const getMyVendorProfile = async (req, res) => {
     try {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
-        const profile = await ensureVendorProfile(userId);
-        if (!profile) return res.status(404).json({ message: 'Vendor profile not found.' });
+        const profile = await ensureVendorProfile(userId, { role: req.user?.role });        if (!profile) return res.status(404).json({ message: 'Vendor profile not found.' });
         res.json({ data: profile.toObject ? profile.toObject() : profile });
     } catch (err) {
         console.error('getMyVendorProfile error:', err);
@@ -52,8 +51,7 @@ export const updateMyVendorProfile = async (req, res) => {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
 
-        const existing = await ensureVendorProfile(userId);
-        if (!existing) return res.status(404).json({ message: 'Vendor profile not found.' });
+        const existing = await ensureVendorProfile(userId, { role: req.user?.role });        if (!existing) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const { companyName, suppliesOffered, mainLocation, pricingList, contactInfo } = req.body;
 
@@ -76,8 +74,7 @@ export const getMyVendorInbox = async (req, res) => {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
 
-        const vendorProfile = await ensureVendorProfile(userId);
-        if (!vendorProfile) return res.json({ data: [] });
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });        if (!vendorProfile) return res.json({ data: [] });
 
         const requests = await VendorRequest.find({
             vendorId: vendorProfile._id,
@@ -106,8 +103,7 @@ export const respondToVendorRequest = async (req, res) => {
             return res.status(400).json({ message: 'Status must be accepted or rejected.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
-        if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });        if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const requestRecord = await VendorRequest.findOne({
             _id: requestId,
@@ -146,8 +142,8 @@ export const getMyVendorRequests = async (req, res) => {
             return res.status(401).json({ message: 'Authentication required.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
-        if (!vendorProfile) {
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
+                if (!vendorProfile) {
             return res.json({ data: [] });
         }
 
@@ -221,8 +217,7 @@ export const sendVendorClarificationMessage = async (req, res) => {
             return res.status(400).json({ message: 'Message text is required.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
-        if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });        if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const requestRecord = await VendorRequest.findOne({
             _id: requestId,

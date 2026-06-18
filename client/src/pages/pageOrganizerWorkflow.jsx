@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./pageOrganizerWorkflow.css";
+import "./pageEvents.css";
 import "../components/componentTheme.css";
 import AppHeader from "../components/componentAppHeader";
 import { P, icons, GlassPanel } from "../components/componentTheme";
@@ -211,8 +212,7 @@ function OrganizerWorkflow() {
   ];
 
   return (
-    <div className="workflow-page">
-      <AppHeader
+    <div className="workflow-page organizer-dashboard-page">      <AppHeader
         crumb="My Workflow"
         right={
           <div className="organizer-dashboard-pill">
@@ -220,8 +220,7 @@ function OrganizerWorkflow() {
           </div>
         }
       />
-      <main className="workflow-content">
-
+      <main className="workflow-content organizer-dashboard-content">
         <div className="summary-cards">
           <WorkflowStatCard
             label="Today's Events"
