@@ -3,10 +3,9 @@ import { registerForOthers } from "../services/serviceRegisterOthers";
 import "../components/componentTheme.css";
 import { P, GlassPanel } from "../components/componentTheme";
 import { useNavigate } from "react-router-dom";
-import "./pageDeactivate.css";
-import "./Login.css";
-import CurvedLoop from "../components/CurvedLoop";
-import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
+import "./pageEvents.css";
+import AppHeader from "../components/componentAppHeader";
+import { VscHome, VscCalendar, VscPerson, VscPersonAdd, VscTrash } from "react-icons/vsc";
 import Dock from "../components/componentDock";
 
 export default function RegisterForOthers() {
@@ -98,23 +97,19 @@ export default function RegisterForOthers() {
     },
   ];
 
-  if (success) {
-    return (
-      <div className="login-page">
-        <div className="login-background-glow login-glow-one"></div>
-        <div className="login-background-glow login-glow-two"></div>
+return (
+    <div className="organizer-dashboard-page">
+      <AppHeader
+        crumb="Create User"
+        right={
+          <div className="organizer-dashboard-pill">
+            Organizer Dashboard
+          </div>
+        }
+      />
 
-        <div className="login-marquee login-marquee--top">
-          <CurvedLoop
-            marqueeText="PopEyez ✦ a moving cafe ✦ "
-            speed={1.5}
-            curveAmount={180}
-            direction="left"
-            interactive={false}
-          />
-        </div>
-
-        <div style={styles.container}>
+      <div className="organizer-dashboard-content">
+        {success ? (
           <GlassPanel style={styles.card}>
             <div style={styles.successIcon}>✓</div>
 
@@ -128,161 +123,115 @@ export default function RegisterForOthers() {
               Create another
             </button>
           </GlassPanel>
-        </div>
-
-        <div className="login-marquee login-marquee--bottom">
-          <CurvedLoop
-            marqueeText="PopEyez ✦ a moving cafe ✦ "
-            speed={1.5}
-            curveAmount={-250}
-            direction="right"
-            interactive={false}
-          />
-        </div>
-
-        <Dock items={dockItems} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="login-page">
-      <div className="login-background-glow login-glow-one"></div>
-      <div className="login-background-glow login-glow-two"></div>
-
-      <div className="login-marquee login-marquee--top">
-        <CurvedLoop
-          marqueeText="PopEyez ✦ a moving cafe ✦ "
-          speed={1.5}
-          curveAmount={180}
-          direction="left"
-          interactive={false}
-        />
-      </div>
-
-      <div style={styles.container}>
-        <GlassPanel style={styles.card}>
-          <div style={styles.header}>
-            <p style={styles.kicker}>Organizer Control</p>
-
-            <h1 style={styles.title}>Create a user</h1>
-
-            <p style={styles.subtitle}>
-              Add a vendor, guest, or staff member to the platform.
-            </p>
-          </div>
-
-          {error && <div style={styles.error}>{error}</div>}
-
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <div style={styles.field}>
-              <label style={styles.label}>Role</label>
-
-              <div style={styles.roleGroup}>
-                {[
-                  { label: "Vendor", value: "vendor" },
-                  { label: "Staff", value: "staff" },
-                ].map((role) => (
-                  <button
-                    key={role.value}
-                    type="button"
-                    onClick={() =>
-                      setFormData({ ...formData, role: role.value })
-                    }
-                    style={{
-                      ...styles.roleButton,
-                      ...(formData.role === role.value
-                        ? styles.roleButtonActive
-                        : {}),
-                    }}
-                  >
-                    {role.label}
-                  </button>
-                ))}
-              </div>
+          ) : (
+          <>
+            <div style={styles.header}>
+              <p style={styles.kicker}>Organizer Control</p>
+              <h1 style={styles.title}>Create a user</h1>
+              <p style={styles.subtitle}>
+                Add a vendor or staff member to the platform.
+              </p>
             </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Full Name</label>
+  <GlassPanel style={styles.card}>
+              {error && <div style={styles.error}>{error}</div>}
 
-              <input
-                style={styles.input}
-                type="text"
-                name="fullname"
-                placeholder="John Doe"
-                value={formData.fullname}
-                onChange={handleChange}
-              />
-            </div>
+              <form onSubmit={handleSubmit} style={styles.form}>
+                <div style={styles.field}>
+                  <label style={styles.label}>Role</label>
+                  <div style={styles.roleGroup}>
+                    {[
+                      { label: "Vendor", value: "vendor" },
+                      { label: "Staff", value: "staff" },
+                    ].map((role) => (
+                      <button
+                        key={role.value}
+                        type="button"
+                        onClick={() =>
+                          setFormData({ ...formData, role: role.value })
+                        }
+                        style={{
+                          ...styles.roleButton,
+                          ...(formData.role === role.value
+                            ? styles.roleButtonActive
+                            : {}),
+                        }}
+                      >
+                        {role.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Email</label>
+              <div style={styles.field}>
+                  <label style={styles.label}>Full Name</label>
+                  <input
+                    style={styles.input}
+                    type="text"
+                    name="fullname"
+                    placeholder="John Doe"
+                    value={formData.fullname}
+                    onChange={handleChange}
+                  />
+                </div>
 
-              <input
-                style={styles.input}
-                type="email"
-                name="email"
-                placeholder="jane@example.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+  <div style={styles.field}>
+                  <label style={styles.label}>Email</label>
+                  <input
+                    style={styles.input}
+                    type="email"
+                    name="email"
+                    placeholder="jane@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Phone</label>
+  <div style={styles.field}>
+                  <label style={styles.label}>Phone</label>
+                  <input
+                    style={styles.input}
+                    type="tel"
+                    name="phone"
+                    placeholder="+201009998877"
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+ <div style={styles.field}>
+                  <label style={styles.label}>Password</label>
+                  <input
+                    style={styles.input}
+                    type="password"
+                    name="password"
+                    placeholder="Enter password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
 
-              <input
-                style={styles.input}
-                type="tel"
-                name="phone"
-                placeholder="+201009998877"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
 
-            <div style={styles.field}>
-              <label style={styles.label}>Password</label>
-
-              <input
-                style={styles.input}
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div style={styles.field}>
-              <label style={styles.label}>Confirm Password</label>
-
-              <input
-                style={styles.input}
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-
-            <button style={styles.button} type="submit" disabled={loading}>
-              {loading ? "Creating user..." : "Create user"}
-            </button>
-          </form>
-        </GlassPanel>
+  <div style={styles.field}>
+                  <label style={styles.label}>Confirm Password</label>
+                  <input
+                    style={styles.input}
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Confirm password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </div>
+   <button style={styles.button} type="submit" disabled={loading}>
+                  {loading ? "Creating user..." : "Create user"}
+                </button>
+              </form>
+            </GlassPanel>
+          </>
+        )}
       </div>
 
-      <div className="login-marquee login-marquee--bottom">
-        <CurvedLoop
-          marqueeText="PopEyez ✦ a moving cafe ✦ "
-          speed={1.5}
-          curveAmount={-250}
-          direction="right"
-          interactive={false}
-        />
-      </div>
+
 
       <Dock items={dockItems} />
     </div>
@@ -290,29 +239,16 @@ export default function RegisterForOthers() {
 }
 
 const styles = {
-  container: {
-    width: "100%",
-    minHeight: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "transparent",
-    padding: "24px",
-    boxSizing: "border-box",
-    position: "relative",
-    zIndex: 2,
-  },
 
   card: {
     width: "100%",
-    maxWidth: "520px",
-    padding: "38px",
+    maxWidth: "640px",
+    padding: "32px",
     background: "rgba(18, 18, 29, 0.82)",
   },
 
   header: {
-    marginBottom: "28px",
-  },
+    marginBottom: "24px",  },
 
   kicker: {
     margin: "0 0 8px",
@@ -325,11 +261,10 @@ const styles = {
 
   title: {
     margin: 0,
-    fontSize: "32px",
-    fontWeight: 950,
+    fontSize: "30px",
+        fontWeight: 950,
     color: P.text,
-    letterSpacing: "-0.05em",
-    fontFamily: "var(--font-display), system-ui, sans-serif",
+    letterSpacing: "-0.04em",    fontFamily: "var(--font-display), system-ui, sans-serif",
   },
 
   subtitle: {

@@ -3,13 +3,9 @@
   background: var(--opal-bg);
   color: var(--opal-text);
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
-  padding-bottom: 120px;
 }
 
 .workflow-content {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 48px 24px 56px;
   animation: workflowIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 

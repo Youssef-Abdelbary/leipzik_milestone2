@@ -8,8 +8,8 @@ export async function getActiveStaff(req, res) {
       role: "staff",
       status: "active",
     }).select("_id fullname fullName email");
-    res.json(staffMembers);
-  } catch (error) {
+    res.json(staffMembers.map((member) => normalizeUserRecord(member.toObject())));
+    } catch (error) {
     console.error("Load staff error:", error);
 
     res.status(500).json({
