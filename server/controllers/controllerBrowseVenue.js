@@ -35,6 +35,7 @@ export async function searchVenues(req, res) {
 export async function requestBooking(req, res) {
     try {
         const {
+            eventId,
             eventType,
             requestedDates,
             expectedAttendees,
@@ -59,6 +60,7 @@ export async function requestBooking(req, res) {
             organizerId:  req.user.user_id,
             venueId:      venue._id,
             venueOwnerId: venue.ownerId,
+            eventId:      eventId ?? null,
 
             eventType,
             requestedDates: requestedDates.map(d => new Date(d + 'T00:00:00.000Z')),
@@ -73,7 +75,6 @@ export async function requestBooking(req, res) {
             status: 'pending',
         });
 
-        // ─── Notify the venue owner ───────────────────────────────────────────
         const dateLabel = requestedDates.length === 1
             ? new Date(requestedDates[0]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
             : `${requestedDates.length} dates`;
@@ -87,7 +88,6 @@ export async function requestBooking(req, res) {
             relatedEntityId:   bookingRequest._id,
             status:            'unread',
         });
-        // ─────────────────────────────────────────────────────────────────────
 
         return res.status(201).json({ message: 'Booking request sent', bookingRequest });
     } catch (err) {

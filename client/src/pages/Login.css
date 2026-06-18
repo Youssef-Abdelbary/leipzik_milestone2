@@ -35,6 +35,25 @@
   background: var(--opal-teal);
 }
 
+/* ── Marquee strips ── */
+.login-marquee {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.13;
+}
+
+.login-marquee--top {
+  top: 0;
+}
+
+.login-marquee--bottom {
+  bottom: -150px;
+}
+
+/* ── Card ── */
 .login-card {
   width: 420px;
   max-width: 100%;

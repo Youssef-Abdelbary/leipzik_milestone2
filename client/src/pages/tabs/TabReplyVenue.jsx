@@ -489,18 +489,6 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 
 =======
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {booking.status === 'approved' && eventId && (
-                            booking.appliedToEvent ? (
-                                <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                                    padding: '5px 12px', borderRadius: 8,
-                                    background: 'var(--opal-teal-dim)', border: '1px solid rgba(79,209,197,0.28)',
-                                    color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
-                                }}>✓ Applied to Event</span>
-                            ) : (
-                                <Btn label={applying ? 'Applying…' : '✓ Apply to Event'} color="var(--opal-teal)" onClick={handleApplyToEvent} disabled={applying} style={{ padding: '6px 14px', fontSize: 12 }} />
-                            )
-                        )}
                         <Badge status={booking.status} />
                     </div>
                 </div>
@@ -609,10 +597,10 @@ export default function PageReplyVenue({ onNavigate }) {
     const [loading,  setLoading]  = useState(true);
 
     useEffect(() => {
-        fetchMyVenueReplies()
+        fetchMyVenueReplies(eventId)
             .then(data => { setBookings(data.replies); setSelected(data.replies[0] ?? null); })
             .finally(() => setLoading(false));
-    }, []);
+    }, [eventId]);
 
     const handleBookingUpdate = useCallback((bookingId, patch) => {
         setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, ...patch } : b));

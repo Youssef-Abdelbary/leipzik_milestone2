@@ -837,7 +837,82 @@ function notifMeta(type) {
 
 // ─── Notifications panel ──────────────────────────────────────────────────────
 
+// AFTER
 function NotificationsPanel() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+  const [dismissing,    setDismissing]    = useState(new Set());
+  const [todayBookings, setTodayBookings] = useState([]);
+
+  const todayStr = (() => {
+    const t = new Date();
+    return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
+  })();
+
+  async function load() {
+    setLoading(true); setError(null);
+    try {
+      const [notifData, todayData] = await Promise.all([
+        fetchNotifications(),
+        getConfirmedBookings({ status: "approved", startDate: todayStr, endDate: todayStr })
+          .then(res => res.data || [])
+          .catch(() => []),
+      ]);
+      setNotifications(notifData || []);
+      setTodayBookings(todayData);
+    } catch(e) {
+      setError(e.message || "Failed to load notifications");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const id = "opal-ping-style";
+    if (!document.getElementById(id)) {
+      const s = document.createElement("style");
+      s.id = id;
+      s.textContent = `@keyframes opal-ping { 75%, 100% { transform: scale(2); opacity: 0; } }`;
+      document.head.appendChild(s);
+    }
+  }, []);
+
+  const unreadCount = notifications.filter(n => n.status === "unread").length;
+
+  async function handleMarkOne(id) {
+    // Optimistically mark as read in local state
+    setDismissing(prev => new Set(prev).add(id));
+    setNotifications(prev =>
+      prev.map(n => n._id === id ? { ...n, status: "read" } : n)
+    );
+    try {
+      await markNotificationsRead([id]);
+    } catch(e) {
+      // Roll back on failure
+      setNotifications(prev =>
+        prev.map(n => n._id === id ? { ...n, status: "unread" } : n)
+      );
+    } finally {
+      setDismissing(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  }
+
+  async function handleMarkAll() {
+    const unreadIds = notifications.filter(n => n.status === "unread").map(n => n._id);
+    if (!unreadIds.length) return;
+    // Optimistic
+    setNotifications(prev => prev.map(n => ({ ...n, status: "read" })));
+    try {
+      await markNotificationsRead(unreadIds);
+    } catch(e) {
+      // Re-fetch on failure
+      load();
+    }
+  }
+
   return (
     <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", height:"100%", minHeight:0 }}>
       {/* Header row */}
@@ -870,7 +945,63 @@ function NotificationsPanel() {
           </button>
         )}
       </div>
-
+      {/* ── Today's bookings pin ── */}
+      {todayBookings.length > 0 && (
+        <div style={{
+          flexShrink: 0,
+          marginBottom: 10,
+          padding: "10px 12px",
+          borderRadius: 11,
+          background: "rgba(245,179,74,0.07)",
+          border: "1px solid rgba(245,179,74,0.32)",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* shimmer accent line */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 2,
+            background: "linear-gradient(90deg, var(--opal-violet,#7c5cfc) 0%, var(--opal-amber,#f5b34a) 60%, var(--opal-teal,#4fd1c5) 100%)",
+          }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+            {/* pulsing live dot */}
+            <span style={{ position: "relative", display: "inline-flex", width: 8, height: 8, flexShrink: 0 }}>
+              <span style={{
+                position: "absolute", inset: 0, borderRadius: "50%",
+                background: "var(--opal-amber,#f5b34a)",
+                animation: "opal-ping 1.4s cubic-bezier(0,0,0.2,1) infinite",
+                opacity: 0.6,
+              }} />
+              <span style={{
+                position: "relative", display: "inline-block",
+                width: 8, height: 8, borderRadius: "50%",
+                background: "var(--opal-amber,#f5b34a)",
+              }} />
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 800, letterSpacing: 0.8, textTransform: "uppercase",
+              color: "var(--opal-amber,#f5b34a)", fontFamily: "var(--font-body,system-ui)",
+            }}>
+              Today · {todayBookings.length} booking{todayBookings.length > 1 ? "s" : ""}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            {todayBookings.map(b => (
+              <div key={b._id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{
+                  width: 3, height: 3, borderRadius: "50%", flexShrink: 0,
+                  background: "var(--opal-amber,#f5b34a)", opacity: 0.7,
+                }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--opal-text,#e8e6f0)", flex: 1, minWidth: 0 }}>
+                  {b.venueId?.name || "Venue"}
+                </span>
+                <span style={{ fontSize: 10, color: "var(--opal-sub,rgba(232,230,240,0.55))", flexShrink: 0 }}>
+                  {b.organizerId?.fullname || ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Scrollable list */}
       <div style={{
         flex:1, overflowY:"auto", minHeight:0,

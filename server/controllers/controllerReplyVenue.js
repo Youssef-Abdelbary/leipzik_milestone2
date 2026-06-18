@@ -115,13 +115,24 @@ async function applyCounterToBooking(booking, counterProposal) {
 export async function getMyVenueReplies(req, res) {
     try {
         const userId = req.user.user_id;
+        const { eventId } = req.query;
 
-        const bookings = await BrowseVenue.find({
+        // Build query first, then run it
+        const query = {
             $or: [
                 { organizerId: userId },
                 { venueOwnerId: userId },
             ],
-        })
+        };
+
+        if (eventId) {
+            if (!isValidObjectId(eventId)) {
+                return res.status(400).json({ message: 'Invalid event id' });
+            }
+            query.eventId = eventId;
+        }
+
+        const bookings = await BrowseVenue.find(query)
             .populate('organizerId', 'name email avatar')
             .populate('venueId', 'name ownerId')
             .sort({ updatedAt: -1 })
