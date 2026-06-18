@@ -80,7 +80,7 @@ export default function RegisterForOthers() {
     },
     {
       icon: <VscTrash size={26} />,
-      label: "Users",
+      label: "Deactivate users",
       active: false,
       onClick: () => navigate("/organizer/deactivate"),
     },

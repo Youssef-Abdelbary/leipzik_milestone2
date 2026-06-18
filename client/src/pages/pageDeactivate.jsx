@@ -311,8 +311,8 @@ export default function UserManagement({ onTabChange }) {
       onClick: () => navigate("/organizer/events"),
     },
     {
-      icon: <VscPersonAdd size={26} />,
-      label: "Users",
+      icon: <VscTrash size={26} />,
+      label: "Deactivate users",
       active: true,
       onClick: () => {
         if (onTabChange) {
@@ -321,7 +321,7 @@ export default function UserManagement({ onTabChange }) {
       },
     },
     {
-      icon: <VscTrash size={26} />,
+      icon: <VscPersonAdd size={26} />,
       label: "Create",
       active: false,
       onClick: () => navigate("/organizer/registerothers"),
