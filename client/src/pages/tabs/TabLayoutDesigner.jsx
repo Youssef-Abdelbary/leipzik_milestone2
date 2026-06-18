@@ -266,30 +266,46 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 function VenueLayoutDesigner() {
-  const [items, setItems]                   = useState([]);
+  const [items, setItems] = useState([]);
   const [draggingItemId, setDraggingItemId] = useState(null);
-  const [dragOffset, setDragOffset]         = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedItemId, setSelectedItemId] = useState(null);
-  const floorPlanRef                        = useRef(null);
-  const [staffMembers, setStaffMembers]     = useState([]);
+  const floorPlanRef = useRef(null);
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [showShareBox, setShowShareBox] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState("");
   const [currentLayoutId, setCurrentLayoutId] = useState(null);
-  const [events, setEvents]                 = useState([]);
+  const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("");
 
   useEffect(() => {
     async function loadEvents() {
       try {
         const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-        if (!loggedInUser?._id && !loggedInUser?.id) return;
+
+        if (!loggedInUser?._id && !loggedInUser?.id) {
+          console.warn("No logged-in user found.");
+          return;
+        }
+
         const organizerId = loggedInUser._id || loggedInUser.id;
-        const response = await fetch(`http://localhost:5001/api/workflow/events/${organizerId}`);
+
+        const response = await fetch(
+          `http://localhost:5001/api/workflow/events/${organizerId}`
+        );
+
         const data = await response.json();
+
         setEvents(data);
-        if (data.length > 0) setSelectedEventId(data[0]._id);
+
+        if (data.length > 0) {
+          setSelectedEventId(data[0]._id);
+        }
       } catch (error) {
         console.error("Failed to load events:", error);
       }
     }
+
     loadEvents();
   }, []);
 
@@ -297,26 +313,63 @@ function VenueLayoutDesigner() {
     async function loadStaffMembers() {
       try {
         const response = await fetch("http://localhost:5001/api/layouts/staff");
+
         const data = await response.json();
-        if (response.ok) setStaffMembers(data);
+
+        if (!response.ok) {
+          alert(data.message || "Failed to load staff members");
+          return;
+        }
+
+        setStaffMembers(data);
       } catch (error) {
         console.error("Failed to load staff members:", error);
+        alert("Something went wrong while loading staff members.");
       }
     }
+
     loadStaffMembers();
   }, []);
 
   useEffect(() => {
     async function loadLayoutForSelectedEvent() {
-      if (!selectedEventId) { setItems([]); setCurrentLayoutId(null); return; }
+      if (!selectedEventId) {
+        setItems([]);
+        setCurrentLayoutId(null);
+        return;
+      }
+
       try {
-        const response = await fetch(`http://localhost:5001/api/layouts/event/${selectedEventId}`);
+        const response = await fetch(
+          `http://localhost:5001/api/layouts/event/${selectedEventId}`
+        );
+
         const data = await response.json();
-        if (!response.ok || !data) { setItems([]); setCurrentLayoutId(null); return; }
-        setItems(data.elements.map(el => ({ id: Number(el.elementId), type: el.type, x: el.x, y: el.y })));
+
+        if (!response.ok) {
+          alert(data.message || "Failed to load layout for this event");
+          return;
+        }
+
+        if (!data) {
+          setItems([]);
+          setCurrentLayoutId(null);
+          return;
+        }
+
+        const loadedItems = data.elements.map((element) => ({
+          id: Number(element.elementId),
+          type: element.type,
+          x: element.x,
+          y: element.y,
+          rotation: element.rotation || 0,
+        }));
+
+        setItems(loadedItems);
         setCurrentLayoutId(data._id);
       } catch (error) {
-        console.error("Failed to load layout:", error);
+        console.error("Failed to load layout for selected event:", error);
+        alert("Something went wrong while loading this event layout.");
       }
     }
 >>>>>>> 6172aed (mid changes 2)
@@ -417,33 +470,95 @@ function VenueLayoutDesigner() {
 =======
     if (!selectedEventId) { alert("Please select an event before sharing the layout."); return; }
     try {
-      const selectedEvent = events.find(e => e._id === selectedEventId);
-      const layoutTitle = selectedEvent ? `${selectedEvent.title} Venue Layout` : "Venue Layout";
+      const selectedEvent = events.find((event) => event._id === selectedEventId);
+
+      const layoutTitle = selectedEvent
+        ? `${selectedEvent.title} Venue Layout`
+        : "Venue Layout";
+
+      // 1. Save/update the layout first
       const saveResponse = await fetch("http://localhost:5001/api/layouts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          eventId: selectedEventId, title: layoutTitle,
-          elements: items.map(item => ({ elementId: String(item.id), type: item.type, label: item.type, x: item.x, y: item.y, width: 100, height: 50, rotation: 0 })),
-          canvasSize: { width: 1000, height: 620 },
+          eventId: selectedEventId,
+          title: layoutTitle,
+          elements: items.map((item) => ({
+            elementId: String(item.id),
+            type: item.type,
+            label: item.type,
+            x: item.x,
+            y: item.y,
+            width: 100,
+            height: 50,
+            rotation: item.rotation || 0,
+          })),
+          canvasSize: {
+            width: 1000,
+            height: 620,
+          },
         }),
       });
+
       const saveData = await saveResponse.json();
-      if (!saveResponse.ok) { alert(saveData.message || "Failed to save layout"); return; }
+
+      if (!saveResponse.ok) {
+        alert(saveData.message || "Failed to save layout");
+        return;
+      }
+
       const layoutId = saveData.layout._id;
       setCurrentLayoutId(layoutId);
-      const tasksResponse = await fetch(`http://localhost:5001/api/team/events/${selectedEventId}/tasks`);
+
+      // 2. Get all tasks for this event
+      const tasksResponse = await fetch(
+        `http://localhost:5001/api/team/events/${selectedEventId}/tasks`
+      );
+
       const tasksData = await tasksResponse.json();
-      if (!tasksResponse.ok) { alert(tasksData.message || "Failed to load staff"); return; }
-      const staffIds = [...new Set(tasksData.filter(t => t.assignedTo).map(t => String(t.assignedTo)))];
-      if (staffIds.length === 0) { alert("No staff members assigned to tasks in this event."); return; }
-      const shareResponse = await fetch(`http://localhost:5001/api/layouts/${layoutId}/share`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffIds }),
-      });
+
+      if (!tasksResponse.ok) {
+        alert(tasksData.message || "Failed to load event staff members");
+        return;
+      }
+
+      // 3. Extract unique staff IDs assigned to tasks in this event
+      const staffIds = [
+        ...new Set(
+          tasksData
+            .filter((task) => task.assignedTo)
+            .map((task) => String(task.assignedTo))
+        ),
+      ];
+
+      if (staffIds.length === 0) {
+        alert("No staff members are assigned to tasks in this event.");
+        return;
+      }
+
+      // 4. Share layout with all event staff members
+      const shareResponse = await fetch(
+        `http://localhost:5001/api/layouts/${layoutId}/share`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            staffIds: staffIds,
+          }),
+        }
+      );
+
       const shareData = await shareResponse.json();
-      if (!shareResponse.ok) { alert(shareData.message || "Failed to share layout"); return; }
+
+      if (!shareResponse.ok) {
+        alert(shareData.message || "Failed to share layout");
+        return;
+      }
+
       alert(`Layout shared with ${staffIds.length} staff member(s)!`);
 >>>>>>> 6172aed (mid changes 2)
     } catch (error) {
@@ -496,16 +611,21 @@ function VenueLayoutDesigner() {
     link.href = image;
 =======
   function addItem(type) {
-    setItems(prev => [...prev, { id: Date.now(), type, x: 100 + prev.length * 24, y: 100 + prev.length * 24 }]);
+    const newItem = {
+      id: Date.now(),
+      type: type,
+      x: 100 + items.length * 20,
+      y: 100 + items.length * 20,
+      rotation: 0,
+    };
+
+    setItems([...items, newItem]);
   }
 
-  function clearLayout() { setItems([]); setSelectedItemId(null); }
-
-  function deleteSelectedItem() {
-    if (selectedItemId === null) return;
-    setItems(items.filter(item => item.id !== selectedItemId));
+  function clearLayout() {
+    setItems([]);
     setSelectedItemId(null);
-  }
+    }
 
   async function exportAsImage() {
     if (!floorPlanRef.current) return;
@@ -617,29 +737,89 @@ function VenueLayoutDesigner() {
     setSelectedItemId(null);
     await wait(100);
     const canvas = await html2canvas(floorPlanRef.current);
-    const pdf = new jsPDF("landscape", "mm", "a4");
-    const w = pdf.internal.pageSize.getWidth();
-    const h = pdf.internal.pageSize.getHeight();
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 10, 10, w - 20, h - 20);
-    pdf.save("venue-layout.pdf");
-  }
+    const image = canvas.toDataURL("image/png");
 
+    const pdf = new jsPDF("landscape", "mm", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    pdf.addImage(image, "PNG", 10, 10, pageWidth - 20, pageHeight - 20);
+
+    pdf.save("venue-layout.pdf");
+    }
+  function deleteSelectedItem() {
+    if (selectedItemId === null) return;
+
+    setItems(items.filter((item) => item.id !== selectedItemId));
+    setSelectedItemId(null);
+    }
+
+  function rotateSelectedItem(direction) {
+    if (selectedItemId === null) {
+      alert("Please select an item first.");
+      return;
+    }
+
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === selectedItemId
+          ? {
+              ...item,
+              rotation:
+                direction === "right"
+                  ? (item.rotation || 0) + 15
+                  : (item.rotation || 0) - 15,
+            }
+          : item
+      )
+    );
+  }
   async function saveLayout() {
-    if (!selectedEventId) { alert("Please select an event before saving."); return; }
     try {
-      const selectedEvent = events.find(e => e._id === selectedEventId);
-      const layoutTitle = selectedEvent ? `${selectedEvent.title} Venue Layout` : "Venue Layout";
+      if (!selectedEventId) {
+        alert("Please select an event before saving the layout.");
+        return;
+      }
+
+      const selectedEvent = events.find((event) => event._id === selectedEventId);
+
+      const layoutTitle = selectedEvent
+        ? `${selectedEvent.title} Venue Layout`
+        : "Venue Layout";
+
       const response = await fetch("http://localhost:5001/api/layouts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          eventId: selectedEventId, title: layoutTitle,
-          elements: items.map(item => ({ elementId: String(item.id), type: item.type, label: item.type, x: item.x, y: item.y, width: 100, height: 50, rotation: 0 })),
-          canvasSize: { width: 1000, height: 620 },
+          eventId: selectedEventId,
+          title: layoutTitle,
+          elements: items.map((item) => ({
+            elementId: String(item.id),
+            type: item.type,
+            label: item.type,
+            x: item.x,
+            y: item.y,
+            width: 100,
+            height: 50,
+            rotation: item.rotation || 0,
+          })),
+          canvasSize: {
+            width: 1000,
+            height: 620,
+          },
         }),
       });
+
       const data = await response.json();
-      if (!response.ok) { alert(data.message || "Failed to save layout"); return; }
+
+      if (!response.ok) {
+        alert(data.message || "Failed to save layout");
+        return;
+      }
+
       setCurrentLayoutId(data.layout._id);
       alert("Layout saved successfully!");
 >>>>>>> 6172aed (mid changes 2)
@@ -814,127 +994,71 @@ function VenueLayoutDesigner() {
     ));
   }
 
-  function stopDragging() { setDraggingItemId(null); }
-
-  const elementTypes = [
-    { type: "Table",    icon: "🍽️" },
-    { type: "Chair",    icon: "🪑" },
-    { type: "Stage",    icon: "🎤" },
-    { type: "Booth",    icon: "🏪" },
-    { type: "Entrance", icon: "🚪" },
-  ];
-
-  const countOf = (type) => items.filter(i => i.type === type).length;
+  function stopDragging() {
+    setDraggingItemId(null);
+  }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: P.bg, fontFamily: "'Inter', system-ui, sans-serif", color: P.text, overflow: 'hidden' }}>
+    <div className="layout-page">
+      <GlassPanel className="layout-sidebar">
+        <h2>Elements</h2>
 
-      {/* ── Sidebar ── */}
-      <aside style={{ width: 220, flexShrink: 0, padding: '24px 16px', borderRight: `1px solid ${P.border}`, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', background: 'rgba(10,10,18,0.6)', backdropFilter: 'blur(12px)' }}>
-        <p style={{ margin: '0 0 16px', fontSize: 11, fontWeight: 700, color: P.sub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Elements</p>
+        <button onClick={() => addItem("Table")}>🍽️ Table</button>
+        <button onClick={() => addItem("Chair")}>🪑 Chair</button>
+        <button onClick={() => addItem("Stage")}>🎤 Stage</button>
+        <button onClick={() => addItem("Booth")}>🏪 Booth</button>
+        <button onClick={() => addItem("Entrance")}>🚪 Entrance</button>
+      </GlassPanel>
 
-        {elementTypes.map(({ type, icon }) => (
-          <div key={type}>
-            <ElementPill icon={icon} label={type} onClick={() => addItem(type)} />
-            {countOf(type) > 0 && (
-              <p style={{ margin: '2px 0 6px 14px', fontSize: 11, color: ITEM_COLORS[type], fontWeight: 700 }}>
-                {countOf(type)} placed
-              </p>
-            )}
-          </div>
-        ))}
-
-        <div style={{ flex: 1 }} />
-
-        {/* Legend */}
-        <div style={{ paddingTop: 16, borderTop: `1px solid ${P.border}` }}>
-          <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 700, color: P.sub, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Legend</p>
-          {elementTypes.map(({ type, icon }) => (
-            <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: ITEM_COLORS[type], flexShrink: 0, boxShadow: `0 0 6px ${ITEM_COLORS[type]}88` }} />
-              <span style={{ fontSize: 12, color: P.sub }}>{icon} {type}</span>
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-        {/* Header */}
-        <div style={{ padding: '20px 28px', borderBottom: `1px solid ${P.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, flexShrink: 0, background: 'rgba(10,10,18,0.5)', backdropFilter: 'blur(12px)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ color: P.teal, background: P.tealGlow, padding: 8, borderRadius: 10, display: 'flex' }}>{icons.venue}</span>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: P.text, letterSpacing: '-0.02em' }}>Venue Layout Designer</h1>
-              <p style={{ margin: '3px 0 0', fontSize: 12, color: P.sub }}></p>
-            </div>
+      <main className="layout-main">
+        <div className="layout-header">
+          <div>
+            <h1>Venue Layout Designer</h1>
+            <p>Drag and drop elements to design your venue layout.</p>
           </div>
 
-          {/* Event selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: P.sub, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>Event</label>
+          <div className="event-selector">
+            <label>Select Event</label>
+
             <select
               value={selectedEventId}
-              onChange={e => setSelectedEventId(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: 9, border: `1px solid ${P.border}`, background: P.surface, color: P.text, fontSize: 13, fontFamily: 'inherit', outline: 'none', cursor: 'pointer', backdropFilter: 'blur(12px)', minWidth: 180 }}
-              onFocus={e => e.target.style.borderColor = `${P.blue}66`}
-              onBlur={e => e.target.style.borderColor = P.border}
+              onChange={(event) => setSelectedEventId(event.target.value)}
             >
               <option value="">Choose an event</option>
-              {events.map(event => (
-                <option key={event._id} value={event._id}>{event.title}</option>
+
+              {events.map((event) => (
+                <option key={event._id} value={event._id}>
+                  {event.title}
+                </option>
               ))}
             </select>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <ActionButton onClick={saveLayout} accent>{icons.save} Save</ActionButton>
-            <ActionButton onClick={shareLayoutWithStaff}>{icons.share} Share</ActionButton>
-            <ActionButton onClick={exportAsImage}>{icons.img} Image</ActionButton>
-            <ActionButton onClick={exportAsPDF}>{icons.pdf} PDF</ActionButton>
-            <ActionButton onClick={deleteSelectedItem} danger disabled={!selectedItemId}>{icons.trash} Delete</ActionButton>
-            <ActionButton onClick={clearLayout}>{icons.clear} Clear</ActionButton>
+        <GlassPanel className="layout-actions-panel">
+          <div className="layout-actions">
+            <button onClick={saveLayout}>Save Layout</button>
+            <button onClick={clearLayout}>Clear Layout</button>
+            <button onClick={shareLayoutWithStaff}>Share</button>
+            <button onClick={exportAsImage}>Export Image</button>
+            <button onClick={exportAsPDF}>Export PDF</button>
+            <button onClick={() => rotateSelectedItem("left")}>Rotate Left</button>
+            <button onClick={() => rotateSelectedItem("right")}>Rotate Right</button>
+            <button onClick={deleteSelectedItem}>Delete Selected</button>
           </div>
-        </div>
+        </GlassPanel>
 
-        {/* Stats strip */}
-        <div style={{ display: 'flex', gap: 12, padding: '14px 28px', borderBottom: `1px solid ${P.border}`, flexShrink: 0, background: 'rgba(10,10,18,0.3)' }}>
-          {elementTypes.map(({ type }) => (
-            countOf(type) > 0 && (
-              <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 99, background: `${ITEM_COLORS[type]}18`, border: `1px solid ${ITEM_COLORS[type]}33` }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ITEM_COLORS[type], boxShadow: `0 0 5px ${ITEM_COLORS[type]}` }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: ITEM_COLORS[type] }}>{countOf(type)} {type}{countOf(type) > 1 ? 's' : ''}</span>
-              </div>
-            )
-          ))}
-          {items.length === 0 && <span style={{ fontSize: 12, color: P.sub }}>No elements placed yet — click an element in the sidebar to begin</span>}
-          {items.length > 0 && (
-            <span style={{ marginLeft: 'auto', fontSize: 12, color: P.sub }}>{items.length} element{items.length !== 1 ? 's' : ''} total</span>
-          )}
-        </div>
-
-        {/* Canvas */}
-        <div style={{ flex: 1, padding: '24px 28px', overflow: 'hidden' }}>
-          <GlassPanel style={{ height: '100%', position: 'relative', overflow: 'hidden', background: 'rgba(10,10,18,0.4)' }}>
-            {/* Grid overlay */}
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(${P.border} 1px, transparent 1px), linear-gradient(90deg, ${P.border} 1px, transparent 1px)`, backgroundSize: '40px 40px', pointerEvents: 'none', opacity: 0.5 }} />
-
-            <div
-              ref={floorPlanRef}
-              style={{ position: 'absolute', inset: 0 }}
-              onMouseMove={handleMouseMove}
-              onMouseUp={stopDragging}
-              onMouseLeave={stopDragging}
-            >
-              {items.length === 0 && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, pointerEvents: 'none' }}>
-                  <span style={{ fontSize: 40, opacity: 0.2 }}>🏟️</span>
-                  <p style={{ margin: 0, fontSize: 14, color: P.muted, fontWeight: 600 }}>Floor plan canvas</p>
-                  <p style={{ margin: 0, fontSize: 12, color: P.muted }}>Add elements from the sidebar to get started</p>
-                </div>
-              )}
+        <GlassPanel className="floor-plan-panel">
+          <div
+            className="floor-plan"
+            ref={floorPlanRef}
+            onMouseMove={handleMouseMove}
+            onMouseUp={stopDragging}
+            onMouseLeave={stopDragging}
+          >
+            {items.length === 0 && (
+              <p className="floor-plan-empty">Floor plan canvas</p>
+            )}
 
               {items.map(item => {
                 const isSelected = selectedItemId === item.id;
