@@ -558,7 +558,6 @@ export default function PageResponseVenue() {
 
     const dockItems = [
         { icon: <VscMail size={26} />, label: "Requests", active: isRequestsActive, onClick: () => navigate("/venueowner/venueresponse") },
-        { icon: <VscBell size={26} />, label: "Notifications", active: location.pathname === '/notificationsview', onClick: () => navigate("/notificationsview") },
         { icon: <VscHome size={26} />, label: "Home", active: location.pathname === '/venueowner/venues', onClick: () => navigate("/venueowner/venues") },
         { icon: <VscCalendar size={26} />, label: "Reports", active: location.pathname === '/venueowner/venuereports', onClick: () => navigate("/venueowner/venuereports") },
         { icon: <VscPerson size={26} />, label: "Owner Profile", active: location.pathname === '/pageProfile', onClick: () => navigate("/pageProfile") },

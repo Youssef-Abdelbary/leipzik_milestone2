@@ -24,7 +24,6 @@ export default function NotificationsPage() {
 
   const dockItems = [
     { icon: <VscMail size={26} />, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
-    { icon: <VscBell size={26} />, label: 'Notifications', active: true, onClick: () => navigate('/notificationsview') },
     { icon: <VscHome size={26} />, label: 'Home', onClick: () => navigate('/venueowner/venues') },
     { icon: <VscCalendar size={26} />, label: 'Reports', onClick: () => navigate('/venueowner/venuereports') },
     { icon: <VscPerson size={26} />, label: 'Owner Profile', onClick: () => navigate('/pageProfile') },

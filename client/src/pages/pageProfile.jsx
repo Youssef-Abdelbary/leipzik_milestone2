@@ -63,11 +63,6 @@ const Profile = () => {
             onClick: () => navigate("/venueowner/venueresponse"),
         },
         {
-            icon: <VscBell size={26} />,
-            label: "Notifications",
-            onClick: () => navigate("/notificationsview"),
-        },
-        {
             icon: <VscHome size={26} />,
             label: "Home",
             onClick: () => navigate("/venueowner/venues"),
