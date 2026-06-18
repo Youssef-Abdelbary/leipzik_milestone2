@@ -19,6 +19,7 @@ import Dock from "../components/componentDock.jsx";
 import AppHeader from "../components/componentAppHeader.jsx";
 import { useNavigate } from "react-router-dom";
 import "../components/componentTheme.css";
+import "./pageOrganizerDashboard.css";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -26,8 +27,6 @@ const AMENITY_OPTIONS = [
   "Parking", "Outdoor Area", "Stage", "Wi-Fi", "Catering", "AV Equipment", "Dressing Room",
 ];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-const DOCK_HEIGHT = 120;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1267,7 +1266,7 @@ export default function PageOwnerDashboard() {
   ];
 
   return (
-    <div style={css.page}>
+    <div className="organizer-dashboard-page">
       <AppHeader
         crumb="Venue Owner"
         right={
@@ -1277,7 +1276,7 @@ export default function PageOwnerDashboard() {
           </div>
         }
       />
-      <div style={css.content}>
+      <div className="organizer-dashboard-content">
         {/* ── Confirmed Bookings ── */}
         <section style={{ marginBottom: 28 }}>
           <ConfirmedBookingsSection />
@@ -1304,17 +1303,6 @@ export default function PageOwnerDashboard() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const css = {
-  page: {
-    minHeight: "100vh",
-    background: "var(--opal-bg,#0a0a0f)",
-    fontFamily: "var(--font-body,system-ui)",
-    color: "var(--opal-text,#e8e6f0)",
-    WebkitFontSmoothing: "antialiased",
-  },
-  content: {
-    padding: `28px 28px ${DOCK_HEIGHT + 24}px`,
-  },
-
   bottomLayout: {
     display: "flex",
     gap: 20,

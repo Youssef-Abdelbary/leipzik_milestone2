@@ -13,17 +13,9 @@
   "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "html5-qrcode": "^2.3.8",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.6.3",
-    "motion": "^12.40.0",
-    "multer": "^2.1.1",
-    "nodemailer": "^8.0.11",
-    "qrcode": "^1.5.4",
-    "react-router-dom": "^7.18.0"
+    "mongoose": "^9.6.3"
   }
 }

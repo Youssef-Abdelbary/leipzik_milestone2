@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import modelUser from "../models/modelUser.js";
-import Vendor from "../models/modelVendor.js";
 import { generateToken, generateRefreshToken } from "../utils/generateJWT.js";
 
 const ALLOWED_ROLES = ["vendor", "venue_owner", "organizer"];
@@ -32,15 +31,6 @@ export const register = async (req, res) => {
             phone,
             role,
         });
-
-        if (role === 'vendor') {
-            await Vendor.create({
-                userId: user._id,
-                companyName: fullname,
-                contactInfo: { contactPerson: fullname, email, phone: phone || '' },
-                isActive: true,
-            });
-        }
 
         const token = generateToken(user._id, user.role);
         const refreshToken = generateRefreshToken(user._id);

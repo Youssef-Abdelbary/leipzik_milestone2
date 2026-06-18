@@ -14,7 +14,6 @@ import AppHeader from '../components/componentAppHeader';
 import Dock from '../components/componentDock';
 import { P, icons, GlassPanel } from '../components/componentTheme';
 import '../components/componentTheme.css';
-import { fetchNotifications, markNotificationAsRead } from '../services/serviceNotifications';
 
 const DELIVERY_ORDER = ['preparing', 'out_for_delivery', 'delivered'];
 
@@ -372,10 +371,10 @@ function ProfileEditor({ onSaved, onLogout }) {
 
     useEffect(() => { loadProfile(); }, []);
 
-    async function loadProfile() {
+    async function loadProfile(attempt = 0) {
+        setLoading(true);
+        setError(null);
         try {
-            setLoading(true);
-            setError(null);
             const res = await fetchMyVendorProfile();
             const p = res.data || EMPTY_PROFILE;
             setProfile(p);
@@ -386,9 +385,13 @@ function ProfileEditor({ onSaved, onLogout }) {
                 pricingList: (p.pricingList || []).map(r => ({ ...r })),
                 contactInfo: { contactPerson: p.contactInfo?.contactPerson || '', phone: p.contactInfo?.phone || '', email: p.contactInfo?.email || '' },
             });
+            setLoading(false);
         } catch (err) {
+            if (attempt < 1 && /not found/i.test(err.message || '')) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                return loadProfile(attempt + 1);
+            }
             setError(err.message || 'Could not load profile.');
-        } finally {
             setLoading(false);
         }
     }
@@ -621,44 +624,13 @@ export default function PageVendorDashboard() {
         navigate('/login');
     }
 
-    const [vendorId, setVendorId]   = useState('');
-    const [orders, setOrders]       = useState([]);
-    const [loading, setLoading]     = useState(true);
-    const [error, setError]         = useState(null);
-    const [updating, setUpdating]   = useState(null);
-    const [filter, setFilter]       = useState('all');
-    const [activeTab, setActiveTab]       = useState('requests');
-    const [visitedTabs, setVisitedTabs]   = useState(() => new Set(['requests']));
-    const [notifications, setNotifications] = useState([]);
-
-    // Resolve vendor ID from localStorage on mount
-    useEffect(() => {
-        const loggedInUser =
-            JSON.parse(localStorage.getItem('loggedInUser')) ||
-            JSON.parse(localStorage.getItem('user'));
-
-        if (!loggedInUser?._id && !loggedInUser?.id) {
-            console.warn('No logged-in vendor found in localStorage.');
-            return;
-        }
-
-        setVendorId(loggedInUser._id || loggedInUser.id);
-    }, []);
-
-    // Fetch notifications once vendor ID is known
-    useEffect(() => {
-        if (!vendorId) return;
-        fetchNotifications(vendorId).then((data) =>
-            setNotifications(data.data || data || [])
-        );
-    }, [vendorId]);
-
-    const handleMarkAsRead = (id) => {
-        setNotifications((prev) =>
-            prev.map((n) => (n._id === id ? { ...n, status: 'read' } : n))
-        );
-        markNotificationAsRead(id).catch(() => {});
-    };
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError]     = useState(null);
+    const [updating, setUpdating] = useState(null);
+    const [filter, setFilter]   = useState('all');
+    const [activeTab, setActiveTab]     = useState('requests');
+    const [visitedTabs, setVisitedTabs] = useState(() => new Set(['requests']));
 
     const switchTab = (tabId) => {
         setActiveTab(tabId);
@@ -777,63 +749,6 @@ export default function PageVendorDashboard() {
                     {visitedTabs.has('requests') && (
                         <div className="tab-panel" style={{ display: activeTab === 'requests' ? 'block' : 'none' }}>
                             <IncomingRequests onAccepted={load} />
-
-                            {/* Notifications */}
-                            <div style={{ marginTop: 32 }}>
-                                <div style={{ marginBottom: 16 }}>
-                                    <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: P.text, fontFamily: 'var(--font-display)' }}>
-                                        🔔 Notifications
-                                    </h2>
-                                    <p style={{ margin: '4px 0 0', fontSize: 13, color: P.sub }}>
-                                        {notifications.filter((n) => n.status === 'unread').length > 0
-                                            ? `${notifications.filter((n) => n.status === 'unread').length} unread`
-                                            : "You're all caught up."}
-                                    </p>
-                                </div>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                    {notifications.length === 0 ? (
-                                        <div style={{ padding: '32px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: `1px solid ${P.border}`, borderRadius: 14, color: P.muted, fontSize: 13 }}>
-                                            No notifications to show yet.
-                                        </div>
-                                    ) : (
-                                        notifications.map((n) => {
-                                            const isUnread = n.status === 'unread';
-                                            return (
-                                                <div
-                                                    key={n._id || n.id}
-                                                    onClick={() => isUnread && handleMarkAsRead(n._id)}
-                                                    style={{
-                                                        background: 'rgba(255,255,255,0.04)',
-                                                        border: `1px solid ${P.border}`,
-                                                        borderLeft: isUnread ? '4px solid #7C5CFC' : `4px solid ${P.border}`,
-                                                        borderRadius: 16,
-                                                        padding: '18px 20px',
-                                                        boxShadow: '0 14px 40px rgba(0,0,0,0.18)',
-                                                        cursor: isUnread ? 'pointer' : 'default',
-                                                        opacity: isUnread ? 1 : 0.75,
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-                                                        <div style={{ fontSize: 15, fontWeight: 700, color: '#F8FAFC' }}>{n.title}</div>
-                                                        {isUnread && (
-                                                            <span style={{ fontSize: 11, fontWeight: 700, color: '#A78BFA', background: 'rgba(167,139,250,0.18)', padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap' }}>
-                                                                NEW
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div style={{ fontSize: 13, color: 'rgba(232,230,240,0.7)', marginTop: 8 }}>{n.message}</div>
-                                                    <div style={{ fontSize: 11, color: 'rgba(232,230,240,0.45)', marginTop: 10 }}>
-                                                        {n.scheduledFor
-                                                            ? new Date(n.scheduledFor).toLocaleString()
-                                                            : new Date(n.createdAt).toLocaleString()}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     )}
 
@@ -934,10 +849,10 @@ export default function PageVendorDashboard() {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 16 }}>
                                     {filtered.map((order, i) => {
                                         const deliveryStatus = order.delivery?.status ?? null;
-                                        const action      = NEXT_ACTION[deliveryStatus];
+                                        const action     = NEXT_ACTION[deliveryStatus];
                                         const isDelivered = deliveryStatus === 'delivered';
-                                        const event       = order.eventId;
-                                        const isUpdating  = updating === order._id;
+                                        const event      = order.eventId;
+                                        const isUpdating = updating === order._id;
 
                                         return (
                                             <div
@@ -954,6 +869,7 @@ export default function PageVendorDashboard() {
                                                     boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
                                                 }}
                                             >
+                                                {/* Header */}
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                                                     <div style={{ flex: 1, minWidth: 0 }}>
                                                         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: P.text, fontFamily: 'var(--font-display)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -969,6 +885,7 @@ export default function PageVendorDashboard() {
                                                     <DeliveryBadge status={deliveryStatus} />
                                                 </div>
 
+                                                {/* Delivery location */}
                                                 {order.deliveryLocation?.venueName && (
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: P.sub, marginBottom: 10 }}>
                                                         <span style={{ color: P.muted, display: 'flex', flexShrink: 0 }}>{icons.mapPin}</span>
@@ -978,6 +895,7 @@ export default function PageVendorDashboard() {
                                                     </div>
                                                 )}
 
+                                                {/* Items */}
                                                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 9, padding: '10px 12px', marginBottom: 12, border: `1px solid ${P.borderSub}` }}>
                                                     <div style={{ fontSize: 10, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Ordered Items</div>
                                                     {(order.requestedItems || []).map((item, idx) => (
@@ -988,6 +906,7 @@ export default function PageVendorDashboard() {
                                                     ))}
                                                 </div>
 
+                                                {/* Delivery date */}
                                                 <div style={{ fontSize: 12, color: P.sub, marginBottom: isDelivered ? 8 : 14, display: 'flex', gap: 6 }}>
                                                     <span style={{ color: P.muted }}>Delivery window:</span>
                                                     <span style={{ fontWeight: 600, color: P.text }}>
@@ -995,6 +914,7 @@ export default function PageVendorDashboard() {
                                                     </span>
                                                 </div>
 
+                                                {/* Confirmed timestamp */}
                                                 {isDelivered && order.delivery?.estimatedArrivalTime && (
                                                     <div style={{ fontSize: 12, color: P.teal, marginBottom: 14, display: 'flex', gap: 6, alignItems: 'center' }}>
                                                         <span style={{ color: P.teal, display: 'flex' }}>{icons.checkCircle}</span>
@@ -1005,8 +925,10 @@ export default function PageVendorDashboard() {
                                                     </div>
                                                 )}
 
+                                                {/* Progress steps */}
                                                 <ProgressSteps status={deliveryStatus} />
 
+                                                {/* Action button */}
                                                 <div style={{ borderTop: `1px solid ${P.borderSub}`, paddingTop: 14, marginTop: 14 }}>
                                                     {isDelivered ? (
                                                         <div style={{ width: '100%', padding: '9px 0', borderRadius: 9, background: P.tealGlow, color: P.teal, fontSize: 13, fontWeight: 700, textAlign: 'center', border: `1px solid ${P.teal}33` }}>
@@ -1030,6 +952,7 @@ export default function PageVendorDashboard() {
                                                     ) : null}
                                                 </div>
 
+                                                {/* Message composer */}
                                                 <MessageComposer orderId={order._id} />
                                             </div>
                                         );

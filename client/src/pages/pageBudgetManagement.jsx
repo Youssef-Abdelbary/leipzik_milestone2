@@ -2,8 +2,30 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../utils/apiFetch";
 import "./pageBudgetManagement.css";
+import "./tabs/workspaceTabShell.css";
 import "../components/componentTheme.css";
-import { GlassPanel } from "../components/componentTheme";
+import { GlassPanel, icons, P } from "../components/componentTheme";
+
+function BudgetStatCard({ icon, label, value, tone, glow, valueClassName = "" }) {
+  return (
+    <GlassPanel className="workspace-stat-card">
+      <div className="workspace-stat-card-top">
+        <span
+          className="workspace-stat-icon"
+          style={{
+            color: tone,
+            background: glow,
+            borderColor: `${tone}44`,
+          }}
+        >
+          {icon}
+        </span>
+      </div>
+      <span>{label}</span>
+      <p className={valueClassName}>{value}</p>
+    </GlassPanel>
+  );
+}
 
 function BudgetManagement({ eventId: propEventId }) {
   const { eventId: routeEventId } = useParams();
@@ -277,8 +299,8 @@ async function saveEditedExpense() {
 
 
   return (
-    <div className="budget-page">
-      <div className="budget-header">
+    <div className="workspace-tab-shell budget-page">
+      <div className="workspace-tab-header budget-header">
         <div>
           <h1>Budget Management</h1>
           <p>View planned budget, actual expenses, and remaining budget for this event.</p>
@@ -299,29 +321,35 @@ async function saveEditedExpense() {
 
       {!loading && budgetData && (
         <>
-          <div className="budget-summary-cards">
-            <GlassPanel className="budget-card">
-              <span>Planned Total</span>
-              <p>{formatMoney(budgetData.plannedTotal)}</p>
-            </GlassPanel>
+          <div className="workspace-stat-grid budget-summary-cards">
+            <BudgetStatCard
+              icon={icons.budget}
+              label="Planned Total"
+              value={formatMoney(budgetData.plannedTotal)}
+              tone={P.blue}
+              glow={P.blueGlow}
+            />
 
-            <GlassPanel className="budget-card">
-              <span>Actual Total</span>
-              <p>{formatMoney(budgetData.actualTotal)}</p>
-            </GlassPanel>
+            <BudgetStatCard
+              icon={icons.ticket}
+              label="Actual Total"
+              value={formatMoney(budgetData.actualTotal)}
+              tone={P.indigo}
+              glow={P.indigoGlow}
+            />
 
-            <GlassPanel className="budget-card">
-              <span>Remaining / Difference</span>
-              <p
-                className={
-                  budgetData.difference >= 0
-                    ? "positive-difference"
-                    : "negative-difference"
-                }
-              >
-                {formatMoney(budgetData.difference)}
-              </p>
-            </GlassPanel>
+            <BudgetStatCard
+              icon={icons.barChart}
+              label="Remaining / Difference"
+              value={formatMoney(budgetData.difference)}
+              tone={budgetData.difference >= 0 ? P.teal : P.rose}
+              glow={budgetData.difference >= 0 ? P.tealGlow : P.roseGlow}
+              valueClassName={
+                budgetData.difference >= 0
+                  ? "positive-difference"
+                  : "negative-difference"
+              }
+            />
           </div>
 
           <div className="budget-sections">
@@ -340,6 +368,7 @@ async function saveEditedExpense() {
                 </button>
               </div>
 
+              <div className="budget-section-body">
               {!isEditingPlannedBudget && (
                 <>
                   {budgetData.plannedBreakdown.length === 0 && (
@@ -418,6 +447,7 @@ async function saveEditedExpense() {
                   </div>
                 </div>
               )}
+              </div>
             </GlassPanel>
 
             <GlassPanel className="budget-section">
@@ -435,6 +465,7 @@ async function saveEditedExpense() {
                 </button>
               </div>
 
+              <div className="budget-section-body">
               {showExpenseForm && (
                 <div className="expense-form">
                   <input
@@ -559,6 +590,7 @@ async function saveEditedExpense() {
                     )}
                   </div>
                 ))}
+              </div>
               </div>
             </GlassPanel>
           </div>

@@ -2,7 +2,6 @@
 import VendorRequest from '../models/modelVendorRequest.js';
 import Vendor from '../models/modelVendor.js';
 import Event from '../models/modelEvent.js';
-import { createNotification } from '../utils/notificationUtil.js';
 import { ensureVendorProfile } from '../utils/ensureVendorProfile.js';
 
 // 11.4: View vendors associated with an event via req.body payload
@@ -37,7 +36,7 @@ export const getMyVendorProfile = async (req, res) => {
     try {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
-        const profile = await ensureVendorProfile(userId);
+        const profile = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!profile) return res.status(404).json({ message: 'Vendor profile not found.' });
         res.json({ data: profile.toObject ? profile.toObject() : profile });
     } catch (err) {
@@ -52,7 +51,7 @@ export const updateMyVendorProfile = async (req, res) => {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
 
-        const existing = await ensureVendorProfile(userId);
+        const existing = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!existing) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const { companyName, suppliesOffered, mainLocation, pricingList, contactInfo } = req.body;
@@ -76,7 +75,7 @@ export const getMyVendorInbox = async (req, res) => {
         const userId = req.user?.user_id;
         if (!userId) return res.status(401).json({ message: 'Authentication required.' });
 
-        const vendorProfile = await ensureVendorProfile(userId);
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!vendorProfile) return res.json({ data: [] });
 
         const requests = await VendorRequest.find({
@@ -106,7 +105,7 @@ export const respondToVendorRequest = async (req, res) => {
             return res.status(400).json({ message: 'Status must be accepted or rejected.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const requestRecord = await VendorRequest.findOne({
@@ -146,7 +145,7 @@ export const getMyVendorRequests = async (req, res) => {
             return res.status(401).json({ message: 'Authentication required.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!vendorProfile) {
             return res.json({ data: [] });
         }
@@ -166,7 +165,6 @@ export const getMyVendorRequests = async (req, res) => {
 };
 
 // 4.4 & 11.5: Update delivery status safely via req.body parameters
-// 4.4 & 11.5: Update delivery status safely via req.body parameters
 export const updateVendorDeliveryStatus = async (req, res) => {
     try {
         const { requestId, status, estimatedArrivalTime } = req.body;
@@ -175,8 +173,7 @@ export const updateVendorDeliveryStatus = async (req, res) => {
             return res.status(400).json({ message: 'requestId and status parameters are required inside body payload.' });
         }
 
-        // 1. Added .populate('eventId') to get the event data (and organizer details)
-        const requestRecord = await VendorRequest.findById(requestId).populate('eventId');
+        const requestRecord = await VendorRequest.findById(requestId);
         if (!requestRecord) {
             return res.status(404).json({ message: 'Vendor request instance not found.' });
         }
@@ -187,20 +184,6 @@ export const updateVendorDeliveryStatus = async (req, res) => {
         }
 
         await requestRecord.save();
-
-        // 2. Simple Alert: Automatically notify the organizer when the vendor updates logistics
-        const organizerId = requestRecord.eventId?.organizerId || requestRecord.eventId?.createdBy || requestRecord.eventId?.userId;
-        if (organizerId) {
-            createNotification({
-                userId: organizerId,
-                type: 'vendor_logistics_alert',
-                title: 'Vendor Logistics Alert',
-                message: `Delivery update received: Status is now "${status}".`,
-                relatedEntityType: 'vendor_request',
-                relatedEntityId: requestRecord._id,
-            });
-        }
-
         res.json({ message: 'Delivery metrics updated successfully.', data: requestRecord });
     } catch (err) {
         console.error('updateVendorDeliveryStatus error:', err);
@@ -221,7 +204,7 @@ export const sendVendorClarificationMessage = async (req, res) => {
             return res.status(400).json({ message: 'Message text is required.' });
         }
 
-        const vendorProfile = await ensureVendorProfile(userId);
+        const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
         if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
 
         const requestRecord = await VendorRequest.findOne({

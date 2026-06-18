@@ -1,26 +1,69 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./pageOrganizerWorkflow.css";
+import "./pageOrganizerDashboard.css";
 import "../components/componentTheme.css";
 import AppHeader from "../components/componentAppHeader";
 import { P, icons, GlassPanel } from "../components/componentTheme";
 import Dock from "../components/componentDock";
-import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
-import UserManagement from "./pageDeactivate";
-import RegisterForOthers from "./pageRegisterOthers";
-import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
+import { VscHome, VscCalendar, VscPerson, VscPersonAdd, VscTrash} from "react-icons/vsc";
 
+function IconBadge({ icon, tone = "violet" }) {
+  return <span className={`workflow-icon-badge workflow-icon-badge--${tone}`}>{icon}</span>;
+}
 
-function DockTabIcon({ icon }) {
+function SectionTitle({ icon, title, subtitle, onClick, expanded }) {
+  const TitleTag = onClick ? "button" : "h2";
+
   return (
-    <div style={{ transform: "scale(1.25)", display: "flex" }}>
-      {icon}
+    <div className="workflow-section-heading">
+      <TitleTag
+        type={onClick ? "button" : undefined}
+        className={onClick ? "collapsible-title workflow-section-title-btn" : "workflow-section-title"}
+        onClick={onClick}
+      >
+        {icon && <IconBadge icon={icon} tone="cyan" />}
+        <span className="workflow-section-title-text">{title}</span>
+        {onClick && (
+          <span className="section-chevron">
+            {expanded ? icons.chevronUp : icons.chevronDown}
+          </span>
+        )}
+      </TitleTag>
+      {subtitle && <p className="workflow-section-subtitle">{subtitle}</p>}
     </div>
   );
 }
 
+function MetaLine({ icon, children, className = "" }) {
+  return (
+    <p className={`workflow-meta-line ${className}`.trim()}>
+      {icon && <span className="workflow-meta-icon">{icon}</span>}
+      {children}
+    </p>
+  );
+}
+
+function MetaChip({ icon, children, className = "" }) {
+  return (
+    <span className={`workflow-meta-chip ${className}`.trim()}>
+      {icon && <span className="workflow-meta-icon">{icon}</span>}
+      {children}
+    </span>
+  );
+}
+
+
+function formatFeedback(value, { emptyLabel = "—" } = {}) {
+  if (value == null || Number.isNaN(Number(value)) || Number(value) === 0) {
+    return emptyLabel;
+  }
+  return Number(value).toFixed(2);
+}
+
 function OrganizerWorkflow() {
   const [summary, setSummary] = useState(null);
+  const [summaryState, setSummaryState] = useState("loading");
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
 
@@ -54,6 +97,13 @@ function OrganizerWorkflow() {
 
         if (!loggedInUser?._id && !loggedInUser?.id) {
           console.warn("No logged-in user found.");
+          setSummaryState("no-auth");
+          setSummary({
+            todayEventsCount: 0,
+            upcomingEventsCount: 0,
+            averagePositiveFeedback: 0,
+            averageNegativeFeedback: 0,
+          });
           return;
         }
 
@@ -62,24 +112,32 @@ function OrganizerWorkflow() {
         console.log("Logged in user:", loggedInUser);
         console.log("Organizer ID sent to backend:", organizerId);
 
+        setSummaryState("loading");
+
         const summaryData = await fetchJson(
           `http://localhost:5001/api/workflow/summary/${organizerId}`
         );
         setSummary(summaryData);
+        setSummaryState("ready");
 
         const eventsData = await fetchJson(
           `http://localhost:5001/api/workflow/events/${organizerId}`
         );
-        setEvents(eventsData);
+        setEvents(Array.isArray(eventsData) ? eventsData : []);
 
         const tasksData = await fetchJson(
           `http://localhost:5001/api/workflow/tasks/${organizerId}`
         );
-        setTasks(tasksData);
-
-        fetchNotifications(organizerId).then((data) => setNotifications(data.data || data || []));
+        setTasks(Array.isArray(tasksData) ? tasksData : []);
       } catch (error) {
         console.error("Failed to load workflow data:", error);
+        setSummaryState("error");
+        setSummary({
+          todayEventsCount: 0,
+          upcomingEventsCount: 0,
+          averagePositiveFeedback: 0,
+          averageNegativeFeedback: 0,
+        });
       }
     }
 
@@ -170,13 +228,6 @@ function OrganizerWorkflow() {
     return true;
   });
 
-  const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, status: "read" } : n))
-    );
-    markNotificationAsRead(id).catch(() => {});
-  };
-
   const dockItems = [
     {
       icon: <VscHome size={26} />,
@@ -210,8 +261,25 @@ function OrganizerWorkflow() {
     },
   ];
 
+  const emptySummary = {
+    todayEventsCount: 0,
+    upcomingEventsCount: 0,
+    averagePositiveFeedback: 0,
+    averageNegativeFeedback: 0,
+  };
+
+  const displaySummary = summary || emptySummary;
+
+  function statValue(value) {
+    if (summaryState === "loading") {
+      return "Loading...";
+    }
+
+    return value;
+  }
+
   return (
-    <div className="workflow-page">
+    <div className="organizer-dashboard-page">
       <AppHeader
         crumb="My Workflow"
         right={
@@ -220,54 +288,88 @@ function OrganizerWorkflow() {
           </div>
         }
       />
-      <main className="workflow-content">
+      <div className="organizer-dashboard-content">
+        <div className="organizer-page-heading">
+          <p className="organizer-page-kicker">Dashboard Overview</p>
+          <h1 className="organizer-page-title">My Workflow</h1>
+          <p className="organizer-page-desc">
+            Track events, tasks, feedback, and reminders in one place.
+          </p>
+        </div>
+
+        {summaryState === "error" && (
+          <p className="workflow-load-error">
+            Could not load dashboard data. Make sure the backend is running on port 5001, then refresh.
+          </p>
+        )}
+
+        {summaryState === "no-auth" && (
+          <p className="workflow-load-error">
+            Session expired. Please log in again.
+          </p>
+        )}
 
         <div className="summary-cards">
           <WorkflowStatCard
             label="Today's Events"
-            value={summary ? summary.todayEventsCount : "Loading..."}
-            icon={icons.calendar || "📅"}
+            value={statValue(displaySummary.todayEventsCount)}
+            icon={icons.calendar}
             accent="cyan"
           />
 
           <WorkflowStatCard
             label="Upcoming Events"
-            value={summary ? summary.upcomingEventsCount : "Loading..."}
-            icon={icons.clock || "⏳"}
+            value={statValue(displaySummary.upcomingEventsCount)}
+            icon={icons.clock}
             accent="blue"
           />
 
           <WorkflowStatCard
             label="Avg Positive Feedback"
             value={
-              summary ? summary.averagePositiveFeedback.toFixed(2) : "Loading..."
+              summaryState === "loading"
+                ? "Loading..."
+                : formatFeedback(displaySummary.averagePositiveFeedback)
             }
-            icon={icons.feedback || "😊"}
+            sub={
+              summaryState === "ready" && displaySummary.positiveFeedbackCount
+                ? `${displaySummary.positiveFeedbackCount} review${displaySummary.positiveFeedbackCount === 1 ? "" : "s"} (4★+)`
+                : summaryState === "ready"
+                  ? "No positive reviews yet"
+                  : null
+            }
+            icon={icons.star}
             accent="teal"
           />
 
           <WorkflowStatCard
             label="Avg Negative Feedback"
             value={
-              summary ? summary.averageNegativeFeedback.toFixed(2) : "Loading..."
+              summaryState === "loading"
+                ? "Loading..."
+                : formatFeedback(displaySummary.averageNegativeFeedback)
             }
-            icon={icons.warning || "⚠️"}
+            sub={
+              summaryState === "ready" && displaySummary.negativeFeedbackCount
+                ? `${displaySummary.negativeFeedbackCount} review${displaySummary.negativeFeedbackCount === 1 ? "" : "s"} (≤2★)`
+                : summaryState === "ready"
+                  ? "No negative reviews yet"
+                  : null
+            }
+            icon={icons.frown}
             accent="orange"
           />
         </div>
 
         <GlassPanel className="workflow-section">
           <div className="section-header">
-            <div>
-              <h2
-                className="collapsible-title"
-                onClick={() => setShowEvents(!showEvents)}
-              >
-                {icons.calendar || "📅"} Upcoming Events{" "}
-                <span>{showEvents ? "▲" : "▼"}</span>
-              </h2>
-              <p>View and filter upcoming events by date.</p>
-            </div>
+            <SectionTitle
+              icon={icons.calendar}
+              title="Upcoming Events"
+              subtitle="View and filter upcoming events by date."
+              onClick={() => setShowEvents(!showEvents)}
+              expanded={showEvents}
+            />
 
             <input
               type="date"
@@ -286,20 +388,21 @@ function OrganizerWorkflow() {
                 <div className="event-card" key={event._id}>
                   <div>
                     <h3>{event.title}</h3>
-                    <p>
-                      {icons.mapPin || "📍"}{" "}
+                    <MetaLine icon={icons.mapPin}>
                       {event.locationSnapshot?.venueName || "TBD"} —{" "}
                       {event.locationSnapshot?.city || "TBD"}
-                    </p>
+                    </MetaLine>
                   </div>
 
                   <div className="event-info">
-                    <span>
+                    <MetaChip icon={icons.calendar}>
                       {event.date
                         ? new Date(event.date).toLocaleDateString()
                         : "No date"}
-                    </span>
-                    <span>{event.startTime || "No time"}</span>
+                    </MetaChip>
+                    <MetaChip icon={icons.clock}>
+                      {event.startTime || "No time"}
+                    </MetaChip>
                     <span className="event-status">
                       {event.status || "planning"}
                     </span>
@@ -312,16 +415,13 @@ function OrganizerWorkflow() {
 
         <GlassPanel className="workflow-section">
           <div className="section-header">
-            <div>
-              <h2
-                className="collapsible-title"
-                onClick={() => setShowTasks(!showTasks)}
-              >
-                {icons.check || "✅"} Event Tasks{" "}
-                <span>{showTasks ? "▲" : "▼"}</span>
-              </h2>
-              <p>Track tasks leading up to each event and filter them by status.</p>
-            </div>
+            <SectionTitle
+              icon={icons.check}
+              title="Event Tasks"
+              subtitle="Track tasks leading up to each event and filter them by status."
+              onClick={() => setShowTasks(!showTasks)}
+              expanded={showTasks}
+            />
 
             <select
               value={selectedStatus}
@@ -350,31 +450,31 @@ function OrganizerWorkflow() {
                       <h3>{task.title}</h3>
                       <p>{task.description}</p>
 
-                      <p className="task-category">
-                        {icons.tag || "📌"} {task.category}
-                      </p>
+                      <MetaLine icon={icons.tag} className="task-category">
+                        {task.category}
+                      </MetaLine>
 
-                      <p className="task-event-name">
-                        {icons.calendar || "🗓️"} Event:{" "}
-                        {taskEvent?.title || task.eventTitle || "Unknown event"}
-                      </p>
+                      <MetaLine icon={icons.calendar} className="task-event-name">
+                        Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
+                      </MetaLine>
                     </div>
 
                     <div className="task-info">
-                      <span className={`task-status ${task.status}`}>
-                        {task.status.replace("_", " ")}
+                      <span className={`task-status ${task.status || "pending"}`}>
+                        {(task.status || "pending").replace("_", " ")}
                       </span>
 
-                      <span>🔥 {task.priority}</span>
+                      <MetaChip icon={icons.zap}>{task.priority}</MetaChip>
 
-                      <span>
-                        {icons.calendar || "📅"}{" "}
+                      <MetaChip icon={icons.calendar}>
                         {task.dueDate
                           ? new Date(task.dueDate).toLocaleDateString()
                           : "No due date"}
-                      </span>
+                      </MetaChip>
 
-                      <span>📊 {task.progressPercent || 0}%</span>
+                      <MetaChip icon={icons.barChart}>
+                        {task.progressPercent || 0}%
+                      </MetaChip>
                     </div>
                   </div>
                 );
@@ -385,10 +485,11 @@ function OrganizerWorkflow() {
 
         <GlassPanel className="workflow-section reminders-section">
           <div className="section-header simple">
-            <div>
-              <h2>{icons.warning || "🔔"} Due Task Reminders</h2>
-              <p>Tasks that still need attention before upcoming events.</p>
-            </div>
+            <SectionTitle
+              icon={icons.bell}
+              title="Due Task Reminders"
+              subtitle="Tasks that still need attention before upcoming events."
+            />
           </div>
 
           <div className="reminders-list">
@@ -411,15 +512,18 @@ function OrganizerWorkflow() {
                   key={task._id}
                 >
                   <div>
-                    <h3>
-                      {isOverdue ? "🚨" : "⚠️"} {task.title}
+                    <h3 className="reminder-card-title">
+                      <IconBadge
+                        icon={isOverdue ? icons.warning : icons.clock}
+                        tone={isOverdue ? "red" : "orange"}
+                      />
+                      {task.title}
                     </h3>
                     <p>{task.description}</p>
 
-                    <p className="task-event-name">
-                      {icons.calendar || "🗓️"} Event:{" "}
-                      {taskEvent?.title || task.eventTitle || "Unknown event"}
-                    </p>
+                    <MetaLine icon={icons.calendar} className="task-event-name">
+                      Event: {taskEvent?.title || task.eventTitle || "Unknown event"}
+                    </MetaLine>
 
                     {isOverdue && (
                       <p className="overdue-text">Deadline has passed</p>
@@ -427,16 +531,18 @@ function OrganizerWorkflow() {
                   </div>
 
                   <div className="reminder-info">
-                    <span>Due: {dueDate.toLocaleDateString()}</span>
+                    <MetaChip icon={icons.calendar}>
+                      Due: {dueDate.toLocaleDateString()}
+                    </MetaChip>
 
-                    <span>
+                    <MetaChip icon={icons.clock}>
                       {dueDate.toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
-                    </span>
+                    </MetaChip>
 
-                    <span>🔥 {task.priority}</span>
+                    <MetaChip icon={icons.zap}>{task.priority}</MetaChip>
 
                     <span
                       className={isOverdue ? "overdue-badge" : "upcoming-badge"}
@@ -452,70 +558,30 @@ function OrganizerWorkflow() {
 
         <GlassPanel className="workflow-section notifications-section">
           <div className="section-header simple">
-            <div>
-              <h2>{icons.messages || "🔔"} Notifications</h2>
-              <p>
-                {notifications.filter((n) => n.status === "unread").length > 0
-                  ? `${notifications.filter((n) => n.status === "unread").length} unread`
-                  : "You're all caught up."}
-              </p>
-            </div>
+            <SectionTitle
+              icon={icons.messages}
+              title="Notifications"
+              subtitle="General organizer notifications will appear here."
+            />
           </div>
 
-          <div className="notifications-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {notifications.length === 0 ? (
-              <p className="empty-message">No notifications to show yet.</p>
-            ) : (
-              notifications.map((n) => {
-                const isUnread = n.status === "unread";
-                return (
-                  <div
-                    key={n._id || n.id}
-                    onClick={() => isUnread && handleMarkAsRead(n._id)}
-                    style={{
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderLeft: isUnread ? "4px solid #7C5CFC" : "4px solid rgba(255,255,255,0.08)",
-                      borderRadius: 16,
-                      padding: "18px 20px",
-                      boxShadow: "0 14px 40px rgba(0,0,0,0.18)",
-                      cursor: isUnread ? "pointer" : "default",
-                      opacity: isUnread ? 1 : 0.75,
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#F8FAFC" }}>{n.title}</div>
-                      {isUnread && (
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#A78BFA", background: "rgba(167,139,250,0.18)", padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>
-                          NEW
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(232,230,240,0.7)", marginTop: 8 }}>{n.message}</div>
-                    <div style={{ fontSize: 11, color: "rgba(232,230,240,0.45)", marginTop: 10 }}>
-                      {n.scheduledFor
-                        ? new Date(n.scheduledFor).toLocaleString()
-                        : new Date(n.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+          <div className="notifications-list">
+            <p className="empty-message">No notifications to show yet.</p>
           </div>
         </GlassPanel>
-
-      </main>
+      </div>
       <Dock items={dockItems} />
     </div>
   );
 }
 
-function WorkflowStatCard({ label, value, icon, accent }) {
+function WorkflowStatCard({ label, value, sub, icon, accent }) {
   return (
     <GlassPanel className={`summary-card ${accent}`}>
       <div className="summary-card-icon">{icon}</div>
       <h3>{label}</h3>
       <p>{value}</p>
+      {sub && <span className="summary-card-sub">{sub}</span>}
     </GlassPanel>
   );
 }

@@ -12,6 +12,7 @@
   --opal-border-hover: rgba(255, 255, 255, 0.18);
 
   /* Accents */
+  --opal-blue:        #8b6dff;
   --opal-violet:      #8b6dff;
   --opal-violet-dim:  rgba(139, 109, 255, 0.16);
   --opal-teal:        #3ecfb8;

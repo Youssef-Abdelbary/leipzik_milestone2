@@ -15,6 +15,7 @@ import AppHeader from '../components/componentAppHeader.jsx';
 import CalendarAvailability from '../components/componentCalendar.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import '../components/componentTheme.css';
+import './pageOrganizerDashboard.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 // ─── Decode user_id from stored JWT (reads payload only — auth is server-side) ──
@@ -564,10 +565,8 @@ export default function PageResponseVenue() {
     ];
 
     return (
-        <div style={{
+        <div className="organizer-dashboard-page" style={{
             height: '100vh', display: 'flex', flexDirection: 'column',
-            fontFamily: 'var(--font-body)',
-            color: 'var(--opal-text)',
         }}>
             <AppHeader
                 crumb="Venue Responses"

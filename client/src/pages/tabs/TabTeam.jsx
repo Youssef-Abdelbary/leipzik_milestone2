@@ -1,7 +1,29 @@
 import { useEffect, useState } from "react";
 import "./TabTeam.css";
+import "./workspaceTabShell.css";
 import "../../components/componentTheme.css";
-import { GlassPanel } from "../../components/componentTheme";
+import { GlassPanel, icons, P } from "../../components/componentTheme";
+
+function TeamStatCard({ icon, label, value, tone, glow }) {
+  return (
+    <GlassPanel className="workspace-stat-card">
+      <div className="workspace-stat-card-top">
+        <span
+          className="workspace-stat-icon"
+          style={{
+            color: tone,
+            background: glow,
+            borderColor: `${tone}44`,
+          }}
+        >
+          {icon}
+        </span>
+      </div>
+      <span>{label}</span>
+      <p>{value}</p>
+    </GlassPanel>
+  );
+}
 
 export default function TabTeam({ eventId }) {
   const [staffMembers, setStaffMembers] = useState([]);
@@ -169,32 +191,41 @@ export default function TabTeam({ eventId }) {
     const doneTasks = allTasks.filter((task) => task.status === "done").length;
 
   return (
-    <div className="team-tab">
-      <div className="team-header">
+    <div className="workspace-tab-shell team-tab">
+      <div className="workspace-tab-header">
         <h1>Team Members</h1>
         <p>View staff members, assign tasks, and track task status for this event.</p>
       </div>
 
-      <div className="team-summary-cards">
-        <GlassPanel className="team-summary-card">
-          <span>Total Staff</span>
-          <p>{totalStaff}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Total Tasks</span>
-          <p>{totalTasks}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Unassigned Tasks</span>
-          <p>{unassignedTasks}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Done Tasks</span>
-          <p>{doneTasks}</p>
-        </GlassPanel>
+      <div className="workspace-stat-grid team-summary-cards">
+        <TeamStatCard
+          icon={icons.team}
+          label="Total Staff"
+          value={totalStaff}
+          tone={P.blue}
+          glow={P.blueGlow}
+        />
+        <TeamStatCard
+          icon={icons.clipboard}
+          label="Total Tasks"
+          value={totalTasks}
+          tone={P.indigo}
+          glow={P.indigoGlow}
+        />
+        <TeamStatCard
+          icon={icons.warning}
+          label="Unassigned Tasks"
+          value={unassignedTasks}
+          tone={P.amber}
+          glow={P.amberGlow}
+        />
+        <TeamStatCard
+          icon={icons.checkCircle}
+          label="Done Tasks"
+          value={doneTasks}
+          tone={P.teal}
+          glow={P.tealGlow}
+        />
       </div>
 
       <div className="team-layout">
@@ -249,7 +280,9 @@ export default function TabTeam({ eventId }) {
                     </p>
                   </div>
 
-                  <span>{selectedStaff?._id === staff._id ? "▲" : "▼"}</span>
+                  <span className="staff-expand-icon">
+                    {selectedStaff?._id === staff._id ? icons.chevronUp : icons.chevronDown}
+                  </span>
                 </div>
 
                 {selectedStaff?._id === staff._id && (

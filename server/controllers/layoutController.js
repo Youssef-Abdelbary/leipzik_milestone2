@@ -1,14 +1,15 @@
 import User from "../models/User.js";
 import EventLayout from "../models/EventLayout.js";
+import { normalizeUserRecord } from "../utils/normalizeUser.js";
 
 export async function getActiveStaff(req, res) {
   try {
     const staffMembers = await User.find({
       role: "staff",
       status: "active",
-    }).select("_id fullName email");
+    }).select("_id fullname fullName email");
 
-    res.json(staffMembers);
+    res.json(staffMembers.map((member) => normalizeUserRecord(member.toObject())));
   } catch (error) {
     console.error("Load staff error:", error);
 

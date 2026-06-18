@@ -3,7 +3,6 @@
   background: var(--opal-bg);
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   color: var(--opal-text);
-  padding-bottom: 120px;
 }
 
 .staff-topbar {
@@ -144,9 +143,20 @@
   display: none;
 }
 .staff-tab-content {
-  max-width: 1180px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px 24px 120px;
+  animation: staffPageIn 0.3s ease;
+}
+
+@keyframes staffPageIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .staff-page-header {
@@ -546,10 +556,13 @@
   }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 700px) {
   .staff-tab-content {
-    padding: 22px 14px;
+    padding: 24px 16px 120px;
   }
+}
+
+@media (max-width: 650px) {
 
   .staff-summary-cards {
     grid-template-columns: 1fr;

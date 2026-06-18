@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { VscHome, VscMail, VscCalendar, VscBell, VscPerson } from 'react-icons/vsc';
 import Dock from '../components/componentDock.jsx';
 import AppHeader from '../components/componentAppHeader.jsx';
+import '../components/componentTheme.css';
+import './pageOrganizerDashboard.css';
 import { getConfirmedBookings } from '../services/serviceBookingCalendar';
 
 const C = {
@@ -111,14 +113,13 @@ export default function PageBookingsCalendar() {
         { icon: <VscPerson size={26} />, label: 'Owner Profile', onClick: () => navigate('/pageProfile') },
     ];
 
-    const page = { minHeight: '100vh', background: '#15171C', color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif', padding: 32, paddingBottom: 150 };
     const panel = { background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '18px 20px' };
     const label = { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase' };
     const select = { background: '#1A1C22', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit' };
     const navBtn = { background: '#1A1C22', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, width: 32, height: 32, fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' };
 
     return (
-        <div style={page}>
+        <div className="organizer-dashboard-page">
             <AppHeader
                 crumb="Booking Calendar"
                 right={
@@ -128,6 +129,7 @@ export default function PageBookingsCalendar() {
                     </div>
                 }
             />
+            <div className="organizer-dashboard-content">
             <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 800 }}>Confirmed Bookings</h1>
             <p style={{ margin: '0 0 24px', fontSize: 14, color: C.sub }}>Calendar overview of confirmed bookings across your listings.</p>
 
@@ -268,6 +270,7 @@ export default function PageBookingsCalendar() {
                         )}
                     </div>
                 </div>
+            </div>
             </div>
 
             <Dock items={dockItems} />

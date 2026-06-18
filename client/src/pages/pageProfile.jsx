@@ -18,6 +18,8 @@ import { P, GlassPanel } from "../components/componentTheme";
 
 import "../components/componentTheme.css";
 import "./Profile.css";
+import "./pageOrganizerDashboard.css";
+import "./pageStaffTasks.css";
 
 const roleLabels = {
     vendor: "Vendor",
@@ -163,49 +165,65 @@ const Profile = () => {
         },
     ];
 
-    const section = (title, children) => (
-        <div
-            style={{
-                background: "rgba(19,19,30,0.72)",
-                backdropFilter: "blur(18px)",
-                WebkitBackdropFilter: "blur(18px)",
-                border: `1px solid ${P.border}`,
-                borderRadius: 14,
-                padding: 22,
-                marginBottom: 16,
-                animation: "cardIn 0.32s ease both",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-            }}
-        >
+    const section = (title, children, delay = 0) => {
+        if (isOrganizer) {
+            return (
+                <GlassPanel
+                    className="organizer-card-in organizer-profile-section"
+                    style={{ "--stagger-delay": `${delay}s` }}
+                >
+                    <div className="organizer-profile-section-title">{title}</div>
+                    {children}
+                </GlassPanel>
+            );
+        }
+
+        return (
             <div
                 style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.09em",
-                    color: P.muted,
+                    background: "rgba(19,19,30,0.72)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
+                    border: `1px solid ${P.border}`,
+                    borderRadius: 14,
+                    padding: 22,
                     marginBottom: 16,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                 }}
             >
-                {title}
+                <div
+                    style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.09em",
+                        color: P.muted,
+                        marginBottom: 16,
+                    }}
+                >
+                    {title}
+                </div>
+
+                {children}
             </div>
+        );
+    };
 
-            {children}
-        </div>
-    );
-
-    const label = (text) => (
-        <div
-            style={{
-                fontSize: 12,
-                color: P.sub,
-                fontWeight: 600,
-                marginBottom: 5,
-            }}
-        >
-            {text}
-        </div>
-    );
+    const label = (text) =>
+        isOrganizer ? (
+            <div className="organizer-profile-field-label">{text}</div>
+        ) : (
+            <div
+                style={{
+                    fontSize: 12,
+                    color: P.sub,
+                    fontWeight: 600,
+                    marginBottom: 5,
+                }}
+            >
+                {text}
+            </div>
+        );
 
     const inputStyle = {
         background: "rgba(255,255,255,0.06)",
@@ -218,7 +236,7 @@ const Profile = () => {
         width: "100%",
         outline: "none",
         boxSizing: "border-box",
-        transition: "border-color 0.15s",
+        transition: "border-color 0.18s ease, box-shadow 0.18s ease",
     };
 
     const inp = (value, onChange, placeholder, extraStyle = {}, disabled = false) => (
@@ -227,17 +245,22 @@ const Profile = () => {
             onChange={(event) => onChange(event.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            style={{
-                ...inputStyle,
-                ...(disabled
-                    ? {
-                        background: "rgba(255,255,255,0.04)",
-                        color: P.muted,
-                        cursor: "not-allowed",
-                    }
-                    : {}),
-                ...extraStyle,
-            }}
+            className={isOrganizer ? "organizer-profile-input" : undefined}
+            style={
+                isOrganizer
+                    ? extraStyle
+                    : {
+                          ...inputStyle,
+                          ...(disabled
+                              ? {
+                                    background: "rgba(255,255,255,0.04)",
+                                    color: P.muted,
+                                    cursor: "not-allowed",
+                                }
+                              : {}),
+                          ...extraStyle,
+                      }
+            }
         />
     );
 
@@ -245,12 +268,17 @@ const Profile = () => {
         <input
             value={value}
             disabled
-            style={{
-                ...inputStyle,
-                background: "rgba(255,255,255,0.04)",
-                color: P.muted,
-                cursor: "not-allowed",
-            }}
+            className={isOrganizer ? "organizer-profile-input" : undefined}
+            style={
+                isOrganizer
+                    ? undefined
+                    : {
+                          ...inputStyle,
+                          background: "rgba(255,255,255,0.04)",
+                          color: P.muted,
+                          cursor: "not-allowed",
+                      }
+            }
         />
     );
 
@@ -316,12 +344,23 @@ const Profile = () => {
 
     return (
         <div
-            style={{
-                minHeight: "100vh",
-                background: "var(--opal-bg)",
-                color: P.text,
-                fontFamily: "var(--font-body)",
-            }}
+            className={
+                isOrganizer || isOwner
+                    ? "organizer-dashboard-page"
+                    : isStaff
+                      ? "staff-workspace-page"
+                      : undefined
+            }
+            style={
+                isOrganizer || isStaff || isOwner
+                    ? undefined
+                    : {
+                          minHeight: "100vh",
+                          background: "var(--opal-bg)",
+                          color: P.text,
+                          fontFamily: "var(--font-body)",
+                      }
+            }
         >
             <style>{`
                 @keyframes pageIn {
@@ -391,34 +430,59 @@ const Profile = () => {
             )}
 
             <div
-                style={{
-                    maxWidth: 1100,
-                    margin: "0 auto",
-                    padding: "28px 24px 140px",
-                    animation: "pageIn 0.3s ease",
-                }}
+                className={
+                    isOrganizer || isOwner
+                        ? "organizer-dashboard-content"
+                        : isStaff
+                          ? "staff-tab-content"
+                          : undefined
+                }
+                style={
+                    isOrganizer || isStaff || isOwner
+                        ? undefined
+                        : {
+                              maxWidth: 1100,
+                              margin: "0 auto",
+                              padding: "28px 24px 140px",
+                              animation: "pageIn 0.3s ease",
+                          }
+                }
             >
-                <div style={{ marginBottom: 24 }}>
+                <div className={isOrganizer ? "organizer-page-heading" : undefined} style={isOrganizer ? undefined : { marginBottom: 24 }}>
+                    {isOrganizer && (
+                        <p className="organizer-page-kicker">Account Settings</p>
+                    )}
+
                     <h1
-                        style={{
-                            margin: 0,
-                            fontSize: 28,
-                            fontWeight: 900,
-                            color: P.text,
-                            letterSpacing: "-0.03em",
-                            fontFamily: "var(--font-display)",
-                        }}
+                        className={isOrganizer ? "organizer-page-title" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      margin: 0,
+                                      fontSize: 28,
+                                      fontWeight: 900,
+                                      color: P.text,
+                                      letterSpacing: "-0.03em",
+                                      fontFamily: "var(--font-display)",
+                                  }
+                        }
                     >
-                        {isOwner ? "Venue Owner Profile" : "Profile"}
+                        {isOwner ? "Venue Owner Profile" : isOrganizer ? "My Profile" : "Profile"}
                     </h1>
 
                     <p
-                        style={{
-                            margin: "5px 0 0",
-                            fontSize: 14,
-                            color: P.sub,
-                            maxWidth: 760,
-                        }}
+                        className={isOrganizer ? "organizer-page-desc" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      margin: "5px 0 0",
+                                      fontSize: 14,
+                                      color: P.sub,
+                                      maxWidth: 760,
+                                  }
+                        }
                     >
                         Manage your account details, contact information, and profile settings.
                     </p>
@@ -439,12 +503,16 @@ const Profile = () => {
 
                 {section(
                     "Account Identity",
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                            gap: 12,
-                        }}
+                    <div className={isOrganizer ? "organizer-profile-grid" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                                      gap: 12,
+                                  }
+                        }
                     >
                         <div>
                             {label("Full Name")}
@@ -476,16 +544,20 @@ const Profile = () => {
                             )}
                         </div>
                     </div>
-                )}
+                , 0.05)}
 
                 {section(
                     "Contact Information",
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                            gap: 12,
-                        }}
+                    <div className={isOrganizer ? "organizer-profile-grid" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                                      gap: 12,
+                                  }
+                        }
                     >
                         <div>
                             {label("Email")}
@@ -509,7 +581,7 @@ const Profile = () => {
                             )}
                         </div>
                     </div>
-                )}
+                , 0.1)}
 
                 {isOwner &&
                     section(
@@ -530,44 +602,62 @@ const Profile = () => {
                                 )}
                             </div>
                         </div>
-                    )}
+                    , 0.15)}
 
                 {error && (
-                    <p
-                        style={{
-                            color: P.red,
-                            fontSize: 13,
-                            marginBottom: 12,
-                        }}
+                    <p className={isOrganizer ? "organizer-profile-error" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      color: P.red,
+                                      fontSize: 13,
+                                      marginBottom: 12,
+                                  }
+                        }
                     >
                         {error}
                     </p>
                 )}
 
                 <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        flexWrap: "wrap",
-                    }}
+                    className={
+                        isOrganizer
+                            ? "organizer-profile-actions organizer-card-in"
+                            : undefined
+                    }
+                    style={
+                        isOrganizer
+                            ? { "--stagger-delay": "0.18s" }
+                            : {
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 12,
+                                  flexWrap: "wrap",
+                              }
+                    }
                 >
                     {!isStaff && (
                         <button
                             onClick={handleSaveClick}
                             disabled={saving}
-                            style={{
-                                padding: "11px 28px",
-                                background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
-                                border: "none",
-                                borderRadius: 10,
-                                color: "#0a0a12",
-                                fontWeight: 700,
-                                fontSize: 14,
-                                cursor: saving ? "not-allowed" : "pointer",
-                                fontFamily: "inherit",
-                                opacity: saving ? 0.7 : 1,
-                            }}
+                            className={isOrganizer ? "organizer-profile-save-btn" : undefined}
+                            style={
+                                isOrganizer
+                                    ? undefined
+                                    : {
+                                          padding: "11px 28px",
+                                          background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`,
+                                          border: "none",
+                                          borderRadius: 10,
+                                          color: "#0a0a12",
+                                          fontWeight: 700,
+                                          fontSize: 14,
+                                          cursor: saving ? "not-allowed" : "pointer",
+                                          fontFamily: "inherit",
+                                          opacity: saving ? 0.7 : 1,
+                                      }
+                            }
                         >
                             {saving ? "Saving..." : "Save Profile"}
                         </button>
@@ -575,28 +665,37 @@ const Profile = () => {
 
                     <button
                         onClick={handleLogout}
-                        style={{
-                            padding: "11px 28px",
-                            background: "rgba(220,38,38,0.16)",
-                            border: "1px solid rgba(248,113,113,0.35)",
-                            borderRadius: 10,
-                            color: "#f87171",
-                            fontWeight: 800,
-                            fontSize: 14,
-                            cursor: "pointer",
-                            fontFamily: "inherit",
-                        }}
+                        className={isOrganizer ? "organizer-profile-logout-btn" : undefined}
+                        style={
+                            isOrganizer
+                                ? undefined
+                                : {
+                                      padding: "11px 28px",
+                                      background: "rgba(220,38,38,0.16)",
+                                      border: "1px solid rgba(248,113,113,0.35)",
+                                      borderRadius: 10,
+                                      color: "#f87171",
+                                      fontWeight: 800,
+                                      fontSize: 14,
+                                      cursor: "pointer",
+                                      fontFamily: "inherit",
+                                  }
+                        }
                     >
                         Logout
                     </button>
 
                     {success && (
-                        <span
-                            style={{
-                                fontSize: 13,
-                                color: P.teal,
-                                fontWeight: 600,
-                            }}
+                        <span className={isOrganizer ? "organizer-profile-success" : undefined}
+                            style={
+                                isOrganizer
+                                    ? undefined
+                                    : {
+                                          fontSize: 13,
+                                          color: P.teal,
+                                          fontWeight: 600,
+                                      }
+                            }
                         >
                             {success}
                         </span>

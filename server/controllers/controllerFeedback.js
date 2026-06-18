@@ -3,6 +3,7 @@ import Feedback from '../models/modelFeedback.js';
 import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
 import { sendFeedbackRequestEmail } from '../utils/emailUtil.js';
+import { computeEventFeedbackStats } from '../utils/feedbackStats.js';
 
 // Called when event is marked completed — send feedback emails to all attending guests
 export const sendFeedbackRequests = async (req, res) => {
@@ -88,6 +89,19 @@ export const submitFeedback = async (req, res) => {
     feedback.comments     = comments || '';
     feedback.submittedAt  = new Date();
     await feedback.save();
+
+    const eventFeedbacks = await Feedback.find({
+      eventId: feedback.eventId,
+      submittedAt: { $ne: null },
+    }).lean();
+    const stats = computeEventFeedbackStats(eventFeedbacks);
+
+    await Event.findByIdAndUpdate(feedback.eventId, {
+      $set: {
+        'dashboardStats.averagePositiveFeedback': stats.averagePositiveFeedback,
+        'dashboardStats.averageNegativeFeedback': stats.averageNegativeFeedback,
+      },
+    });
 
     res.json({ message: 'Thank you for your feedback!' });
   } catch (err) {

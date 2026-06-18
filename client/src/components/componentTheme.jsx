@@ -218,6 +218,9 @@ export const icons = {
   checkCircle: ic(<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>),
   xCircle: ic(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>),
   chevronUp: ic(<><polyline points="18 15 12 9 6 15"/></>),
+  barChart: ic(
+    <><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></>
+  ),
   videoOff: ic(<><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34"/><path d="M23 7l-7 5 7 5V7z"/><line x1="1" y1="1" x2="23" y2="23"/></>),
   shieldOff: ic(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v4.09c0 5.52 3.44 10.08 8 11.91z"/><line x1="9" y1="9" x2="15" y2="15"/></>),
 };
