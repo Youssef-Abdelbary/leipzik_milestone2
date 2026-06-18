@@ -29,10 +29,10 @@ function getUserIdFromToken() {
 
 // ─── Status map ───────────────────────────────────────────────────────────────
 const STATUS = {
-    pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Pending'   },
-    approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)',   label: 'Approved'  },
-    declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)',    label: 'Declined'  },
-    countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Countered' },
+    pending: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)', text: 'var(--opal-amber)', label: 'Pending' },
+    approved: { bg: 'var(--opal-teal-dim)', border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)', label: 'Approved' },
+    declined: { bg: 'var(--opal-red-dim)', border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)', label: 'Declined' },
+    countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)', text: 'var(--opal-amber)', label: 'Countered' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function GlassCard({ children, style = {}, ...rest }) {
 // ─── Chat bubble ──────────────────────────────────────────────────────────────
 function Bubble({ msg, isMine }) {
     const isCP = msg.type === 'counter_proposal';
-    const cp   = msg.counterProposal;
+    const cp = msg.counterProposal;
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
             {isCP && (
@@ -172,7 +172,7 @@ function Bubble({ msg, isMine }) {
             <div style={{
                 maxWidth: '72%', padding: '10px 14px', borderRadius: 14,
                 borderBottomRightRadius: isMine ? 4 : 14,
-                borderBottomLeftRadius:  isMine ? 14 : 4,
+                borderBottomLeftRadius: isMine ? 14 : 4,
                 background: isMine ? 'var(--opal-violet)' : 'var(--opal-surface)',
                 border: isCP ? '1px solid rgba(245,179,74,0.28)' : '1px solid var(--opal-border)',
                 color: isMine ? '#0a0a0f' : 'var(--opal-text)', fontSize: 15, lineHeight: 1.55,
@@ -204,13 +204,13 @@ function Bubble({ msg, isMine }) {
 
 // ─── Message thread ───────────────────────────────────────────────────────────
 function MessageThread({ booking, currentUserId, onBookingUpdate }) {
-    const [messages,   setMessages]   = useState(booking.messages ?? []);
-    const [text,       setText]       = useState('');
-    const [isCP,       setIsCP]       = useState(false);
-    const [cpPrice,    setCpPrice]    = useState('');
-    const [cpDates,    setCpDates]    = useState([]);
-    const [calOpen,    setCalOpen]    = useState(false);
-    const [sending,    setSending]    = useState(false);
+    const [messages, setMessages] = useState(booking.messages ?? []);
+    const [text, setText] = useState('');
+    const [isCP, setIsCP] = useState(false);
+    const [cpPrice, setCpPrice] = useState('');
+    const [cpDates, setCpDates] = useState([]);
+    const [calOpen, setCalOpen] = useState(false);
+    const [sending, setSending] = useState(false);
     const [matchedIds, setMatchedIds] = useState(new Set());
     const bottomRef = useRef(null);
     const calBtnRef = useRef(null);
@@ -218,8 +218,8 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
     useEffect(() => { if (!isCP) setCalOpen(false); }, [isCP]);
 
     const incomingCounters = booking.incomingCounterProposals ?? [];
-    const latestCounter    = incomingCounters[incomingCounters.length - 1];
-    const latestIsMatched  = latestCounter && matchedIds.has(latestCounter._id);
+    const latestCounter = incomingCounters[incomingCounters.length - 1];
+    const latestIsMatched = latestCounter && matchedIds.has(latestCounter._id);
 
     const load = useCallback(async () => {
         if (!booking?._id) return;
@@ -250,14 +250,14 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                 data = await sendCounterProposal(booking._id, {
                     text: text.trim(),
                     counterProposal: {
-                        adjustedPrice:    cpPrice ? Number(cpPrice) : null,
+                        adjustedPrice: cpPrice ? Number(cpPrice) : null,
                         alternativeDates: cpDates.length ? cpDates : [],
-                        note:             text.trim(),
+                        note: text.trim(),
                     },
                 });
                 onBookingUpdate(booking._id, {
                     status: 'countered',
-                    proposedPrice:  data.booking.proposedPrice,
+                    proposedPrice: data.booking.proposedPrice,
                     requestedDates: data.booking.requestedDates,
                 });
             } else {
@@ -279,7 +279,7 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
             setMatchedIds(prev => new Set(prev).add(latestCounter._id));
             onBookingUpdate(booking._id, {
                 status: 'countered',
-                proposedPrice:  data.booking.proposedPrice,
+                proposedPrice: data.booking.proposedPrice,
                 requestedDates: data.booking.requestedDates,
             });
         } finally {
@@ -358,9 +358,9 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => setIsCP(p => !p)} style={{
                         ...pillActive,
-                        color:      isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                        color: isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
                         background: isCP ? 'var(--opal-amber-dim)' : 'transparent',
-                        border:     `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                        border: `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                         cursor: 'pointer',
                     }}>↩ Counter-proposal</button>
                     {isCP && (
@@ -370,17 +370,17 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                                 onChange={e => setCpPrice(e.target.value)}
                                 style={{
                                     ...pillActive,
-                                    color:      cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                    color: cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                     background: cpPrice ? 'var(--opal-amber-dim)' : 'transparent',
-                                    border:     `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                    border: `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                                     cursor: 'text', width: 110, outline: 'none',
                                 }}
                             />
                             <button ref={calBtnRef} onClick={() => setCalOpen(o => !o)} style={{
                                 ...pillActive,
-                                color:      calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                color: calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                 background: calOpen || cpDates.length > 0 ? 'var(--opal-amber-dim)' : 'transparent',
-                                border:     `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                border: `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
                             }}>
                                 📅 {cpDates.length > 0 ? `${cpDates.length} date${cpDates.length > 1 ? 's' : ''}` : 'Dates'}
@@ -415,8 +415,8 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
 function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
-    const [tab,        setTab]        = useState('details');
-    const [applying,   setApplying]   = useState(false);
+    const [tab, setTab] = useState('details');
+    const [applying, setApplying] = useState(false);
     const [applyError, setApplyError] = useState(null);
 
     useEffect(() => {
@@ -432,17 +432,19 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
         </div>
     );
 
-    const venue   = booking.venueId;
+    const venue = booking.venueId;
     const venueId = venue?._id ?? venue;
 
     const fields = [
-        { label: 'Venue',      value: venue?.name },
+        { label: 'Venue', value: venue?.name },
         { label: 'Event Type', value: booking.eventType },
-        { label: 'Dates',      value: booking.requestedDates?.map(fmtDate).join(', ') },
-        { label: 'Attendees',  value: booking.expectedAttendees?.toLocaleString() },
-        { label: 'Price',      value: booking.proposedPrice?.amount
-            ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
-            : '—' },
+        { label: 'Dates', value: booking.requestedDates?.map(fmtDate).join(', ') },
+        { label: 'Attendees', value: booking.expectedAttendees?.toLocaleString() },
+        {
+            label: 'Price', value: booking.proposedPrice?.amount
+                ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
+                : '—'
+        },
     ];
 
     const handleApplyToEvent = async () => {
@@ -473,18 +475,6 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
                         </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {booking.status === 'approved' && eventId && (
-                            booking.appliedToEvent ? (
-                                <span style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                                    padding: '5px 12px', borderRadius: 8,
-                                    background: 'var(--opal-teal-dim)', border: '1px solid rgba(79,209,197,0.28)',
-                                    color: 'var(--opal-teal)', fontSize: 12, fontWeight: 700,
-                                }}>✓ Applied to Event</span>
-                            ) : (
-                                <Btn label={applying ? 'Applying…' : '✓ Apply to Event'} color="var(--opal-teal)" onClick={handleApplyToEvent} disabled={applying} style={{ padding: '6px 14px', fontSize: 12 }} />
-                            )
-                        )}
                         <Badge status={booking.status} />
                     </div>
                 </div>
@@ -565,19 +555,19 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function PageReplyVenue({ onNavigate }) {
     const currentUserId = getUserIdFromToken();
-    const navigate      = useNavigate();
-    const { eventId }   = useParams();
+    const navigate = useNavigate();
+    const { eventId } = useParams();
 
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [filter,   setFilter]   = useState('All');
-    const [loading,  setLoading]  = useState(true);
+    const [filter, setFilter] = useState('All');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchMyVenueReplies()
+        fetchMyVenueReplies(eventId)
             .then(data => { setBookings(data.replies); setSelected(data.replies[0] ?? null); })
             .finally(() => setLoading(false));
-    }, []);
+    }, [eventId]);
 
     const handleBookingUpdate = useCallback((bookingId, patch) => {
         setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, ...patch } : b));
@@ -589,10 +579,10 @@ export default function PageReplyVenue({ onNavigate }) {
         return STATUS[b.status]?.label ?? 'Pending';
     };
 
-    const tabs   = ['All', 'Pending', 'Approved', 'Declined'];
+    const tabs = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
-        All:      bookings.length,
-        Pending:  bookings.filter(b => sidebarLabel(b) === 'Pending').length,
+        All: bookings.length,
+        Pending: bookings.filter(b => sidebarLabel(b) === 'Pending').length,
         Approved: bookings.filter(b => sidebarLabel(b) === 'Approved').length,
         Declined: bookings.filter(b => sidebarLabel(b) === 'Declined').length,
     };
@@ -602,14 +592,14 @@ export default function PageReplyVenue({ onNavigate }) {
 
     // Map filter keys → StatCard colors matching Opal palette
     const TILE_COLOR = {
-        All:      P.blue ?? 'var(--opal-violet)',
-        Pending:  P.amber ?? 'var(--opal-amber)',
-        Approved: P.teal  ?? 'var(--opal-teal)',
-        Declined: P.rose  ?? 'var(--opal-red)',
+        All: P.blue ?? 'var(--opal-violet)',
+        Pending: P.amber ?? 'var(--opal-amber)',
+        Approved: P.teal ?? 'var(--opal-teal)',
+        Declined: P.rose ?? 'var(--opal-red)',
     };
     const TILE_SUB = {
-        All:      'all requests',
-        Pending:  'awaiting response',
+        All: 'all requests',
+        Pending: 'awaiting response',
         Approved: 'confirmed',
         Declined: 'rejected',
     };
@@ -733,7 +723,7 @@ export default function PageReplyVenue({ onNavigate }) {
                             )}
                             {filtered.map(b => {
                                 const isActive = selected?._id === b._id;
-                                const s        = STATUS[b.status] ?? STATUS.pending;
+                                const s = STATUS[b.status] ?? STATUS.pending;
                                 return (
                                     <button
                                         key={b._id}

@@ -55,3 +55,10 @@ export async function updateMyVendorProfile(payload) {
     body: JSON.stringify(payload),
   });
 }
+
+export async function sendVendorClarificationMessage(requestId, message) {
+    return apiFetch(`/vendorRequests/${requestId}/message`, {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+    });
+}

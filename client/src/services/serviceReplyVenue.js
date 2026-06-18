@@ -1,8 +1,9 @@
 import { apiFetch } from "../utils/apiFetch";
 
 // GET all booking entries for the current user, each with message threads
-export async function fetchMyVenueReplies() {
-  return apiFetch("/reply-venue");
+export async function fetchMyVenueReplies(eventId) {
+    const qs = eventId ? `?eventId=${eventId}` : '';
+    return apiFetch(`/reply-venue${qs}`);
 }
 
 // GET single booking thread (marks incoming messages as read)

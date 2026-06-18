@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 import "../components/componentTheme.css";
-import { P, icons, GlassPanel } from "../components/componentTheme";
+import { icons, GlassPanel } from "../components/componentTheme";
+import CurvedLoop from "../components/CurvedLoop";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -79,6 +80,17 @@ function Login() {
       <div className="login-background-glow login-glow-one"></div>
       <div className="login-background-glow login-glow-two"></div>
 
+      {/* TOP marquee — arches upward */}
+      <div className="login-marquee login-marquee--top">
+        <CurvedLoop
+          marqueeText="PopEyez ✦ a moving cafe ✦ "
+          speed={1.5}
+          curveAmount={180}
+          direction="left"
+          interactive={false}
+        />
+      </div>
+
       <GlassPanel className="login-card">
         <div className="login-logo">
           <div className="login-logo-icon">{icons.lock || "🔐"}</div>
@@ -92,7 +104,6 @@ function Login() {
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-
             <div className="login-input-wrap">
               <span>{icons.mail || "✉️"}</span>
               <input
@@ -106,7 +117,6 @@ function Login() {
 
           <div className="form-group">
             <label>Password</label>
-
             <div className="login-input-wrap">
               <span>{icons.key || "●"}</span>
               <input
@@ -138,6 +148,15 @@ function Login() {
           </p>
         </form>
       </GlassPanel>
+      <div className="login-marquee login-marquee--bottom">
+        <CurvedLoop
+          marqueeText="PopEyez ✦ a moving cafe ✦ "
+          speed={1.5}
+          curveAmount={-250}
+          direction="right"
+          interactive={false}
+        />
+      </div>
     </div>
   );
 }

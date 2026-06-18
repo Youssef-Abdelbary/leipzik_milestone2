@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { requestVenueBooking, searchVenues } from "../../services/serviceBrowseVenue.js";
-import MiniCalendar from "../../components/componentMiniCalendar.jsx";
+import MiniCalendarSelect from '../../components/componentMiniCalendarSelect.jsx';
+import MiniCalendar from '../../components/componentMiniCalendar.jsx';
 import { OpalSelect, OpalMultiSelect } from "../../components/componentMenus.jsx";
 import { P, icons, GlassPanel } from "../../components/componentTheme";
 import '../../components/componentTheme.css';
+import { fetchVenueAvailability } from "../../services/serviceReplyVenue.js";
 
 const AMENITY_ICONS = {
   Parking: "P",
@@ -221,51 +223,69 @@ function VenueCard({ venue, onViewDetails }) {
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function DetailModal({ venue, onClose, onBookingSent }) {
-  const [form, setForm] = useState({
-    eventType: "wedding",
-    expectedAttendees: "",
-    specialRequirements: "",
-    proposedAmount: "",
-    proposedCurrency: venue.pricing?.currency ?? "EGP",
-  });
-  const [selectedDates, setSelectedDates] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const photoUrl = venue.photos?.[0]?.url;
-  const unit = venue.pricing?.pricingUnit?.replace("per_", "") ?? "event";
+function DetailModal({ venue, onClose, onBookingSent, eventId }) {
+    const [form, setForm] = useState({
+        eventType: "wedding",
+        expectedAttendees: "",
+        specialRequirements: "",
+        proposedAmount: "",
+        proposedCurrency: venue.pricing?.currency ?? "EGP",
+    });
+    const [selectedDates,  setSelectedDates]  = useState([]);
+    const [submitting,     setSubmitting]     = useState(false);
+    const [error,          setError]          = useState("");
+    const [bookedDates,    setBookedDates]    = useState([]);
+    const [loadingDates,   setLoadingDates]   = useState(true);
+    const photoUrl = venue.photos?.[0]?.url;
+    const unit = venue.pricing?.pricingUnit?.replace("per_", "") ?? "event";
 
-  const inp = {
-    width: '100%', padding: '9px 12px', borderRadius: 8,
-    border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.8)',
-    fontSize: 13, color: P.text, outline: 'none', boxSizing: 'border-box',
-    fontFamily: 'inherit', transition: 'border-color 0.15s',
-  };
+    useEffect(() => {
+        setLoadingDates(true);
+        console.log('Fetching availability for venue:', venue._id);
+        fetchVenueAvailability(venue._id)
+            .then(data => {
+                console.log('Availability data:', data);
+                setBookedDates(data.bookedDates?.map(b => b.date) ?? []);
+            })
+            .catch(err => {
+                console.error('Availability fetch failed:', err);
+                setBookedDates([]);
+            })
+            .finally(() => setLoadingDates(false));
+    }, [venue._id]);
 
-  const updateField = (field, value) => { setError(""); setForm((prev) => ({ ...prev, [field]: value })); };
-  const handleDatesChange = (dates) => { setError(""); setSelectedDates(dates); };
+    const inp = {
+        width: '100%', padding: '9px 12px', borderRadius: 8,
+        border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.8)',
+        fontSize: 13, color: P.text, outline: 'none', boxSizing: 'border-box',
+        fontFamily: 'inherit', transition: 'border-color 0.15s',
+    };
 
-  const submitBooking = async (event) => {
-    event.preventDefault();
-    if (selectedDates.length === 0) { setError("Select at least one date."); return; }
-    setSubmitting(true);
-    setError("");
-    try {
-      await requestVenueBooking(venue._id, {
-        eventType: form.eventType,
-        requestedDates: selectedDates,
-        expectedAttendees: Number(form.expectedAttendees),
-        specialRequirements: form.specialRequirements.trim(),
-        proposedAmount: form.proposedAmount ? Number(form.proposedAmount) : undefined,
-        proposedCurrency: form.proposedCurrency.trim() || undefined,
-      });
-      onBookingSent("Booking request sent.");
-      onClose();
-    } catch (err) {
-      setError(err.message || "Failed to send booking request.");
-    } finally {
-      setSubmitting(false);
-    }
+    const updateField = (field, value) => { setError(""); setForm((prev) => ({ ...prev, [field]: value })); };
+    const handleDatesChange = (dates) => { setError(""); setSelectedDates(dates); };
+
+    const submitBooking = async (event) => {
+        event.preventDefault();
+        if (selectedDates.length === 0) { setError("Select at least one date."); return; }
+        setSubmitting(true);
+        setError("");
+        try {
+            await requestVenueBooking(venue._id, {
+                eventId,
+                eventType: form.eventType,
+                requestedDates: selectedDates,
+                expectedAttendees: Number(form.expectedAttendees),
+                specialRequirements: form.specialRequirements.trim(),
+                proposedAmount: form.proposedAmount ? Number(form.proposedAmount) : undefined,
+                proposedCurrency: form.proposedCurrency.trim() || undefined,
+            });
+            onBookingSent("Booking request sent.");
+            onClose();
+        } catch (err) {
+            setError(err.message || "Failed to send booking request.");
+        } finally {
+            setSubmitting(false);
+        }
   };
 
   return (
@@ -346,30 +366,34 @@ function DetailModal({ venue, onClose, onBookingSent }) {
             </div>
           )}
 
-          <div style={{ borderTop: `1px solid ${P.border}`, paddingTop: 18 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 12 }}>Select date(s)</div>
-            <MiniCalendar
-              selectedDates={selectedDates}
-              onChange={handleDatesChange}
-              disabledDates={venue.bookedDates?.map((b) => b.date) ?? []}
-            />
+        <div style={{ borderTop: `1px solid ${P.border}`, paddingTop: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 7 }}>Select date(s)</div>
+            {loadingDates ? (
+                <div style={{ fontSize: 13, color: P.muted, padding: '12px 0' }}>Loading availability…</div>
+            ) : (
+                  <MiniCalendarSelect
+                      selectedDates={selectedDates}
+                      onChange={handleDatesChange}
+                      disabledDates={bookedDates}
+                  />
+            )}
 
             {selectedDates.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                {selectedDates.map((d) => (
-                  <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px 4px 10px', borderRadius: 20, background: P.blue, color: '#0a0a12', fontSize: 12, fontWeight: 500 }}>
-                    {new Date(`${d}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    <button type="button" onClick={() => setSelectedDates((prev) => prev.filter((x) => x !== d))}
-                      style={{ background: 'rgba(10,10,15,0.25)', border: 'none', color: '#0a0a12', borderRadius: '50%', width: 16, height: 16, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                    {selectedDates.map((d) => (
+                        <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px 4px 10px', borderRadius: 20, background: P.blue, color: '#0a0a12', fontSize: 12, fontWeight: 500 }}>
+                            {new Date(`${d}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                            <button type="button" onClick={() => setSelectedDates((prev) => prev.filter((x) => x !== d))}
+                                style={{ background: 'rgba(10,10,15,0.25)', border: 'none', color: '#0a0a12', borderRadius: '50%', width: 16, height: 16, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                </div>
             )}
 
             <div style={{ fontSize: 10, fontWeight: 700, color: P.muted, textTransform: 'uppercase', letterSpacing: '0.09em', margin: '18px 0 10px', paddingTop: 14, borderTop: `1px solid ${P.border}` }}>
-              Request Booking
+                Request Booking
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 10 }}>
@@ -467,11 +491,11 @@ function DateFilterPopover({ value, onChange }) {
         )}
       </button>
       {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 600 }}>
-          <MiniCalendar
-            selectedDates={value ? [value] : []}
-            onChange={(dates) => { const next = dates.find((d) => d !== value) ?? ""; onChange(next); setOpen(false); }}
-          />
+        <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 10000 }}>
+            <MiniCalendar
+                selectedDates={value ? [value] : []}
+                onChange={(dates) => { const next = dates.find((d) => d !== value) ?? ""; onChange(next); setOpen(false); }}
+            />
         </div>
       )}
     </div>
@@ -479,7 +503,7 @@ function DateFilterPopover({ value, onChange }) {
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
-export default function VenueDiscovery({ onNavigate }) {
+export default function VenueDiscovery({ onNavigate, eventId }) {
   const navigate = useNavigate();
   const [venues,           setVenues]           = useState([]);
   const [loading,          setLoading]          = useState(true);
@@ -666,65 +690,67 @@ export default function VenueDiscovery({ onNavigate }) {
         </div>
 
         {/* ── Search + filter bar (now inside the content width) ── */}
-        <GlassPanel style={{ padding: '14px 16px', marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Name search */}
-            <div style={{ flex: '1 1 220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: 12, fontSize: 14, pointerEvents: 'none', color: P.muted }}>⌕</span>
-              <input style={inp} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search venues"
-                onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
-              {search && <button style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: P.muted, fontSize: 16, cursor: 'pointer' }} onClick={() => setSearch("")}>×</button>}
+        <div style={{ position: 'relative', zIndex: 100 }}>
+          <GlassPanel style={{ padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Name search */}
+              <div style={{ flex: '1 1 220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: 12, fontSize: 14, pointerEvents: 'none', color: P.muted }}>⌕</span>
+                <input style={inp} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search venues"
+                  onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
+                {search && <button style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: P.muted, fontSize: 16, cursor: 'pointer' }} onClick={() => setSearch("")}>×</button>}
+              </div>
+
+              {/* Location search */}
+              <div style={{ flex: '1 1 180px', position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <span style={{ position: 'absolute', left: 12, fontSize: 14, pointerEvents: 'none', color: P.muted }}>◎</span>
+                <input style={inp} value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)} placeholder="Area or city" list="location-suggestions"
+                  onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
+                {locationSearch && <button style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: P.muted, fontSize: 16, cursor: 'pointer' }} onClick={() => setLocationSearch("")}>×</button>}
+                <datalist id="location-suggestions">{locationSuggestions.map((l) => <option key={l} value={l} />)}</datalist>
+              </div>
+
+              <DateFilterPopover value={dateFilter} onChange={setDateFilter} />
+
+              {/* Filters toggle */}
+              <button
+                onClick={() => setFiltersExpanded((v) => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
+                  border: filtersExpanded || activeFilterCount > 1 ? `1px solid ${P.blue}` : `1px solid ${P.border}`,
+                  borderRadius: 9, fontSize: 13,
+                  color: filtersExpanded || activeFilterCount > 1 ? '#0a0a12' : P.text,
+                  background: filtersExpanded || activeFilterCount > 1 ? P.blue : 'rgba(30,30,41,0.7)',
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+              >
+                Filters {activeFilterCount > 0 && <span style={{ background: '#0a0a0f', color: P.blue, fontSize: 11, fontWeight: 700, borderRadius: 10, padding: '1px 6px' }}>{activeFilterCount}</span>}
+              </button>
+
+              <OpalSelect value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} style={{ minWidth: 180 }} accent="violet" />
             </div>
 
-            {/* Location search */}
-            <div style={{ flex: '1 1 180px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: 12, fontSize: 14, pointerEvents: 'none', color: P.muted }}>◎</span>
-              <input style={inp} value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)} placeholder="Area or city" list="location-suggestions"
-                onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
-              {locationSearch && <button style={{ position: 'absolute', right: 10, background: 'none', border: 'none', color: P.muted, fontSize: 16, cursor: 'pointer' }} onClick={() => setLocationSearch("")}>×</button>}
-              <datalist id="location-suggestions">{locationSuggestions.map((l) => <option key={l} value={l} />)}</datalist>
-            </div>
-
-            <DateFilterPopover value={dateFilter} onChange={setDateFilter} />
-
-            {/* Filters toggle */}
-            <button
-              onClick={() => setFiltersExpanded((v) => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
-                border: filtersExpanded || activeFilterCount > 1 ? `1px solid ${P.blue}` : `1px solid ${P.border}`,
-                borderRadius: 9, fontSize: 13,
-                color: filtersExpanded || activeFilterCount > 1 ? '#0a0a12' : P.text,
-                background: filtersExpanded || activeFilterCount > 1 ? P.blue : 'rgba(30,30,41,0.7)',
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-              }}
-            >
-              Filters {activeFilterCount > 0 && <span style={{ background: '#0a0a0f', color: P.blue, fontSize: 11, fontWeight: 700, borderRadius: 10, padding: '1px 6px' }}>{activeFilterCount}</span>}
-            </button>
-
-            <OpalSelect value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} style={{ minWidth: 180 }} accent="violet" />
-          </div>
-
-          {filtersExpanded && (
-            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap', paddingTop: 14, marginTop: 14, borderTop: `1px solid ${P.border}` }}>
-              {amenityOptions.length > 0 && (
-                <div style={{ flex: 1, minWidth: 260 }}>
-                  <OpalMultiSelect label="Must-have amenities" value={amenityFilter} onChange={setAmenityFilter} options={amenityOptions} placeholder="Any amenities" accent="violet" />
-                </div>
-              )}
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={() => { setLocationSearch(""); setDateFilter(""); setAmenityFilter([]); }}
-                  style={{ padding: '9px 16px', border: `1px solid ${P.red}44`, borderRadius: 9, fontSize: 13, color: P.red, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-end', height: 40, transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = P.red}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = `${P.red}44`}
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-          )}
-        </GlassPanel>
+            {filtersExpanded && (
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap', paddingTop: 14, marginTop: 14, borderTop: `1px solid ${P.border}` }}>
+                {amenityOptions.length > 0 && (
+                  <div style={{ flex: 1, minWidth: 260 }}>
+                    <OpalMultiSelect label="Must-have amenities" value={amenityFilter} onChange={setAmenityFilter} options={amenityOptions} placeholder="Any amenities" accent="violet" />
+                  </div>
+                )}
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() => { setLocationSearch(""); setDateFilter(""); setAmenityFilter([]); }}
+                    style={{ padding: '9px 16px', border: `1px solid ${P.red}44`, borderRadius: 9, fontSize: 13, color: P.red, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-end', height: 40, transition: 'border-color 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = P.red}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = `${P.red}44`}
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            )}
+          </GlassPanel>
+        </div>
 
         {/* Active filter pill */}
         {activeFilterCount > 0 && (
@@ -792,7 +818,7 @@ export default function VenueDiscovery({ onNavigate }) {
       </div>
 
       {detailVenue && (
-        <DetailModal venue={detailVenue} onClose={() => setDetailVenue(null)} onBookingSent={showToast} />
+        <DetailModal venue={detailVenue} onClose={() => setDetailVenue(null)} onBookingSent={showToast} eventId={eventId} />
       )}
 
       <style>{`
