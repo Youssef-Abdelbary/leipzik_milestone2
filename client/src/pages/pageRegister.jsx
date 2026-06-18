@@ -3,6 +3,8 @@ import { registerUser } from "../services/serviceRegister";
 import { useNavigate, Link } from "react-router-dom";
 import "../components/componentTheme.css";
 import "./Login.css";
+import CurvedLoop from "../components/CurvedLoop";
+import { icons, GlassPanel } from "../components/componentTheme";
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -19,14 +21,14 @@ export default function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleChange = (event) => {
+    function handleChange(event) {
         setFormData({
             ...formData,
             [event.target.name]: event.target.value,
         });
-    };
+    }
 
-    const handleSubmit = async (event) => {
+    async function handleSubmit(event) {
         event.preventDefault();
         setError("");
 
@@ -37,20 +39,23 @@ export default function Register() {
             !formData.password ||
             !formData.confirmPassword
         ) {
-            return setError("All fields are required");
+            setError("All fields are required");
+            return;
         }
 
         if (!formData.role) {
-            return setError("Please select a role");
+            setError("Please select a role");
+            return;
         }
 
         if (formData.password !== formData.confirmPassword) {
-            return setError("Passwords do not match");
+            setError("Passwords do not match");
+            return;
         }
 
-        setLoading(true);
-
         try {
+            setLoading(true);
+
             const { confirmPassword, ...payload } = formData;
 
             await registerUser(payload);
@@ -65,113 +70,165 @@ export default function Register() {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     return (
-        <div className="auth-page">
-            <form className="auth-card auth-form register-form" onSubmit={handleSubmit}>
-                <div className="auth-top">
-                    <div className="auth-chip">Register</div>
-                    <h1>Create your account</h1>
-                    <p className="auth-subtitle">Choose your role and start using the vendor dashboard.</p>
+        <div className="login-page register-page">
+            <div className="login-background-glow login-glow-one"></div>
+            <div className="login-background-glow login-glow-two"></div>
+
+            <div className="login-marquee login-marquee--top">
+                <CurvedLoop
+                    marqueeText="PopEyez ✦ a moving cafe ✦ "
+                    speed={1.5}
+                    curveAmount={180}
+                    direction="left"
+                    interactive={false}
+                />
+            </div>
+
+            <GlassPanel className="login-card register-card">
+                <div className="login-logo">
+                    <div className="login-logo-icon">🔐</div>
                 </div>
 
-                <div className="form-group">
-                    <label>I am a...</label>
+                <div className="login-header">
+                    <h1>Create Account</h1>
+                    <p>Choose your role and start using your PopEyez dashboard.</p>
+                </div>
 
-                    <div className="role-group">
-                        {[
-                            { label: "Vendor", value: "vendor" },
-                            { label: "Venue Owner", value: "venue_owner" },
-                            { label: "Organizer", value: "organizer" },
-                        ].map((role) => (
-                            <button
-                                key={role.value}
-                                type="button"
-                                className={
-                                    formData.role === role.value
-                                        ? "role-button role-button-active"
-                                        : "role-button"
-                                }
-                                onClick={() =>
-                                    setFormData({
-                                        ...formData,
-                                        role: role.value,
-                                    })
-                                }
-                            >
-                                {role.label}
-                            </button>
-                        ))}
+                <form className="login-form register-form" onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>I am a...</label>
+
+                        <div className="role-group">
+                            {[
+                                { label: "Vendor", value: "vendor" },
+                                { label: "Venue Owner", value: "venue_owner" },
+                                { label: "Organizer", value: "organizer" },
+                            ].map((role) => (
+                                <button
+                                    key={role.value}
+                                    type="button"
+                                    className={
+                                        formData.role === role.value
+                                            ? "role-button role-button-active"
+                                            : "role-button"
+                                    }
+                                    onClick={() =>
+                                        setFormData({
+                                            ...formData,
+                                            role: role.value,
+                                        })
+                                    }
+                                >
+                                    {role.value === "vendor" && <span>🧑‍🍳</span>}
+                                    {role.value === "venue_owner" && <span>🏟️</span>}
+                                    {role.value === "organizer" && <span>🎪</span>}
+                                    {role.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                <div className="form-group">
-                    <label>Full Name</label>
-                    <input
-                        type="text"
-                        name="fullname"
-                        value={formData.fullname}
-                        onChange={handleChange}
-                        placeholder="Enter full name"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Full Name</label>
+                        <div className="login-input-wrap">
+                            <span>👤</span>
+                            <input
+                                type="text"
+                                name="fullname"
+                                value={formData.fullname}
+                                onChange={handleChange}
+                                placeholder="Enter full name"
+                            />
+                        </div>
+                    </div>
 
-                <div className="form-group">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Enter email"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Email</label>
+                        <div className="login-input-wrap">
+                            <span>{icons.mail || "✉️"}</span>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="Enter email"
+                            />
+                        </div>
+                    </div>
 
-                <div className="form-group">
-                    <label>Phone</label>
-                    <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="Enter phone number"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Phone</label>
+                        <div className="login-input-wrap">
+                            <span>📞</span>
+                            <input
+                                type="tel"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                placeholder="Enter phone number"
+                            />
+                        </div>
+                    </div>
 
-                <div className="form-group">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Enter password"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Password</label>
+                        <div className="login-input-wrap">
+                            <span>🔒</span>
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Enter password"
+                            />
+                        </div>
+                    </div>
 
-                <div className="form-group">
-                    <label>Confirm Password</label>
-                    <input
-                        type="password"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        placeholder="Confirm password"
-                    />
-                </div>
+                    <div className="form-group">
+                        <label>Confirm Password</label>
+                        <div className="login-input-wrap">
+                            <span>🔒</span>
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="Confirm password"
+                            />
+                        </div>
+                    </div>
 
-                {error && <p className="error-message">{error}</p>}
+                    {error && (
+                        <p className="error-message">
+                            {icons.warning || "⚠️"} {error}
+                        </p>
+                    )}
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account"}
-                </button>
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Creating account..." : "Create Account"}
+                    </button>
 
-                <p className="auth-meta">
-                    Already have an account?{' '}
-                    <Link to="/login">Log in</Link>
-                </p>
-            </form>
+                    <p className="loginText">
+                        Already have an account?{" "}
+                        <Link to="/login" className="link">
+                            Log in
+                        </Link>
+                    </p>
+                </form>
+            </GlassPanel>
+
+            <div className="login-marquee login-marquee--bottom">
+                <CurvedLoop
+                    marqueeText="PopEyez ✦ a moving cafe ✦ "
+                    speed={1.5}
+                    curveAmount={-350}
+                    direction="right"
+                    interactive={false}
+                />
+            </div>
         </div>
     );
 }
