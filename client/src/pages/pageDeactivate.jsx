@@ -13,7 +13,13 @@ const ROLE_COLORS = {
   venue_owner: { bg: "rgba(245, 166, 35, 0.12)", text: "#f5a623", border: "rgba(245, 166, 35, 0.35)" },
   staff: { bg: "rgba(77, 231, 227, 0.12)", text: "#4de7e3", border: "rgba(77, 231, 227, 0.35)" },
   vendor: { bg: "rgba(255, 91, 159, 0.12)", text: "#ff6fb1", border: "rgba(255, 91, 159, 0.35)" },
-  guest: { bg: "rgba(255, 255, 255, 0.08)", text: "rgba(232, 232, 240, 0.75)", border: "rgba(255, 255, 255, 0.14)" },
+};
+
+
+const DEFAULT_ROLE_STYLE = {
+  bg: "rgba(255, 255, 255, 0.08)",
+  text: "rgba(232, 232, 240, 0.75)",
+  border: "rgba(255, 255, 255, 0.14)",
 };
 
 const ROLES = Object.keys(ROLE_COLORS);
@@ -594,8 +600,7 @@ export default function UserManagement({ onTabChange }) {
                 ) : (
                   filtered.map((user, index) => {
                     const isActive = user.status === "active";
-                    const roleStyle = ROLE_COLORS[user.role] ?? ROLE_COLORS.guest;
-
+                    const roleStyle = ROLE_COLORS[user.role] ?? DEFAULT_ROLE_STYLE;
                     return (
                       <tr
                         key={user._id}
@@ -609,8 +614,7 @@ export default function UserManagement({ onTabChange }) {
                       >
                         <td style={{ padding: "15px 20px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <Avatar fullname={user.fullname ?? ""} active={isActive} />
-
+                            <Avatar fullname={user.fullname || user.fullName || ""} active={isActive} />
                             <span
                               style={{
                                 fontSize: 14,
@@ -618,8 +622,7 @@ export default function UserManagement({ onTabChange }) {
                                 color: P.text,
                               }}
                             >
-                              {user.fullname || "Unnamed user"}
-                            </span>
+                              {user.fullname || user.fullName || "Unnamed user"}                            </span>
                           </div>
                         </td>
 

@@ -181,7 +181,6 @@ export default function RegisterForOthers() {
               <div style={styles.roleGroup}>
                 {[
                   { label: "Vendor", value: "vendor" },
-                  { label: "Guest", value: "guest" },
                   { label: "Staff", value: "staff" },
                 ].map((role) => (
                   <button

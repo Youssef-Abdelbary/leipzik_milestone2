@@ -3,7 +3,7 @@ import modelUser from "../models/modelUser.js";
 import Vendor from "../models/modelVendor.js";
 import { generateToken, generateRefreshToken } from "../utils/generateJWT.js";
 
-const ALLOWED_ROLES = ["vendor", "guest", "staff"];
+const ALLOWED_ROLES = ["vendor", "staff"];
 
 export const register = async (req, res) => {
     try {
@@ -24,8 +24,7 @@ export const register = async (req, res) => {
         }
 
         if (!ALLOWED_ROLES.includes(role)) {
-            return res.status(400).json({ message: "Role must be one of: vendor, guest, staff" });
-        }
+            return res.status(400).json({ message: "Role must be one of: vendor, staff" });        }
 
         const existingUser = await modelUser.findOne({ email });
         if (existingUser) {

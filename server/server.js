@@ -7,7 +7,6 @@ import registerRoute from "./routes/routeRegister.js";
 import registerOthersRoute from "./routes/routeRegisterOthers.js";
 import deactivateRoutes from "./routes/routeDeactivate.js";
 import guestsRoutes from "./routes/routeGuests.js";
-import User from "./models/User.js";
 import venueRoutes from "./routes/routeVenue.js";
 import browseVenueRoutes from "./routes/routeBrowseVenue.js";
 import routeResponseVenue from './routes/routeResponseVenue.js';
