@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { VscHome, VscMail, VscCalendar, VscBell, VscPerson, VscLayout  } from "react-icons/vsc";
+import {
+    VscHome,
+    VscMail,
+    VscCalendar,
+    VscPerson,
+    VscLayout,
+} from "react-icons/vsc";
+import { FaQrcode } from "react-icons/fa";
 
 import Dock from "../components/componentDock.jsx";
 import AppHeader from "../components/componentAppHeader.jsx";
@@ -83,46 +90,60 @@ const Profile = () => {
     ];
 
     const organizerDockItems = [
-    {
-        icon: <VscHome size={26} />,
-        label: "Home",
-        onClick: () => navigate("/organizer/workflow"),
-    },
-    {
-        icon: <VscCalendar size={26} />,
-        label: "Events",
-        onClick: () => navigate("/organizer/events"),
-    },
-    {
-        icon: <VscPerson size={26} />,
-        label: "Profile",
-        active: true,
-        onClick: () => navigate("/profile"),
-    },
+        {
+            icon: <VscHome size={26} />,
+            label: "Home",
+            onClick: () => navigate("/organizer/workflow"),
+        },
+        {
+            icon: <VscCalendar size={26} />,
+            label: "Events",
+            onClick: () => navigate("/organizer/events"),
+        },
+        {
+            icon: <VscPerson size={26} />,
+            label: "Profile",
+            active: true,
+            onClick: () => navigate("/profile"),
+        },
     ];
 
     const staffDockItems = [
-    {
-        icon: <VscHome size={26} />,
-        label: "Tasks",
-        onClick: () => navigate("/staff/dashboard"),
-    },
-    {
-        icon: <VscLayout  size={26} />,
-        label: "Layout",
-        onClick: () => navigate("/staff/dashboard"),
-    },
-    {
-        icon: <VscCalendar size={26} />,
-        label: "Day-Of",
-        onClick: () => navigate("/staff/dashboard"),
-    },
-    {
-        icon: <VscPerson size={26} />,
-        label: "Profile",
-        active: true,
-        onClick: () => navigate("/profile"),
-    },
+        {
+            icon: <VscHome size={26} />,
+            label: "Tasks",
+            onClick: () =>
+                navigate("/staff/dashboard", {
+                    state: { activeTab: "tasks" },
+                }),
+        },
+        {
+            icon: <VscLayout size={26} />,
+            label: "Layout",
+            onClick: () =>
+                navigate("/staff/dashboard", {
+                    state: { activeTab: "layout" },
+                }),
+        },
+        {
+            icon: <VscCalendar size={26} />,
+            label: "Day-Of",
+            onClick: () =>
+                navigate("/staff/dashboard", {
+                    state: { activeTab: "dayof" },
+                }),
+        },
+        {
+            icon: <FaQrcode size={26} />,
+            label: "QR Scan",
+            onClick: () => navigate("/staff/qr-scanner"),
+        },
+        {
+            icon: <VscPerson size={26} />,
+            label: "Profile",
+            active: true,
+            onClick: () => navigate("/profile"),
+        },
     ];
 
     const section = (title, children) => (
@@ -223,7 +244,6 @@ const Profile = () => {
         }));
     };
 
-
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
@@ -287,22 +307,21 @@ const Profile = () => {
             }}
         >
             <style>{`
-        @keyframes pageIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
+                @keyframes pageIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
 
-        @keyframes cardIn {
-          from { opacity: 0; transform: translateY(18px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+                @keyframes cardIn {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            `}</style>
 
             {isOwner && (
-            <AppHeader
-                crumb={isOwner ? "Owner Profile" : "Profile"}
-                right={
-                    isOwner ? (
+                <AppHeader
+                    crumb="Owner Profile"
+                    right={
                         <div
                             style={{
                                 display: "flex",
@@ -328,18 +347,17 @@ const Profile = () => {
                             />
                             Venue Owner Portal
                         </div>
-                    ) : null
-                }
-            />
+                    }
+                />
             )}
 
             {isOrganizer && (
                 <AppHeader
                     crumb="My Profile"
                     right={
-                    <div className="organizer-dashboard-pill">
-                        Organizer Dashboard
-                    </div>
+                        <div className="organizer-dashboard-pill">
+                            Organizer Dashboard
+                        </div>
                     }
                 />
             )}
@@ -348,9 +366,9 @@ const Profile = () => {
                 <AppHeader
                     crumb="My Profile"
                     right={
-                    <div className="staff-dashboard-pill">
-                        Staff Dashboard
-                    </div>
+                        <div className="staff-dashboard-pill">
+                            Staff Dashboard
+                        </div>
                     }
                 />
             )}
@@ -387,6 +405,7 @@ const Profile = () => {
                     >
                         Manage your account details, contact information, and profile settings.
                     </p>
+
                     {isStaff && (
                         <p
                             style={{
