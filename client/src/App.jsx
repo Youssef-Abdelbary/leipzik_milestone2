@@ -54,48 +54,33 @@ function App() {
         <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
         <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
         <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-<<<<<<< HEAD
-        <Route path="/register" element={<Register />} />
-        <Route path="/venueowner/venues" element={<VenuesPage />} />
-        <Route path="/venueowner/venuereports" element={<VenueReports />} />
-        <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
-        <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
-        <Route path="/notificationsview" element={<NotificationsPage />} />
-        <Route path="/staff/guestlist" element={<GuestList />} />
-        <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
-        <Route path="/organizer/deactivate" element={<UserDeactivation />} />
-        <Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
-        <Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
-        <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
-        <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
-        <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
-        <Route path="/organizer/budget" element={<BudgetManagement />} />
-        <Route path="/organizer/reply" element={<PageReplyVenue />} />
-        <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
-        <Route path="/staff/dashboard" element={<StaffTasks />} />
-        <Route path="/pageProfile" element={<ProfilePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-=======
         <Route element={<Layout />}>
           <Route path="/register" element={<Register />} />
           <Route path="/staff/guestlist" element={<GuestList />} />
           <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
           <Route path="/organizer/deactivate" element={<UserDeactivation />} />
+
           <Route path="/venueowner/venues" element={<VenuesPage />} />
-          <Route path="/venueowner/venueresponse" element={<PageResponseVenue currentUserId={currentUserId} />} />
+          <Route
+            path="/venueowner/venueresponse"
+            element={<PageResponseVenue currentUserId={currentUserId} />}
+          />
           <Route path="/venueowner/venuereports" element={<VenueReports />} />
           <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
+
           <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
           <Route path="/notificationsview" element={<NotificationsPage />} />
+
           <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
           <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
           <Route path="/organizer/budget" element={<BudgetManagement />} />
           <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+
           <Route path="/staff/dashboard" element={<StaffTasks />} />
+
           <Route path="/pageProfile" element={<ProfilePage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
->>>>>>> 54f13e1 (mid changes 2)
       </Routes>
     </BrowserRouter>
   );
