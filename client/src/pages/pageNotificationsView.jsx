@@ -6,7 +6,7 @@ import AppHeader from "../components/componentAppHeader.jsx";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 
 // TODO: replace with the actual logged-in user's id (e.g. from auth context)
-const CURRENT_USER_ID = "665000000000000000000006";
+const CURRENT_USER_ID = "665000000000000000000001";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();

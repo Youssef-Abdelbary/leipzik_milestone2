@@ -10,6 +10,7 @@ import AppHeader from "../components/componentAppHeader";
 import { icons } from "../components/componentTheme";
 import { VscHome, VscCalendar, VscPerson, VscLayout } from "react-icons/vsc";
 import { FaQrcode } from "react-icons/fa";
+import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 
 const STAFF_TABS = [
   { id: "tasks", label: "Tasks", icon: <VscHome size={26} /> },
@@ -39,6 +40,7 @@ export default function StaffTasks() {
   const [loading, setLoading] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [selectedEventTitle, setSelectedEventTitle] = useState("");
+  const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,6 +63,9 @@ export default function StaffTasks() {
 
     loadAllStaffEvents();
     loadAllStaffTasks();
+    fetchNotifications(staffId).then((data) =>
+      setNotifications(data.data || data || [])
+    );
   }, [staffId]);
 
   useEffect(() => {
@@ -83,6 +88,7 @@ export default function StaffTasks() {
     const data = await response.json();
     setAllEvents(data);
   }
+
   async function loadStaffEvents() {
     const query = selectedDate ? `?date=${selectedDate}` : "";
 
@@ -93,6 +99,7 @@ export default function StaffTasks() {
     const data = await response.json();
     setEvents(data);
   }
+
   async function loadAllStaffTasks() {
     const response = await fetch(
       `http://localhost:5001/api/staff-tasks/tasks/${staffId}`
@@ -152,7 +159,6 @@ export default function StaffTasks() {
       loadAllStaffTasks();
       loadStaffEvents();
       loadStaffTasks();
-
     } catch (error) {
       console.error("Update task error:", error);
       alert("Something went wrong while updating the task.");
@@ -160,6 +166,13 @@ export default function StaffTasks() {
       setLoading(false);
     }
   }
+
+  const handleMarkAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === id ? { ...n, status: "read" } : n))
+    );
+    markNotificationAsRead(id).catch(() => {});
+  };
 
   const totalEvents = allEvents.length;
   const totalTasks = allTasks.length;
@@ -352,6 +365,7 @@ export default function StaffTasks() {
                                     style={{ width: `${task.progressPercent || 0}%` }}
                                   ></div>
                                 </div>
+
                                 {task.status === "in_progress" && (
                                   <div className="staff-progress-actions">
                                     <button
@@ -430,6 +444,62 @@ export default function StaffTasks() {
               </div>
             </section>
 
+            {/* Notifications */}
+            <section className="staff-section">
+              <div className="staff-section-header">
+                <div>
+                  <h2>🔔 Notifications</h2>
+                  <p>
+                    {notifications.filter((n) => n.status === "unread").length > 0
+                      ? `${notifications.filter((n) => n.status === "unread").length} unread`
+                      : "You're all caught up."}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {notifications.length === 0 ? (
+                  <p className="staff-empty">No notifications to show yet.</p>
+                ) : (
+                  notifications.map((n) => {
+                    const isUnread = n.status === "unread";
+                    return (
+                      <div
+                        key={n._id || n.id}
+                        onClick={() => isUnread && handleMarkAsRead(n._id)}
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          borderLeft: isUnread
+                            ? "4px solid #7C5CFC"
+                            : "4px solid rgba(255,255,255,0.08)",
+                          borderRadius: 16,
+                          padding: "18px 20px",
+                          boxShadow: "0 14px 40px rgba(0,0,0,0.18)",
+                          cursor: isUnread ? "pointer" : "default",
+                          opacity: isUnread ? 1 : 0.75,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#F8FAFC" }}>{n.title}</div>
+                          {isUnread && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#A78BFA", background: "rgba(167,139,250,0.18)", padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 13, color: "rgba(232,230,240,0.7)", marginTop: 8 }}>{n.message}</div>
+                        <div style={{ fontSize: 11, color: "rgba(232,230,240,0.45)", marginTop: 10 }}>
+                          {n.scheduledFor
+                            ? new Date(n.scheduledFor).toLocaleString()
+                            : new Date(n.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
           </>
         )}
 

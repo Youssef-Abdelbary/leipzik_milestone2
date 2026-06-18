@@ -2,6 +2,7 @@
 import VendorRequest from '../models/modelVendorRequest.js';
 import Vendor from '../models/modelVendor.js';
 import Event from '../models/modelEvent.js';
+import { createNotification } from '../utils/notificationUtil.js';
 import { ensureVendorProfile } from '../utils/ensureVendorProfile.js';
 
 // 11.4: View vendors associated with an event via req.body payload
@@ -165,6 +166,7 @@ export const getMyVendorRequests = async (req, res) => {
 };
 
 // 4.4 & 11.5: Update delivery status safely via req.body parameters
+// 4.4 & 11.5: Update delivery status safely via req.body parameters
 export const updateVendorDeliveryStatus = async (req, res) => {
     try {
         const { requestId, status, estimatedArrivalTime } = req.body;
@@ -173,7 +175,8 @@ export const updateVendorDeliveryStatus = async (req, res) => {
             return res.status(400).json({ message: 'requestId and status parameters are required inside body payload.' });
         }
 
-        const requestRecord = await VendorRequest.findById(requestId);
+        // 1. Added .populate('eventId') to get the event data (and organizer details)
+        const requestRecord = await VendorRequest.findById(requestId).populate('eventId');
         if (!requestRecord) {
             return res.status(404).json({ message: 'Vendor request instance not found.' });
         }
@@ -184,6 +187,20 @@ export const updateVendorDeliveryStatus = async (req, res) => {
         }
 
         await requestRecord.save();
+
+        // 2. Simple Alert: Automatically notify the organizer when the vendor updates logistics
+        const organizerId = requestRecord.eventId?.organizerId || requestRecord.eventId?.createdBy || requestRecord.eventId?.userId;
+        if (organizerId) {
+            createNotification({
+                userId: organizerId,
+                type: 'vendor_logistics_alert',
+                title: 'Vendor Logistics Alert',
+                message: `Delivery update received: Status is now "${status}".`,
+                relatedEntityType: 'vendor_request',
+                relatedEntityId: requestRecord._id,
+            });
+        }
+
         res.json({ message: 'Delivery metrics updated successfully.', data: requestRecord });
     } catch (err) {
         console.error('updateVendorDeliveryStatus error:', err);

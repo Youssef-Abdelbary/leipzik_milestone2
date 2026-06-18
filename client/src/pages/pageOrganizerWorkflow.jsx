@@ -8,6 +8,7 @@ import Dock from "../components/componentDock";
 import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
 import UserManagement from "./pageDeactivate";
 import RegisterForOthers from "./pageRegisterOthers";
+import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 
 
 function DockTabIcon({ icon }) {
@@ -75,6 +76,8 @@ function OrganizerWorkflow() {
           `http://localhost:5001/api/workflow/tasks/${organizerId}`
         );
         setTasks(tasksData);
+
+        fetchNotifications(organizerId).then((data) => setNotifications(data.data || data || []));
       } catch (error) {
         console.error("Failed to load workflow data:", error);
       }
@@ -167,6 +170,13 @@ function OrganizerWorkflow() {
     return true;
   });
 
+  const handleMarkAsRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n._id === id ? { ...n, status: "read" } : n))
+    );
+    markNotificationAsRead(id).catch(() => {});
+  };
+
   const dockItems = [
     {
       icon: <VscHome size={26} />,
@@ -211,7 +221,6 @@ function OrganizerWorkflow() {
         }
       />
       <main className="workflow-content">
-
 
         <div className="summary-cards">
           <WorkflowStatCard
@@ -445,14 +454,56 @@ function OrganizerWorkflow() {
           <div className="section-header simple">
             <div>
               <h2>{icons.messages || "🔔"} Notifications</h2>
-              <p>General organizer notifications will appear here.</p>
+              <p>
+                {notifications.filter((n) => n.status === "unread").length > 0
+                  ? `${notifications.filter((n) => n.status === "unread").length} unread`
+                  : "You're all caught up."}
+              </p>
             </div>
           </div>
 
-          <div className="notifications-list">
-            <p className="empty-message">No notifications to show yet.</p>
+          <div className="notifications-list" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {notifications.length === 0 ? (
+              <p className="empty-message">No notifications to show yet.</p>
+            ) : (
+              notifications.map((n) => {
+                const isUnread = n.status === "unread";
+                return (
+                  <div
+                    key={n._id || n.id}
+                    onClick={() => isUnread && handleMarkAsRead(n._id)}
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderLeft: isUnread ? "4px solid #7C5CFC" : "4px solid rgba(255,255,255,0.08)",
+                      borderRadius: 16,
+                      padding: "18px 20px",
+                      boxShadow: "0 14px 40px rgba(0,0,0,0.18)",
+                      cursor: isUnread ? "pointer" : "default",
+                      opacity: isUnread ? 1 : 0.75,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#F8FAFC" }}>{n.title}</div>
+                      {isUnread && (
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#A78BFA", background: "rgba(167,139,250,0.18)", padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap" }}>
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 13, color: "rgba(232,230,240,0.7)", marginTop: 8 }}>{n.message}</div>
+                    <div style={{ fontSize: 11, color: "rgba(232,230,240,0.45)", marginTop: 10 }}>
+                      {n.scheduledFor
+                        ? new Date(n.scheduledFor).toLocaleString()
+                        : new Date(n.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </GlassPanel>
+
       </main>
       <Dock items={dockItems} />
     </div>
