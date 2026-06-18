@@ -55,6 +55,13 @@ function Login() {
           navigate("/staff/dashboard");
         }
 
+        if (data.user.role === "vendor") {
+          navigate("/vendor/dashboard");
+        }
+
+        if (data.user.role === "venue_owner") {
+          navigate("/venueowner/venues");
+        }
         return;
       }
 
