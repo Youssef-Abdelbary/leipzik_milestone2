@@ -3,7 +3,7 @@
   background: var(--opal-bg);
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   color: var(--opal-text);
-  padding-bottom: 130px;
+  padding-bottom: 120px;
 }
 
 .staff-topbar {
@@ -19,6 +19,18 @@
   position: sticky;
   top: 0;
   z-index: 50;
+}
+
+.staff-dashboard-pill {
+  color: #4de7e3;
+  font-size: 13px;
+  font-weight: 900;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(77, 231, 227, 0.1);
+  border: 1px solid rgba(77, 231, 227, 0.32);
 }
 
 .staff-brand {

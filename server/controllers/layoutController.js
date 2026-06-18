@@ -97,7 +97,9 @@ export async function getSharedLayoutsForStaff(req, res) {
 
     const layouts = await EventLayout.find({
       sharedWithStaff: staffId,
-    }).sort({ updatedAt: -1 });
+    })
+      .populate("eventId", "title name")
+      .sort({ updatedAt: -1 });
 
     res.json(layouts);
   } catch (error) {
