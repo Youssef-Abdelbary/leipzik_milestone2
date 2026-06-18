@@ -182,7 +182,7 @@ export default function CalendarAvailability({ venueId, requestedDates = [], fet
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span style={{ width: 7, height: 7, borderRadius: 2, background: '#48c78e', flexShrink: 0 }} />
-                    Manually selected
+                    Manually booked
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span style={{ width: 7, height: 7, borderRadius: 2, background: 'var(--opal-amber)', flexShrink: 0 }} />

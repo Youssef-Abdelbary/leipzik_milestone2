@@ -54,8 +54,8 @@ function App() {
         <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
         <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
         <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+        <Route path="/register" element={<Register />} />
         <Route element={<Layout />}>
-          <Route path="/register" element={<Register />} />
           <Route path="/staff/guestlist" element={<GuestList />} />
           <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
           <Route path="/organizer/deactivate" element={<UserDeactivation />} />

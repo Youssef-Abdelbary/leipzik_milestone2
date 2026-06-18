@@ -190,3 +190,43 @@ export const updateVendorDeliveryStatus = async (req, res) => {
         res.status(500).json({ message: 'Failed to update delivery operational metrics.', error: err.message });
     }
 };
+
+// Vendor: send a clarification message on an accepted order
+export const sendVendorClarificationMessage = async (req, res) => {
+    try {
+        const userId = req.user?.user_id;
+        if (!userId) return res.status(401).json({ message: 'Authentication required.' });
+
+        const { requestId } = req.params;
+        const { message } = req.body;
+
+        if (!message?.trim()) {
+            return res.status(400).json({ message: 'Message text is required.' });
+        }
+
+        const vendorProfile = await ensureVendorProfile(userId);
+        if (!vendorProfile) return res.status(404).json({ message: 'Vendor profile not found.' });
+
+        const requestRecord = await VendorRequest.findOne({
+            _id: requestId,
+            vendorId: vendorProfile._id,
+            status: 'accepted',
+        });
+
+        if (!requestRecord) {
+            return res.status(404).json({ message: 'Accepted order not found.' });
+        }
+
+        requestRecord.clarificationMessages.push({
+            senderId: vendorProfile._id,
+            message: message.trim(),
+            sentAt: new Date(),
+        });
+
+        await requestRecord.save();
+        res.json({ message: 'Message sent.', data: requestRecord.clarificationMessages.at(-1) });
+    } catch (err) {
+        console.error('sendVendorClarificationMessage error:', err);
+        res.status(500).json({ message: 'Failed to send message.', error: err.message });
+    }
+};

@@ -38,6 +38,114 @@ const elementTypes = [
   { type: "Entrance", icon: "🚪" },
 ];
 
+// ─── Design tokens (mirrors TabDayOf / componentTheme) ───────────────────────
+const P = {
+  bg: '#0a0a0f',
+  surface: 'rgba(19,19,30,0.72)',
+  border: 'rgba(255,255,255,0.08)',
+  text: '#e8e8f0',
+  sub: 'rgba(200,200,220,0.5)',
+  muted: 'rgba(200,200,220,0.3)',
+
+  blue: '#7c5cfc',
+  indigo: '#8b6dff',
+  teal: '#00e5c0',
+  cyan: '#00c9e5',
+  amber: '#f5a623',
+  rose: '#ff4d6d',
+  green: '#22c55e',
+  red: '#ff4d6d',
+
+  blueGlow: 'rgba(124,92,252,0.12)',
+  tealGlow: 'rgba(0,229,192,0.12)',
+  roseGlow: 'rgba(255,77,109,0.12)',
+  redGlow: 'rgba(255,77,109,0.12)',
+};
+
+// ─── GlassPanel ──────────────────────────────────────────────────────────────
+function GlassPanel({ children, style = {} }) {
+  return (
+    <div style={{
+      background: P.surface,
+      backdropFilter: 'blur(18px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(18px) saturate(140%)',
+      border: `1px solid ${P.border}`,
+      borderRadius: 16,
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.3)',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ─── Icon button ─────────────────────────────────────────────────────────────
+function ActionButton({ onClick, children, accent = false, danger = false }) {
+  const base = {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '8px 14px', borderRadius: 9, fontSize: 13, fontWeight: 700,
+    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s',
+    border: 'none', outline: 'none',
+  };
+  const style = accent
+    ? { ...base, background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, color: '#0a0a0f' }
+    : danger
+      ? { ...base, background: `${P.rose}22`, color: P.rose, border: `1px solid ${P.rose}44` }
+      : { ...base, background: 'transparent', color: P.text, border: `1px solid ${P.border}` };
+
+  return (
+    <button
+      onClick={onClick}
+      style={style}
+      onMouseEnter={e => {
+        if (accent) { e.currentTarget.style.opacity = '0.85'; return; }
+        if (danger) { e.currentTarget.style.background = `${P.rose}33`; return; }
+        e.currentTarget.style.background = P.blueGlow;
+        e.currentTarget.style.borderColor = `${P.blue}44`;
+        e.currentTarget.style.color = P.blue;
+      }}
+      onMouseLeave={e => {
+        if (accent) { e.currentTarget.style.opacity = '1'; return; }
+        if (danger) { e.currentTarget.style.background = `${P.rose}22`; return; }
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderColor = P.border;
+        e.currentTarget.style.color = P.text;
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ─── Sidebar element pill ─────────────────────────────────────────────────────
+function ElementPill({ icon, label, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 14px', borderRadius: 10, border: `1px solid ${P.border}`,
+        background: 'transparent', color: P.text, fontSize: 13, fontWeight: 600,
+        cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.18s', textAlign: 'left',
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = P.blueGlow;
+        e.currentTarget.style.borderColor = `${P.blue}44`;
+        e.currentTarget.style.color = P.blue;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderColor = P.border;
+        e.currentTarget.style.color = P.text;
+      }}
+    >
+      <span style={{ fontSize: 18 }}>{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+// ─── Icons ───────────────────────────────────────────────────────────────────
 const icons = {
   venue: (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -210,12 +318,6 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
           `http://localhost:5001/api/layouts/event/${selectedEventId}`
         );
 
-        if (response.status === 404) {
-          setItems([]);
-          setCurrentLayoutId(null);
-          return;
-        }
-
         const data = await response.json();
 
         if (!response.ok || !data || !data.elements) {
@@ -236,11 +338,9 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         setCurrentLayoutId(data._id);
       } catch (error) {
         console.error("Failed to load layout for selected event:", error);
-        setItems([]);
-        setCurrentLayoutId(null);
+        alert("Something went wrong while loading this event layout.");
       }
     }
-
     loadLayoutForSelectedEvent();
   }, [selectedEventId]);
 
@@ -356,6 +456,11 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         ? `${event.title} Venue Layout`
         : "Venue Layout";
 
+      const layoutTitle = selectedEvent
+        ? `${selectedEvent.title} Venue Layout`
+        : "Venue Layout";
+
+      // 1. Save/update the layout first
       const saveResponse = await fetch("http://localhost:5001/api/layouts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -386,6 +491,7 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
       const layoutId = saveData.layout._id;
       setCurrentLayoutId(layoutId);
 
+      // 2. Get all tasks for this event
       const tasksResponse = await fetch(
         `http://localhost:5001/api/team/events/${selectedEventId}/tasks`
       );
@@ -397,6 +503,7 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         return;
       }
 
+      // 3. Extract unique staff IDs assigned to tasks in this event
       const staffIds = [
         ...new Set(
           tasksData
@@ -414,6 +521,7 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
         return;
       }
 
+      // 4. Share layout with all event staff members
       const shareResponse = await fetch(
         `http://localhost:5001/api/layouts/${layoutId}/share`,
         {
@@ -439,10 +547,8 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
 
   async function exportAsImage() {
     if (!floorPlanRef.current) return;
-
     setSelectedItemId(null);
     await wait(100);
-
     const canvas = await html2canvas(floorPlanRef.current);
     const link = document.createElement("a");
 
@@ -456,7 +562,6 @@ export default function TabLayoutDesigner({ eventId, event, onNavigate }) {
 
     setSelectedItemId(null);
     await wait(100);
-
     const canvas = await html2canvas(floorPlanRef.current);
     const pdf = new jsPDF("landscape", "mm", "a4");
 

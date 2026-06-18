@@ -1,20 +1,33 @@
 // src/routes/routeVendorTracking.js
 import express from 'express';
-import { getEventVendorRequests, updateVendorDeliveryStatus, getMyVendorRequests, getMyVendorProfile, updateMyVendorProfile, getMyVendorInbox, respondToVendorRequest } from '../controllers/controllerVendorTracking.js';
+import {
+    getEventVendorRequests,
+    updateVendorDeliveryStatus,
+    getMyVendorRequests,
+    getMyVendorProfile,
+    updateMyVendorProfile,
+    getMyVendorInbox,
+    respondToVendorRequest,
+    sendVendorClarificationMessage,
+} from '../controllers/controllerVendorTracking.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Vendor profile
-router.get('/profile', authenticate, getMyVendorProfile);
-router.patch('/profile', authenticate, updateMyVendorProfile);
+router.get('/profile',              authenticate, getMyVendorProfile);
+router.patch('/profile',            authenticate, updateMyVendorProfile);
+
 // Vendor inbox: pending sourcing requests
-router.get('/inbox', authenticate, getMyVendorInbox);
+router.get('/inbox',                authenticate, getMyVendorInbox);
+
+// Static-path param routes — must come before /:requestId wildcards
+router.get('/mine',                 authenticate, getMyVendorRequests);
+router.post('/search',              getEventVendorRequests);
+router.put('/delivery',             updateVendorDeliveryStatus);
+
+// Parameterised routes
 router.patch('/:requestId/respond', authenticate, respondToVendorRequest);
-// 15.1: Vendor views own accepted orders
-router.get('/mine', authenticate, getMyVendorRequests);
-// 11.4: View vendors associated with event
-router.post('/search', getEventVendorRequests);
-// 4.4 & 11.5: Update delivery states / mark as arrived
-router.put('/delivery', updateVendorDeliveryStatus);
+router.post('/:requestId/message',  authenticate, sendVendorClarificationMessage);
+
 export default router;
