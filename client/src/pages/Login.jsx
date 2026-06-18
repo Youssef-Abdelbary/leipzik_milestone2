@@ -152,7 +152,7 @@ function Login() {
         <CurvedLoop
           marqueeText="PopEyez ✦ a moving cafe ✦ "
           speed={1.5}
-          curveAmount={-180}
+          curveAmount={-250}
           direction="right"
           interactive={false}
         />

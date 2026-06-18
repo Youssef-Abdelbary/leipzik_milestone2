@@ -29,10 +29,10 @@ function getUserIdFromToken() {
 
 // ─── Status map ───────────────────────────────────────────────────────────────
 const STATUS = {
-    pending:   { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Pending'   },
-    approved:  { bg: 'var(--opal-teal-dim)',  border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)',   label: 'Approved'  },
-    declined:  { bg: 'var(--opal-red-dim)',   border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)',    label: 'Declined'  },
-    countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)',  text: 'var(--opal-amber)',  label: 'Countered' },
+    pending: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)', text: 'var(--opal-amber)', label: 'Pending' },
+    approved: { bg: 'var(--opal-teal-dim)', border: 'rgba(79,209,197,0.28)', text: 'var(--opal-teal)', label: 'Approved' },
+    declined: { bg: 'var(--opal-red-dim)', border: 'rgba(255,92,102,0.28)', text: 'var(--opal-red)', label: 'Declined' },
+    countered: { bg: 'var(--opal-amber-dim)', border: 'rgba(245,179,74,0.3)', text: 'var(--opal-amber)', label: 'Countered' },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function GlassCard({ children, style = {}, ...rest }) {
 // ─── Chat bubble ──────────────────────────────────────────────────────────────
 function Bubble({ msg, isMine }) {
     const isCP = msg.type === 'counter_proposal';
-    const cp   = msg.counterProposal;
+    const cp = msg.counterProposal;
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
             {isCP && (
@@ -172,7 +172,7 @@ function Bubble({ msg, isMine }) {
             <div style={{
                 maxWidth: '72%', padding: '10px 14px', borderRadius: 14,
                 borderBottomRightRadius: isMine ? 4 : 14,
-                borderBottomLeftRadius:  isMine ? 14 : 4,
+                borderBottomLeftRadius: isMine ? 14 : 4,
                 background: isMine ? 'var(--opal-violet)' : 'var(--opal-surface)',
                 border: isCP ? '1px solid rgba(245,179,74,0.28)' : '1px solid var(--opal-border)',
                 color: isMine ? '#0a0a0f' : 'var(--opal-text)', fontSize: 15, lineHeight: 1.55,
@@ -204,13 +204,13 @@ function Bubble({ msg, isMine }) {
 
 // ─── Message thread ───────────────────────────────────────────────────────────
 function MessageThread({ booking, currentUserId, onBookingUpdate }) {
-    const [messages,   setMessages]   = useState(booking.messages ?? []);
-    const [text,       setText]       = useState('');
-    const [isCP,       setIsCP]       = useState(false);
-    const [cpPrice,    setCpPrice]    = useState('');
-    const [cpDates,    setCpDates]    = useState([]);
-    const [calOpen,    setCalOpen]    = useState(false);
-    const [sending,    setSending]    = useState(false);
+    const [messages, setMessages] = useState(booking.messages ?? []);
+    const [text, setText] = useState('');
+    const [isCP, setIsCP] = useState(false);
+    const [cpPrice, setCpPrice] = useState('');
+    const [cpDates, setCpDates] = useState([]);
+    const [calOpen, setCalOpen] = useState(false);
+    const [sending, setSending] = useState(false);
     const [matchedIds, setMatchedIds] = useState(new Set());
     const bottomRef = useRef(null);
     const calBtnRef = useRef(null);
@@ -218,8 +218,8 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
     useEffect(() => { if (!isCP) setCalOpen(false); }, [isCP]);
 
     const incomingCounters = booking.incomingCounterProposals ?? [];
-    const latestCounter    = incomingCounters[incomingCounters.length - 1];
-    const latestIsMatched  = latestCounter && matchedIds.has(latestCounter._id);
+    const latestCounter = incomingCounters[incomingCounters.length - 1];
+    const latestIsMatched = latestCounter && matchedIds.has(latestCounter._id);
 
     const load = useCallback(async () => {
         if (!booking?._id) return;
@@ -250,14 +250,14 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                 data = await sendCounterProposal(booking._id, {
                     text: text.trim(),
                     counterProposal: {
-                        adjustedPrice:    cpPrice ? Number(cpPrice) : null,
+                        adjustedPrice: cpPrice ? Number(cpPrice) : null,
                         alternativeDates: cpDates.length ? cpDates : [],
-                        note:             text.trim(),
+                        note: text.trim(),
                     },
                 });
                 onBookingUpdate(booking._id, {
                     status: 'countered',
-                    proposedPrice:  data.booking.proposedPrice,
+                    proposedPrice: data.booking.proposedPrice,
                     requestedDates: data.booking.requestedDates,
                 });
             } else {
@@ -279,7 +279,7 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
             setMatchedIds(prev => new Set(prev).add(latestCounter._id));
             onBookingUpdate(booking._id, {
                 status: 'countered',
-                proposedPrice:  data.booking.proposedPrice,
+                proposedPrice: data.booking.proposedPrice,
                 requestedDates: data.booking.requestedDates,
             });
         } finally {
@@ -358,9 +358,9 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => setIsCP(p => !p)} style={{
                         ...pillActive,
-                        color:      isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                        color: isCP ? 'var(--opal-amber)' : 'var(--opal-muted)',
                         background: isCP ? 'var(--opal-amber-dim)' : 'transparent',
-                        border:     `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                        border: `1px solid ${isCP ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                         cursor: 'pointer',
                     }}>↩ Counter-proposal</button>
                     {isCP && (
@@ -370,17 +370,17 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
                                 onChange={e => setCpPrice(e.target.value)}
                                 style={{
                                     ...pillActive,
-                                    color:      cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                    color: cpPrice ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                     background: cpPrice ? 'var(--opal-amber-dim)' : 'transparent',
-                                    border:     `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                    border: `1px solid ${cpPrice ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                                     cursor: 'text', width: 110, outline: 'none',
                                 }}
                             />
                             <button ref={calBtnRef} onClick={() => setCalOpen(o => !o)} style={{
                                 ...pillActive,
-                                color:      calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
+                                color: calOpen || cpDates.length > 0 ? 'var(--opal-amber)' : 'var(--opal-muted)',
                                 background: calOpen || cpDates.length > 0 ? 'var(--opal-amber-dim)' : 'transparent',
-                                border:     `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
+                                border: `1px solid ${calOpen || cpDates.length > 0 ? 'rgba(245,179,74,0.4)' : 'var(--opal-border)'}`,
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
                             }}>
                                 📅 {cpDates.length > 0 ? `${cpDates.length} date${cpDates.length > 1 ? 's' : ''}` : 'Dates'}
@@ -414,18 +414,10 @@ function MessageThread({ booking, currentUserId, onBookingUpdate }) {
 }
 
 // ─── Detail panel ─────────────────────────────────────────────────────────────
-<<<<<<< HEAD
-
-const DOCK_HEIGHT = 120;
-
-function DetailPanel({ booking, currentUserId, onBookingUpdate, fetchVenueAvailability }) {
-    const [tab, setTab] = useState('details');
-=======
 function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
-    const [tab,        setTab]        = useState('details');
-    const [applying,   setApplying]   = useState(false);
+    const [tab, setTab] = useState('details');
+    const [applying, setApplying] = useState(false);
     const [applyError, setApplyError] = useState(null);
->>>>>>> 6172aed (mid changes 2)
 
     useEffect(() => {
         setTab('details');
@@ -440,21 +432,21 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
         </div>
     );
 
-    const venue   = booking.venueId;
+    const venue = booking.venueId;
     const venueId = venue?._id ?? venue;
 
     const fields = [
-        { label: 'Venue',      value: venue?.name },
+        { label: 'Venue', value: venue?.name },
         { label: 'Event Type', value: booking.eventType },
-        { label: 'Dates',      value: booking.requestedDates?.map(fmtDate).join(', ') },
-        { label: 'Attendees',  value: booking.expectedAttendees?.toLocaleString() },
-        { label: 'Price',      value: booking.proposedPrice?.amount
-            ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
-            : '—' },
+        { label: 'Dates', value: booking.requestedDates?.map(fmtDate).join(', ') },
+        { label: 'Attendees', value: booking.expectedAttendees?.toLocaleString() },
+        {
+            label: 'Price', value: booking.proposedPrice?.amount
+                ? `${booking.proposedPrice.amount.toLocaleString()} ${booking.proposedPrice.currency ?? ''}`
+                : '—'
+        },
     ];
 
-<<<<<<< HEAD
-=======
     const handleApplyToEvent = async () => {
         if (!eventId || applying || booking.appliedToEvent) return;
         setApplying(true);
@@ -468,7 +460,6 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
         }
     };
 
->>>>>>> 6172aed (mid changes 2)
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {/* Panel header */}
@@ -483,17 +474,11 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
                             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--opal-sub)' }}>{booking.eventType}</p>
                         </div>
                     </div>
-<<<<<<< HEAD
-                    <Badge status={booking.status} />
-                </div>
-
-=======
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         <Badge status={booking.status} />
                     </div>
                 </div>
                 {applyError && <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--opal-red)' }}>{applyError}</p>}
->>>>>>> 6172aed (mid changes 2)
                 <div style={{ display: 'flex', gap: 0 }}>
                     {['details', 'messages'].map(t => (
                         <button key={t} onClick={() => setTab(t)} style={{
@@ -517,17 +502,8 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 
             {/* Details tab */}
             {tab === 'details' && (
-<<<<<<< HEAD
-                <div style={{
-                    flex: 1, overflowY: 'auto',
-                    padding: `20px 24px ${DOCK_HEIGHT + 16}px`,
-                    display: 'flex', flexDirection: 'column', gap: 16,
-                }}>
-                    <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden' }}>
-=======
                 <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
                     <GlassCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, overflow: 'hidden', flexShrink: 0 }}>
->>>>>>> 6172aed (mid changes 2)
                         {fields.map(({ label, value }, i) => (
                             <div key={label} style={{
                                 padding: '14px 18px',
@@ -540,12 +516,7 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
                         ))}
                     </GlassCard>
 
-<<<<<<< HEAD
-                    {/* Calendar — fix: pass fetchVenueAvailability directly from prop */}
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-=======
                     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexShrink: 0 }}>
->>>>>>> 6172aed (mid changes 2)
                         <div style={{ flexShrink: 0 }}>
                             <CalendarAvailability
                                 venueId={venueId}
@@ -584,17 +555,13 @@ function DetailPanel({ booking, currentUserId, onBookingUpdate, eventId }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function PageReplyVenue({ onNavigate }) {
     const currentUserId = getUserIdFromToken();
-<<<<<<< HEAD
     const navigate = useNavigate();
-=======
-    const navigate      = useNavigate();
-    const { eventId }   = useParams();
+    const { eventId } = useParams();
 
->>>>>>> 6172aed (mid changes 2)
     const [bookings, setBookings] = useState([]);
     const [selected, setSelected] = useState(null);
-    const [filter,   setFilter]   = useState('All');
-    const [loading,  setLoading]  = useState(true);
+    const [filter, setFilter] = useState('All');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchMyVenueReplies(eventId)
@@ -612,10 +579,10 @@ export default function PageReplyVenue({ onNavigate }) {
         return STATUS[b.status]?.label ?? 'Pending';
     };
 
-    const tabs   = ['All', 'Pending', 'Approved', 'Declined'];
+    const tabs = ['All', 'Pending', 'Approved', 'Declined'];
     const counts = {
-        All:      bookings.length,
-        Pending:  bookings.filter(b => sidebarLabel(b) === 'Pending').length,
+        All: bookings.length,
+        Pending: bookings.filter(b => sidebarLabel(b) === 'Pending').length,
         Approved: bookings.filter(b => sidebarLabel(b) === 'Approved').length,
         Declined: bookings.filter(b => sidebarLabel(b) === 'Declined').length,
     };
@@ -625,14 +592,14 @@ export default function PageReplyVenue({ onNavigate }) {
 
     // Map filter keys → StatCard colors matching Opal palette
     const TILE_COLOR = {
-        All:      P.blue ?? 'var(--opal-violet)',
-        Pending:  P.amber ?? 'var(--opal-amber)',
-        Approved: P.teal  ?? 'var(--opal-teal)',
-        Declined: P.rose  ?? 'var(--opal-red)',
+        All: P.blue ?? 'var(--opal-violet)',
+        Pending: P.amber ?? 'var(--opal-amber)',
+        Approved: P.teal ?? 'var(--opal-teal)',
+        Declined: P.rose ?? 'var(--opal-red)',
     };
     const TILE_SUB = {
-        All:      'all requests',
-        Pending:  'awaiting response',
+        All: 'all requests',
+        Pending: 'awaiting response',
         Approved: 'confirmed',
         Declined: 'rejected',
     };
@@ -756,7 +723,7 @@ export default function PageReplyVenue({ onNavigate }) {
                             )}
                             {filtered.map(b => {
                                 const isActive = selected?._id === b._id;
-                                const s        = STATUS[b.status] ?? STATUS.pending;
+                                const s = STATUS[b.status] ?? STATUS.pending;
                                 return (
                                     <button
                                         key={b._id}
@@ -797,17 +764,6 @@ export default function PageReplyVenue({ onNavigate }) {
                         </div>
                     </div>
 
-<<<<<<< HEAD
-                {/* Detail panel */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <DetailPanel
-                        booking={selected}
-                        currentUserId={currentUserId}
-                        onBookingUpdate={handleBookingUpdate}
-                        fetchVenueAvailability={fetchVenueAvailability}
-                    />
-                </div>
-=======
                     {/* Detail panel */}
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
                         <DetailPanel
@@ -818,7 +774,6 @@ export default function PageReplyVenue({ onNavigate }) {
                         />
                     </div>
                 </GlassPanel>
->>>>>>> 6172aed (mid changes 2)
             </div>
         </div>
     );
