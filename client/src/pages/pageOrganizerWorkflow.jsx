@@ -4,6 +4,17 @@ import "./pageOrganizerWorkflow.css";
 import "../components/componentTheme.css";
 import AppHeader from "../components/componentAppHeader";
 import { P, icons, GlassPanel } from "../components/componentTheme";
+import Dock from "../components/componentDock";
+import { VscHome, VscCalendar, VscPerson } from "react-icons/vsc";
+
+
+function DockTabIcon({ icon }) {
+  return (
+    <div style={{ transform: "scale(1.25)", display: "flex" }}>
+      {icon}
+    </div>
+  );
+}
 
 function OrganizerWorkflow() {
   const [summary, setSummary] = useState(null);
@@ -153,22 +164,39 @@ function OrganizerWorkflow() {
     return true;
   });
 
+  const dockItems = [
+    {
+      icon: <VscHome size={26} />,
+      label: "Home",
+      active: true,
+      onClick: () => navigate("/organizer/workflow"),
+    },
+    {
+      icon: <VscCalendar size={26} />,
+      label: "Events",
+      active: false,
+      onClick: () => navigate("/organizer/events"),
+    },
+    {
+      icon: <VscPerson size={26} />,
+      label: "Profile",
+      active: false,
+      onClick: () => navigate("/profile"),
+    },
+  ];
+
   return (
     <div className="workflow-page">
-      <main className="workflow-content">
-        <div className="workflow-heading">
-          <div>
-            <h1>Organizer Daily Workflow</h1>
-            <p>Overview of today’s events, upcoming events, tasks, and reminders.</p>
+      <AppHeader
+        crumb="My Workflow"
+        right={
+          <div className="organizer-dashboard-pill">
+            Organizer Dashboard
           </div>
+        }
+      />
+      <main className="workflow-content">
 
-          <button
-            className="workflow-header-button"
-            onClick={() => navigate("/organizer/events")}
-        >
-            View Events
-        </button>
-        </div>
 
         <div className="summary-cards">
           <WorkflowStatCard
@@ -411,6 +439,7 @@ function OrganizerWorkflow() {
           </div>
         </GlassPanel>
       </main>
+      <Dock items={dockItems} />
     </div>
   );
 }

@@ -55,6 +55,7 @@ const Profile = () => {
     }
 
     const isOwner = user.role === "venue_owner";
+    const isOrganizer = user.role === "organizer";
 
     const dockItems = [
         {
@@ -78,6 +79,25 @@ const Profile = () => {
             active: true,
             onClick: () => navigate("/pageProfile"),
         },
+    ];
+
+    const organizerDockItems = [
+    {
+        icon: <VscHome size={26} />,
+        label: "Home",
+        onClick: () => navigate("/organizer/workflow"),
+    },
+    {
+        icon: <VscCalendar size={26} />,
+        label: "Events",
+        onClick: () => navigate("/organizer/events"),
+    },
+    {
+        icon: <VscPerson size={26} />,
+        label: "Profile",
+        active: true,
+        onClick: () => navigate("/profile"),
+    },
     ];
 
     const section = (title, children) => (
@@ -245,6 +265,7 @@ const Profile = () => {
         }
       `}</style>
 
+            {isOwner && (
             <AppHeader
                 crumb={isOwner ? "Owner Profile" : "Profile"}
                 right={
@@ -277,6 +298,18 @@ const Profile = () => {
                     ) : null
                 }
             />
+            )}
+
+            {isOrganizer && (
+                <AppHeader
+                    crumb="My Profile"
+                    right={
+                    <div className="organizer-dashboard-pill">
+                        Organizer Dashboard
+                    </div>
+                    }
+                />
+            )}
 
             <div
                 style={{
@@ -472,6 +505,7 @@ const Profile = () => {
             </div>
 
             {isOwner && <Dock items={dockItems} />}
+            {isOrganizer && <Dock items={organizerDockItems} />}
         </div>
     );
 };
