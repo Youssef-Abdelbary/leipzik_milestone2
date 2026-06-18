@@ -156,7 +156,6 @@
 #spacer {
   height: 88px;
   border-top: 1px solid var(--border);
-
   @media (max-width: 1024px) {
     height: 48px;
   }
@@ -178,7 +177,6 @@
     left: 0;
     border-left-color: var(--border);
   }
-
   &::after {
     right: 0;
     border-right-color: var(--border);
