@@ -17,7 +17,7 @@ function VenueLayoutDesigner() {
   const [currentLayoutId, setCurrentLayoutId] = useState(null);
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("");
-
+  
   useEffect(() => {
     async function loadEvents() {
       try {
