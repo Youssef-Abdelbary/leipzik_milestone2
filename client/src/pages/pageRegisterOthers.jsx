@@ -4,6 +4,7 @@ import "../components/componentTheme.css";
 import { P, GlassPanel } from "../components/componentTheme";
 import { useNavigate } from "react-router-dom";
 import "./pageEvents.css";
+import "./pageOrganizerDashboard.css";
 import AppHeader from "../components/componentAppHeader";
 import { VscHome, VscCalendar, VscPerson, VscPersonAdd, VscTrash } from "react-icons/vsc";
 import Dock from "../components/componentDock";
@@ -115,7 +116,7 @@ return (
         }
       />
 
-      <div className="organizer-dashboard-content">
+      <div className="organizer-dashboard-content organizer-dashboard-content--centered">
         {successInfo ? (          <GlassPanel style={styles.card}>
             <div style={styles.successIcon}>✓</div>
 

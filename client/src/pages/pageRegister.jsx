@@ -115,15 +115,18 @@ export default function Register() {
                                 { label: "Vendor", value: "vendor" },
                                 { label: "Venue Owner", value: "venue_owner" },
                                 { label: "Organizer", value: "organizer" },
-                            ].map((role) => (
+                            ].map((role) => {
+                                const isActive = formData.role === role.value;
+                                return (
                                 <button
                                     key={role.value}
                                     type="button"
                                     className={
-                                        formData.role === role.value
+                                        isActive
                                             ? "role-button role-button-active"
                                             : "role-button"
                                     }
+                                    aria-pressed={isActive}
                                     onClick={() =>
                                         setFormData({
                                             ...formData,
@@ -131,9 +134,16 @@ export default function Register() {
                                         })
                                     }
                                 >
-                                    <span>{ROLE_ICONS[role.value]}</span>                                    {role.label}
+                                    <span>{ROLE_ICONS[role.value]}</span>
+                                    {role.label}
+                                    {isActive && (
+                                        <span className="role-check" aria-hidden="true">
+                                            {icons.check}
+                                        </span>
+                                    )}
                                 </button>
-                            ))}
+                            );
+                            })}
                         </div>
                     </div>
 

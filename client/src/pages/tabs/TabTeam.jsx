@@ -1,7 +1,31 @@
 import { useEffect, useState } from "react";
 import "./TabTeam.css";
+import "./workspaceTabShell.css";
 import "../../components/componentTheme.css";
-import { GlassPanel } from "../../components/componentTheme";
+import { GlassPanel, icons, P } from "../../components/componentTheme";
+
+function TeamStatCard({ label, value, icon, accent }) {
+  const colors = {
+    teal: { bg: "rgba(77, 231, 227, 0.1)", color: "#4de7e3", border: "rgba(77, 231, 227, 0.28)" },
+    blue: { bg: "rgba(59, 130, 246, 0.14)", color: P.blue, border: "rgba(59, 130, 246, 0.32)" },
+    orange: { bg: "rgba(245, 158, 11, 0.14)", color: P.orange, border: "rgba(245, 158, 11, 0.32)" },
+    violet: { bg: "rgba(139, 109, 255, 0.14)", color: "#9b7cff", border: "rgba(139, 109, 255, 0.28)" },
+  };
+  const style = colors[accent] || colors.violet;
+
+  return (
+    <GlassPanel className="workspace-stat-card">
+      <span
+        className="workspace-stat-icon"
+        style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}
+      >
+        {icon}
+      </span>
+      <span>{label}</span>
+      <p>{value}</p>
+    </GlassPanel>
+  );
+}
 
 export default function TabTeam({ eventId }) {
   const [staffMembers, setStaffMembers] = useState([]);
@@ -34,12 +58,14 @@ export default function TabTeam({ eventId }) {
   useEffect(() => {
     loadTasks();
   }, [eventId, taskStatusFilter]);
+
   function updateTaskForm(field, value) {
     setTaskForm((currentForm) => ({
       ...currentForm,
       [field]: value,
     }));
   }
+
   async function createTask() {
     if (!taskForm.title || !taskForm.description || !taskForm.category) {
       alert("Please fill title, description, and category.");
@@ -82,11 +108,11 @@ export default function TabTeam({ eventId }) {
     const params = new URLSearchParams();
 
     if (employmentTypeFilter) {
-        params.append("employmentType", employmentTypeFilter);
+      params.append("employmentType", employmentTypeFilter);
     }
 
     if (specialityFilter) {
-        params.append("speciality", specialityFilter);
+      params.append("speciality", specialityFilter);
     }
 
     const query = params.toString() ? `?${params.toString()}` : "";
@@ -112,16 +138,16 @@ export default function TabTeam({ eventId }) {
     if (!staffId) return;
 
     const response = await fetch(`http://localhost:5001/api/team/tasks/${taskId}/assign`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffId }),
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ staffId }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-        alert(data.message || "Failed to assign task");
-        return;
+      alert(data.message || "Failed to assign task");
+      return;
     }
 
     loadTasks();
@@ -138,7 +164,7 @@ export default function TabTeam({ eventId }) {
 
   function getStaffDoneTaskCount(staffId) {
     return tasks.filter(
-        (task) => task.assignedTo === staffId && task.status === "done"
+      (task) => task.assignedTo === staffId && task.status === "done"
     ).length;
   }
 
@@ -150,51 +176,36 @@ export default function TabTeam({ eventId }) {
   }
 
   async function loadAllTasks() {
-  if (!eventId) return;
+    if (!eventId) return;
 
-  const response = await fetch(
-    `http://localhost:5001/api/team/events/${eventId}/tasks`
-  );
+    const response = await fetch(
+      `http://localhost:5001/api/team/events/${eventId}/tasks`
+    );
 
-  const data = await response.json();
+    const data = await response.json();
 
-  setAllTasks(data);
-}
+    setAllTasks(data);
+  }
 
-    const totalStaff = allStaffMembers.length;
-    const totalTasks = allTasks.length;
-    const unassignedTasks = allTasks.filter(
-        (task) => !task.assignedTo || task.status === "not_assigned"
-    ).length;
-    const doneTasks = allTasks.filter((task) => task.status === "done").length;
+  const totalStaff = allStaffMembers.length;
+  const totalTasks = allTasks.length;
+  const unassignedTasks = allTasks.filter(
+    (task) => !task.assignedTo || task.status === "not_assigned"
+  ).length;
+  const doneTasks = allTasks.filter((task) => task.status === "done").length;
 
   return (
-    <div className="team-tab">
+    <div className="workspace-tab-shell team-tab">
       <div className="team-header">
         <h1>Team Members</h1>
         <p>View staff members, assign tasks, and track task status for this event.</p>
       </div>
 
-      <div className="team-summary-cards">
-        <GlassPanel className="team-summary-card">
-          <span>Total Staff</span>
-          <p>{totalStaff}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Total Tasks</span>
-          <p>{totalTasks}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Unassigned Tasks</span>
-          <p>{unassignedTasks}</p>
-        </GlassPanel>
-
-        <GlassPanel className="team-summary-card">
-          <span>Done Tasks</span>
-          <p>{doneTasks}</p>
-        </GlassPanel>
+      <div className="workspace-stat-grid">
+        <TeamStatCard label="Total Staff" value={totalStaff} icon={icons.team} accent="teal" />
+        <TeamStatCard label="Total Tasks" value={totalTasks} icon={icons.clipboard} accent="blue" />
+        <TeamStatCard label="Unassigned Tasks" value={unassignedTasks} icon={icons.warning} accent="orange" />
+        <TeamStatCard label="Done Tasks" value={doneTasks} icon={icons.check} accent="violet" />
       </div>
 
       <div className="team-layout">
@@ -249,7 +260,9 @@ export default function TabTeam({ eventId }) {
                     </p>
                   </div>
 
-                  <span>{selectedStaff?._id === staff._id ? "▲" : "▼"}</span>
+                  <span className="staff-chevron">
+                    {selectedStaff?._id === staff._id ? icons.chevronUp : icons.chevronDown}
+                  </span>
                 </div>
 
                 {selectedStaff?._id === staff._id && (
@@ -353,7 +366,7 @@ export default function TabTeam({ eventId }) {
                   </div>
 
                   <span className={`task-status-badge ${task.status}`}>
-                    {task.status}
+                    {(task.status || "").replace("_", " ")}
                   </span>
                 </div>
 

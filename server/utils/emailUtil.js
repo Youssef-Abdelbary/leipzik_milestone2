@@ -429,7 +429,9 @@ export async function sendStaffWelcomeEmail({ to, fullname, email, password, log
   const bodyHtml = `
     <p style="margin:0 0 6px;font-size:14px;color:rgba(237,233,255,0.5);">Hi ${firstName},</p>
 
-    <h1 style="margin:0 0 16px;font-size:28px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;line-height:1.2;">    </h1>
+    <h1 style="margin:0 0 16px;font-size:28px;font-weight:900;color:#ede9ff;letter-spacing:-0.03em;line-height:1.2;">
+      Welcome to PopEyez
+    </h1>
     <p style="margin:0 0 24px;font-size:14px;color:rgba(237,233,255,0.52);line-height:1.7;">
       An event organizer created a PopEyez staff account for you. Use the credentials below to sign in.
     </p>

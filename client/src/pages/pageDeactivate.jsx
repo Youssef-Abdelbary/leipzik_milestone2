@@ -6,6 +6,7 @@ import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} fr
 import Dock from "../components/componentDock";
 import { useNavigate } from "react-router-dom";
 import "./pageDeactivate.css";
+import "./pageOrganizerDashboard.css";
 import "./pageEvents.css";
 import AppHeader from "../components/componentAppHeader";
 
@@ -108,7 +109,10 @@ function RoleFilterTile({ role, label, color, count, filterRole, onSelect, index
             opacity: 0.7,
           }}
         />
-      )}  );
+      )}
+    </button>
+  );
+}
 
 function Avatar({ fullname = "", active }) {
   const initials = fullname

@@ -72,7 +72,7 @@
 
 .summary-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -96,9 +96,9 @@
   height: 38px;
   border-radius: 12px;
   margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  line-height: 0;
   background: rgba(139, 109, 255, 0.14);
   color: var(--opal-blue);
   border: 1px solid rgba(139, 109, 255, 0.28);
@@ -146,9 +146,19 @@
   letter-spacing: -0.04em;
 }
 
+.summary-card-sub {
+  display: block;
+  margin-top: 6px;
+  color: var(--opal-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .workflow-section {
   padding: 20px !important;
   margin-bottom: 22px;
+  min-width: 0;
 }
 
 .section-header {
@@ -184,17 +194,164 @@
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   transition: color 0.15s ease;
+  margin: 0 0 5px;
+  color: var(--opal-text);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+}
+
+.section-title-static {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 5px;
+  color: var(--opal-text);
+  font-size: 21px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
 }
 
 .collapsible-title:hover {
   color: #4de7e3;
 }
 
-.collapsible-title span {
+.collapsible-chevron {
+  margin-left: auto;
   color: var(--opal-muted);
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.workflow-icon-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  flex-shrink: 0;
+  background: rgba(139, 109, 255, 0.14);
+  color: var(--opal-blue);
+  border: 1px solid rgba(139, 109, 255, 0.28);
+}
+
+.workflow-icon-badge.cyan {
+  background: rgba(77, 231, 227, 0.1);
+  color: #4de7e3;
+  border-color: rgba(77, 231, 227, 0.28);
+}
+
+.workflow-icon-badge.amber {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--opal-orange);
+  border-color: rgba(245, 158, 11, 0.32);
+}
+
+.workflow-icon-badge.violet {
+  background: rgba(139, 109, 255, 0.14);
+  color: var(--opal-blue);
+  border-color: rgba(139, 109, 255, 0.28);
+}
+
+.meta-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0 !important;
+  color: var(--opal-sub) !important;
+  font-size: 13px !important;
+}
+
+.meta-line-icon {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  color: var(--opal-muted);
+  flex-shrink: 0;
+}
+
+.meta-chip {
+  background: rgba(19, 19, 30, 0.68);
+  border: 1px solid var(--opal-border);
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--opal-sub);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.workflow-load-error {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ffb4c0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.notification-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  transition: all 0.15s ease;
+}
+
+.notification-card--unread {
+  border-left-color: #7c5cfc;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.notification-card:not(.notification-card--unread) {
+  opacity: 0.75;
+}
+
+.notification-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.notification-new-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.18);
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.notification-card-message {
   font-size: 13px;
+  color: rgba(232, 230, 240, 0.7);
+  margin-top: 8px;
+}
+
+.notification-card-time {
+  font-size: 11px;
+  color: rgba(232, 230, 240, 0.45);
+  margin-top: 10px;
 }
 
 .section-header input,
@@ -486,7 +643,6 @@
 }
 
 @media (max-width: 700px) {
-
   .workflow-heading,
   .section-header {
     flex-direction: column;
@@ -500,16 +656,4 @@
   .section-header select {
     width: 100%;
   }
-}
-
-.organizer-dashboard-pill {
-  color: #9b7cff;
-  font-size: 13px;
-  font-weight: 900;
-  font-family: var(--font-display), system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(139, 109, 255, 0.12);
-  border: 1px solid rgba(139, 109, 255, 0.32);
 }
