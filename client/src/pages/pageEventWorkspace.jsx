@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent } from '../services/serviceEvent';
 
+import TabBrowseVenue    from './tabs/TabBrowseVenue';
+import TabReplyVenue     from './tabs/TabReplyVenue';
+import TabLayoutDesigner from './tabs/TabLayoutDesigner';
 import TabGuests        from './tabs/TabGuests';
 import TabOverview      from './tabs/TabOverview';
 import TabDayOf         from './tabs/TabDayOf';
@@ -49,6 +52,7 @@ export default function EventWorkspace() {
   const [loading,      setLoading]     = useState(true);
   const [error,        setError]       = useState(null);
   const [showSettings, setShowSettings]= useState(false);
+  const [venuePage, setVenuePage] = useState('reply');
 
   const switchTab = (tabId) => {
     if (tabId === activeTab) return;
@@ -198,12 +202,19 @@ export default function EventWorkspace() {
               <TabVendors eventId={eventId} organizerId={event?.organizerId} />
             </div>
           )}
+          {visitedTabs.has('venue') && (
+            <div style={{ display: activeTab === 'venue' ? 'block' : 'none' }} className={activeTab === 'venue' ? 'tab-panel' : ''}>
+              {venuePage === 'browse' && <TabBrowseVenue eventId={eventId} event={event} onNavigate={setVenuePage} />}
+              {venuePage === 'reply'  && <TabReplyVenue  eventId={eventId} event={event} onNavigate={setVenuePage} />}
+              {venuePage === 'layout' && <TabLayoutDesigner eventId={eventId} event={event} onNavigate={setVenuePage} />}
+            </div>
+          )}
           {visitedTabs.has('team') && (
             <div style={{ display: activeTab === 'team' ? 'block' : 'none' }} className={activeTab === 'team' ? 'tab-panel' : ''}>
               <TabTeam eventId={eventId} />
             </div>
           )}
-          {!['overview','guests','day-of','messages','feedback','budget','vendors','team'].includes(activeTab) && (
+          {!['overview','guests','day-of','messages','feedback','budget','vendors','venue','team'].includes(activeTab) && (
             <div className="tab-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400, flexDirection: 'column', gap: 12 }}>
               <div style={{ color: P.muted, display: 'flex', transform: 'scale(1.8)', marginBottom: 4 }}>{icons.wrench}</div>
               <p style={{ color: P.sub, fontSize: 14, margin: 0 }}>
