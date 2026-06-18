@@ -338,10 +338,8 @@ export default function StaffQRScanner() {
 
       <div className="staff-tab-content">
         <div
+          className="staff-content-inner"
           style={{
-            maxWidth: 600,
-            margin: "0 auto",
-            padding: "32px 24px",
             animation: "cardIn 0.32s ease 0.05s both",
           }}
         >

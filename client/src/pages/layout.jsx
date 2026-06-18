@@ -30,7 +30,7 @@ const Layout = () => {
     const flushPageContent =
         location.pathname.startsWith("/organizer/") ||
                 location.pathname.startsWith("/venueowner/") ||
-                location.pathname === "/staff/dashboard" ||
+                location.pathname.startsWith("/staff/") ||
                         location.pathname === "/notificationsview" ||
         ((location.pathname === "/pageProfile" || location.pathname === "/profile") &&
             (user?.role === "organizer" || user?.role === "staff" || user?.role === "venue_owner"));                const lockPageScroll = location.pathname === "/organizer/deactivate";

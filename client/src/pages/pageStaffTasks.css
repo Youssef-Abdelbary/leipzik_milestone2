@@ -143,8 +143,19 @@
   display: none;
 }
 .staff-tab-content {
-  max-width: 980px;  padding: 32px 24px 120px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 120px;
+  box-sizing: border-box;
   animation: staffPageIn 0.3s ease;
+}
+
+.staff-content-inner {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @keyframes staffPageIn {
