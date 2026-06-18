@@ -431,95 +431,81 @@
   margin-bottom: 14px;
 }
 
-.role-group {
+.register-form .role-group {
   display: flex;
   gap: 8px;
   margin-top: 2px;
 }
 
-.role-button {
+.register-form .role-button {
   flex: 1;
-  height: 42px;
+  min-height: 48px;
   border-radius: 11px;
   border: 1px solid var(--opal-border);
-  background: rgba(30, 30, 41, 0.55);
-  color: var(--opal-sub);
+  background: rgba(19, 19, 30, 0.72);
+  color: rgba(237, 233, 255, 0.45);
   font-weight: 800;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.15s ease;
-}
-
-.role-button:hover {
-  border-color: #4de7e3;
-  color: var(--opal-text);
-  background: rgba(38, 38, 54, 0.75);
-}
-
-.role-button-active {
-  background: linear-gradient(135deg, #4de7e3 0%, #8b6dff 100%);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-@media (max-width: 520px) {
-  .register-card {
-    width: 100%;
-    padding: 26px 22px !important;
-  }
-
-  .role-group {
-    flex-direction: column;
-  }
-}
-
-.register-page {
-  overflow-y: auto;
-}
-
-.register-card {
-  width: 500px;
-  padding: 30px 36px !important;
-}
-
-.register-form .form-group {
-  margin-bottom: 14px;
-}
-
-.role-group {
-  display: flex;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.role-button {
-  flex: 1;
-  height: 42px;
-  border-radius: 11px;
-  border: 1px solid var(--opal-border);
-  background: rgba(30, 30, 41, 0.55);
-  color: var(--opal-sub);
-  font-weight: 800;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s ease;
-
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
+  position: relative;
 }
 
-.role-button:hover {
-  border-color: #4de7e3;
-  color: var(--opal-text);
-  background: rgba(38, 38, 54, 0.75);
+.register-form .role-button span:first-child {
+  opacity: 0.45;
+  display: grid;
+  place-items: center;
+  line-height: 0;
 }
 
-.role-button-active {
-  background: linear-gradient(135deg, #4de7e3 0%, #8b6dff 100%);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.08);
+.register-form .role-button:hover {
+  border-color: rgba(77, 231, 227, 0.35);
+  color: rgba(237, 233, 255, 0.72);
+  background: rgba(30, 30, 41, 0.82);
+}
+
+.register-form .role-button:hover span:first-child {
+  opacity: 0.75;
+}
+
+.register-form .role-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(77, 231, 227, 0.14);
+}
+
+.register-form .role-button-active {
+  background: rgba(77, 231, 227, 0.08);
+  color: #ede9ff;
+  border-color: rgba(77, 231, 227, 0.45);
+  box-shadow: 0 0 0 1px rgba(77, 231, 227, 0.12);
+}
+
+.register-form .role-button-active span:first-child {
+  opacity: 1;
+  color: #4de7e3;
+}
+
+.register-form .role-button-active:hover {
+  border-color: rgba(77, 231, 227, 0.55);
+  background: rgba(77, 231, 227, 0.12);
+}
+
+.register-form .role-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(77, 231, 227, 0.18);
+  color: #4de7e3;
+  display: grid;
+  place-items: center;
+  line-height: 0;
 }
 
 @media (max-width: 520px) {
@@ -528,7 +514,7 @@
     padding: 26px 22px !important;
   }
 
-  .role-group {
+  .register-form .role-group {
     flex-direction: column;
   }
 }

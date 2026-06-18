@@ -1,0 +1,94 @@
+/* Shared shell for event workspace tabs (Team, Budget, etc.) */
+.workspace-tab-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+  box-sizing: border-box;
+  animation: workspaceTabIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes workspaceTabIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.workspace-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.workspace-stat-card {
+  padding: 18px 20px !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.workspace-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 109, 255, 0.4) !important;
+  box-shadow:
+    0 0 0 1px rgba(139, 109, 255, 0.14),
+    0 8px 32px 4px rgba(139, 109, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.workspace-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.workspace-stat-icon svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block;
+  margin: 0;
+}
+
+.workspace-stat-card > span:not(.workspace-stat-icon) {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--opal-muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.workspace-stat-card p {
+  margin: 0;
+  color: var(--opal-text);
+  font-size: 28px;
+  font-weight: 900;
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+}
+
+@media (max-width: 900px) {
+  .workspace-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .workspace-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-tab-shell {
+    padding: 24px 16px 48px;
+  }
+}

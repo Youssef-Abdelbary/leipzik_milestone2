@@ -47,4 +47,12 @@
 
 .page-content {
     padding: 24px;
+
+    }
+.page-content--flush {
+    padding: 0;
+    }
+.page-content--locked {
+    height: 100vh;
+    overflow: hidden;
 }

@@ -27,6 +27,14 @@ const Layout = () => {
         || ((location.pathname === '/pageProfile' || location.pathname === '/profile') && (user?.role === 'venue_owner' || user?.role === 'organizer' || user?.role === 'staff'))
         || location.pathname === '/notificationsview';
 
+    const flushPageContent =
+        location.pathname.startsWith("/organizer/") ||
+                location.pathname.startsWith("/venueowner/") ||
+                location.pathname === "/staff/dashboard" ||
+                        location.pathname === "/notificationsview" ||
+        ((location.pathname === "/pageProfile" || location.pathname === "/profile") &&
+            (user?.role === "organizer" || user?.role === "staff" || user?.role === "venue_owner"));                const lockPageScroll = location.pathname === "/organizer/deactivate";
+
     return (
         <>
             {!hideHeader && (
@@ -45,8 +53,15 @@ const Layout = () => {
                 />
             )}
 
-            <main className="page-content">
-                <Outlet />
+            <main
+                className={[
+                    "page-content",
+                    flushPageContent ? "page-content--flush" : "",
+                    lockPageScroll ? "page-content--locked" : "",
+                ]
+                    .filter(Boolean)
+                    .join(" ")}
+            >                                <Outlet />
             </main>
         </>
     );

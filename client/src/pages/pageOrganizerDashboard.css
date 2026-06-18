@@ -1,0 +1,53 @@
+/* Shared organizer / venue owner / staff dashboard shell */
+.organizer-dashboard-page {
+  min-height: 100vh;
+  background: var(--opal-bg);
+  color: var(--opal-text);
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+}
+
+.organizer-dashboard-content {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 24px 120px;
+  box-sizing: border-box;
+  animation: organizerPageIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.organizer-dashboard-content--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px);
+}
+
+.organizer-dashboard-pill {
+  color: #9b7cff;
+  font-size: 13px;
+  font-weight: 900;
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(139, 109, 255, 0.12);
+  border: 1px solid rgba(139, 109, 255, 0.32);
+}
+
+@keyframes organizerPageIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .organizer-dashboard-content {
+    padding: 24px 16px 120px;
+  }
+}

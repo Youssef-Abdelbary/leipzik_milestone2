@@ -6,6 +6,8 @@ import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} fr
 import Dock from "../components/componentDock";
 import { useNavigate } from "react-router-dom";
 import "./pageDeactivate.css";
+import "./pageOrganizerDashboard.css";
+import "./pageEvents.css";
 import AppHeader from "../components/componentAppHeader";
 
 const ROLE_COLORS = {
@@ -13,10 +15,104 @@ const ROLE_COLORS = {
   venue_owner: { bg: "rgba(245, 166, 35, 0.12)", text: "#f5a623", border: "rgba(245, 166, 35, 0.35)" },
   staff: { bg: "rgba(77, 231, 227, 0.12)", text: "#4de7e3", border: "rgba(77, 231, 227, 0.35)" },
   vendor: { bg: "rgba(255, 91, 159, 0.12)", text: "#ff6fb1", border: "rgba(255, 91, 159, 0.35)" },
-  guest: { bg: "rgba(255, 255, 255, 0.08)", text: "rgba(232, 232, 240, 0.75)", border: "rgba(255, 255, 255, 0.14)" },
+};
+
+
+const DEFAULT_ROLE_STYLE = {
+  bg: "rgba(255, 255, 255, 0.08)",
+  text: "rgba(232, 232, 240, 0.75)",
+  border: "rgba(255, 255, 255, 0.14)",
+};
+const ROLE_LABELS = {
+  organizer: "Organizer",
+  venue_owner: "Venue Owner",
+  staff: "Staff",
+  vendor: "Vendor",
 };
 
 const ROLES = Object.keys(ROLE_COLORS);
+const ROLE_FILTER_ITEMS = [
+  { role: "all", label: "All", color: P.blue },
+  { role: "organizer", label: "Organizer", color: "#9b7cff" },
+  { role: "venue_owner", label: "Venue Owner", color: P.amber },
+  { role: "staff", label: "Staff", color: "#4de7e3" },
+  { role: "vendor", label: "Vendor", color: "#ff6fb1" },
+];
+function RoleFilterTile({ role, label, color, count, filterRole, onSelect, index }) {
+  const isActive = filterRole === role;
+        return (
+    <button
+          type="button"
+      className="role-filter-tile"
+      onClick={() => onSelect(role)}
+
+      style={{
+
+        background: isActive
+  ? `linear-gradient(135deg, ${color}22 0%, ${color}10 100%)`
+          : "rgba(19,19,30,0.72)",
+        border: `1px solid ${isActive ? `${color}55` : P.border}`,
+        transform: isActive ? "translateY(-3px)" : "translateY(0)",
+        boxShadow: isActive
+   ? `0 0 0 1px ${color}33, 0 8px 24px ${color}22, inset 0 1px 0 rgba(255,255,255,0.06)`
+          : "inset 0 1px 0 rgba(255,255,255,0.04)",
+        animation: `roleTileIn 0.3s ease ${index * 0.05}s both`,
+      }}
+       onMouseEnter={(event) => {
+        if (!isActive) {
+          event.currentTarget.style.background = `linear-gradient(135deg, ${color}18 0%, ${color}08 100%)`;
+          event.currentTarget.style.borderColor = `${color}44`;
+        }
+      }}
+      onMouseLeave={(event) => {
+        if (!isActive) {
+          event.currentTarget.style.background = "rgba(19,19,30,0.72)";
+          event.currentTarget.style.borderColor = P.border;
+        }
+      }}
+    >
+
+       <div
+        style={{
+          fontSize: 28,
+          fontWeight: 900,
+          color,
+          lineHeight: 1,
+          fontFamily: "var(--font-display), system-ui, sans-serif",
+          letterSpacing: "-0.04em",
+        }}
+      >
+        {count}
+      </div>
+      <div
+        style={{
+          fontSize: 10,
+          color: isActive ? color : P.muted,
+          marginTop: 6,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.09em",
+        }}
+      >
+        {label}
+      </div>
+      {isActive && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "20%",
+            right: "20%",
+            height: 2,
+            background: color,
+            borderRadius: "2px 2px 0 0",
+            opacity: 0.7,
+          }}
+        />
+      )}
+    </button>
+  );
+}
 
 function Avatar({ fullname = "", active }) {
   const initials = fullname
@@ -291,6 +387,17 @@ export default function UserManagement({ onTabChange }) {
     return filterRole === "all" || user.role === filterRole;
   });
 
+    const roleCounts = {
+    all: users.length,
+    ...Object.fromEntries(
+      ROLES.map((role) => [role, users.filter((user) => user.role === role).length])
+    ),
+  };
+  const handleRoleFilterClick = (role) => {
+    setFilterRole((prev) => (prev === role ? "all" : role));
+  };
+
+
   const dockItems = [
     {
       icon: <VscHome size={26} />,
@@ -335,16 +442,7 @@ export default function UserManagement({ onTabChange }) {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: P.bg,
-        color: P.text,
-        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-        padding: "34px 24px 50px",
-      }}
-    >
-      <AppHeader
+    <div className="organizer-dashboard-page user-management-page">      <AppHeader
               crumb="Other users in app"
               right={
                 <div className="organizer-dashboard-pill">
@@ -352,8 +450,8 @@ export default function UserManagement({ onTabChange }) {
                 </div>
               }
             />
-      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-        <div
+      <div className="user-management-shell">
+        <div className="user-management-header">                <div
           style={{
             display: "flex",
             alignItems: "flex-start",
@@ -453,87 +551,60 @@ export default function UserManagement({ onTabChange }) {
         </div>
 
         <GlassPanel style={{ padding: 18, marginBottom: 20 }}>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 260, position: "relative" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: 15,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: P.sub,
-                  fontSize: 16,
-                  pointerEvents: "none",
-                }}
-              >
-                🔍
-              </span>
-
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by name or email..."
-                style={{
-                  width: "100%",
-                  padding: "13px 15px 13px 43px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.05)",
-                  fontSize: 14,
-                  color: P.text,
-                  outline: "none",
-                  boxSizing: "border-box",
-                  fontFamily: "inherit",
-                }}
-              />
-            </div>
-
-            <div
+      <div style={{ position: "relative" }}>
+            <span
               style={{
-                display: "flex",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 12,
-                overflow: "hidden",
-                flexWrap: "wrap",
+                position: "absolute",
+                left: 15,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: P.sub,
+                fontSize: 16,
+                pointerEvents: "none",
               }}
             >
-              {["all", ...ROLES].map((role) => (
-                <button
-                  key={role}
-                  onClick={() => setFilterRole(role)}
-                  style={{
-                    padding: "12px 16px",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 850,
-                    background:
-                      filterRole === role
-                        ? "linear-gradient(135deg, #8b6dff, #4de7e3)"
-                        : "transparent",
-                    color: filterRole === role ? "#071018" : P.sub,
-                    transition: "all 0.15s",
-                    whiteSpace: "nowrap",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {role === "all" ? "All" : role.replace("_", " ")}
-                </button>
-              ))}
-            </div>
+              🔍
+            </span>
+
+               <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by name or email..."
+              style={{
+                width: "100%",
+                padding: "13px 15px 13px 43px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.05)",
+                fontSize: 14,
+                color: P.text,
+                outline: "none",
+                boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+            />
           </div>
         </GlassPanel>
-
-        <GlassPanel style={{ overflow: "hidden" }}>
-          <div style={{ overflowX: "auto" }}>
+            {!loading && users.length > 0 && (
+          <div className="role-filter-tiles">
+            {ROLE_FILTER_ITEMS.map((item, index) => (
+              <RoleFilterTile
+                key={item.role}
+                role={item.role}
+                label={item.label}
+                color={item.color}
+                count={roleCounts[item.role] ?? 0}
+                filterRole={filterRole}
+                onSelect={handleRoleFilterClick}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
+        </div>
+        <div className="user-management-list">
+  <GlassPanel className="user-management-table-panel" style={{ overflow: "hidden" }}>
+            <div className="user-management-table-wrap">
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
               <thead>
                 <tr
@@ -594,8 +665,7 @@ export default function UserManagement({ onTabChange }) {
                 ) : (
                   filtered.map((user, index) => {
                     const isActive = user.status === "active";
-                    const roleStyle = ROLE_COLORS[user.role] ?? ROLE_COLORS.guest;
-
+                    const roleStyle = ROLE_COLORS[user.role] ?? DEFAULT_ROLE_STYLE;
                     return (
                       <tr
                         key={user._id}
@@ -609,8 +679,7 @@ export default function UserManagement({ onTabChange }) {
                       >
                         <td style={{ padding: "15px 20px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <Avatar fullname={user.fullname ?? ""} active={isActive} />
-
+                            <Avatar fullname={user.fullname || user.fullName || ""} active={isActive} />
                             <span
                               style={{
                                 fontSize: 14,
@@ -618,8 +687,7 @@ export default function UserManagement({ onTabChange }) {
                                 color: P.text,
                               }}
                             >
-                              {user.fullname || "Unnamed user"}
-                            </span>
+                              {user.fullname || user.fullName || "Unnamed user"}                            </span>
                           </div>
                         </td>
 
@@ -646,10 +714,10 @@ export default function UserManagement({ onTabChange }) {
                               background: roleStyle.bg,
                               color: roleStyle.text,
                               border: `1px solid ${roleStyle.border}`,
+                                                            whiteSpace: "nowrap",
                             }}
                           >
-                            {user.role?.replace("_", " ")}
-                          </span>
+                            {ROLE_LABELS[user.role] ?? user.role?.replace("_", " ")}                          </span>
                         </td>
 
                         <td style={{ padding: "15px 20px" }}>
@@ -740,6 +808,7 @@ export default function UserManagement({ onTabChange }) {
         <div style={{ marginTop: 16, fontSize: 13, color: P.sub, fontWeight: 650 }}>
           Showing {filtered.length} of {users.length} users
         </div>
+                </div>
       </div>
 
       {confirmTarget && (

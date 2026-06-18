@@ -4,6 +4,12 @@
   gap: 12px;
 }
 
+@media (max-width: 700px) {
+  .organizer-dashboard-content {
+    padding: 24px 16px 120px;
+  }
+}
+
 .organizer-dashboard-pill {
   color: #9b7cff;
   font-size: 13px;

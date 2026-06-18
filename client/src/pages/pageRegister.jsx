@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { registerUser } from "../services/serviceRegister";
 import { useNavigate, Link } from "react-router-dom";
+import { VscLock, VscPerson, VscDeviceMobile } from "react-icons/vsc";
 import "../components/componentTheme.css";
 import "./Login.css";
 import CurvedLoop from "../components/CurvedLoop";
 import { icons, GlassPanel } from "../components/componentTheme";
+
+const ROLE_ICONS = {
+    vendor: icons.utensils,
+    venue_owner: icons.building2,
+    organizer: icons.ticket,
+};
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -89,7 +96,9 @@ export default function Register() {
 
             <GlassPanel className="login-card register-card">
                 <div className="login-logo">
-                    <div className="login-logo-icon">🔐</div>
+                    <div className="login-logo-icon">
+                        <VscLock size={24} aria-hidden="true" />
+                    </div>
                 </div>
 
                 <div className="login-header">
@@ -106,15 +115,18 @@ export default function Register() {
                                 { label: "Vendor", value: "vendor" },
                                 { label: "Venue Owner", value: "venue_owner" },
                                 { label: "Organizer", value: "organizer" },
-                            ].map((role) => (
+                            ].map((role) => {
+                                const isActive = formData.role === role.value;
+                                return (
                                 <button
                                     key={role.value}
                                     type="button"
                                     className={
-                                        formData.role === role.value
+                                        isActive
                                             ? "role-button role-button-active"
                                             : "role-button"
                                     }
+                                    aria-pressed={isActive}
                                     onClick={() =>
                                         setFormData({
                                             ...formData,
@@ -122,20 +134,23 @@ export default function Register() {
                                         })
                                     }
                                 >
-                                    {role.value === "vendor" && <span>🧑‍🍳</span>}
-                                    {role.value === "venue_owner" && <span>🏟️</span>}
-                                    {role.value === "organizer" && <span>🎪</span>}
+                                    <span>{ROLE_ICONS[role.value]}</span>
                                     {role.label}
+                                    {isActive && (
+                                        <span className="role-check" aria-hidden="true">
+                                            {icons.check}
+                                        </span>
+                                    )}
                                 </button>
-                            ))}
+                            );
+                            })}
                         </div>
                     </div>
 
                     <div className="form-group">
                         <label>Full Name</label>
                         <div className="login-input-wrap">
-                            <span>👤</span>
-                            <input
+                            <span><VscPerson size={20} aria-hidden="true" /></span>                            <input
                                 type="text"
                                 name="fullname"
                                 value={formData.fullname}
@@ -148,8 +163,7 @@ export default function Register() {
                     <div className="form-group">
                         <label>Email</label>
                         <div className="login-input-wrap">
-                            <span>{icons.mail || "✉️"}</span>
-                            <input
+                            <span>{icons.mail}</span>                            <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
@@ -162,8 +176,7 @@ export default function Register() {
                     <div className="form-group">
                         <label>Phone</label>
                         <div className="login-input-wrap">
-                            <span>📞</span>
-                            <input
+                            <span><VscDeviceMobile size={20} aria-hidden="true" /></span>                            <input
                                 type="tel"
                                 name="phone"
                                 value={formData.phone}
@@ -176,8 +189,7 @@ export default function Register() {
                     <div className="form-group">
                         <label>Password</label>
                         <div className="login-input-wrap">
-                            <span>🔒</span>
-                            <input
+                            <span><VscLock size={20} aria-hidden="true" /></span>                            <input
                                 type="password"
                                 name="password"
                                 value={formData.password}
@@ -190,8 +202,7 @@ export default function Register() {
                     <div className="form-group">
                         <label>Confirm Password</label>
                         <div className="login-input-wrap">
-                            <span>🔒</span>
-                            <input
+                            <span><VscLock size={20} aria-hidden="true" /></span>                            <input
                                 type="password"
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
@@ -203,8 +214,7 @@ export default function Register() {
 
                     {error && (
                         <p className="error-message">
-                            {icons.warning || "⚠️"} {error}
-                        </p>
+                            {icons.warning} {error}                        </p>
                     )}
 
                     <button type="submit" disabled={loading}>

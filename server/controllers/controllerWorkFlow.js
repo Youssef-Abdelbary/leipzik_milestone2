@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { createNotification } from "../utils/notificationUtil.js";
 import Notification from "../models/modelNotification.js";
+import Feedback from "../models/modelFeedback.js";
+import { computeEventFeedbackStats } from "../utils/feedbackStats.js";
 
 export function testWorkflowRoute(req, res) {
   res.json({
@@ -67,24 +69,30 @@ export async function getWorkflowSummary(req, res) {
       })
       .toArray();
 
-    let totalPositiveFeedback = 0;
-    let totalNegativeFeedback = 0;
+    const allOrganizerEvents = await eventsCollection
+      .find({ organizerId: organizerObjectId })
+      .project({ _id: 1 })
+      .toArray();
 
-    upcomingEvents.forEach((event) => {
-      totalPositiveFeedback +=
-        event.dashboardStats?.averagePositiveFeedback || 0;
+    const eventIds = allOrganizerEvents.map((event) => event._id);
 
-      totalNegativeFeedback +=
-        event.dashboardStats?.averageNegativeFeedback || 0;
-    });
+    const feedbacks = eventIds.length
+      ? await Feedback.find({
+          eventId: { $in: eventIds },
+          submittedAt: { $ne: null },
+        }).lean()
+      : [];
 
-    const numberOfEvents = upcomingEvents.length || 1;
+    const feedbackStats = computeEventFeedbackStats(feedbacks);
 
     res.json({
       todayEventsCount: todayEvents.length,
       upcomingEventsCount: upcomingEvents.length,
-      averagePositiveFeedback: totalPositiveFeedback / numberOfEvents,
-      averageNegativeFeedback: totalNegativeFeedback / numberOfEvents,
+      averagePositiveFeedback: feedbackStats.averagePositiveFeedback,
+      averageNegativeFeedback: feedbackStats.averageNegativeFeedback,
+      feedbackReviewCount: feedbackStats.count,
+      positiveFeedbackReviewCount: feedbackStats.positiveReviewCount,
+      negativeFeedbackReviewCount: feedbackStats.negativeReviewCount,
     });
   } catch (error) {
     console.error("Get workflow summary error:", error);

@@ -9,6 +9,7 @@ import Dock from '../components/componentDock.jsx';
 import MiniCalendar from '../components/componentMiniCalendar.jsx';
 import AppHeader from '../components/componentAppHeader.jsx';
 import '../components/componentTheme.css';
+import './pageOrganizerDashboard.css';
 import { useNavigate } from 'react-router-dom';
 
 const fmtDate = d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -51,7 +52,6 @@ const labelStyle = {
     color: 'var(--opal-muted)', letterSpacing: 0.8, textTransform: 'uppercase',
 };
 
-const DOCK_HEIGHT = 120;
 
 export default function PageVenueReports() {
     const [summary, setSummary] = useState(null);
@@ -211,8 +211,7 @@ export default function PageVenueReports() {
     ];
 
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-body)', color: 'var(--opal-text)' }}>
-            <AppHeader
+        <div className="organizer-dashboard-page" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>            <AppHeader
                 crumb="Venue Reports"
                 right={
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'rgba(62,207,184,0.14)', color: '#3ecfb8', border: '1px solid rgba(62,207,184,0.27)' }}>
@@ -221,8 +220,7 @@ export default function PageVenueReports() {
                     </div>
                 }
             />
-            <div style={{ flex: 1, overflowY: 'auto', padding: `24px 32px ${DOCK_HEIGHT + 16}px` }}>
-
+            <div className="organizer-dashboard-content" style={{ flex: 1, overflowY: 'auto' }}>
                 {/* ── Filters + export ── */}
                 <GlassCard style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', padding: '16px 18px', marginBottom: 20, position: 'relative', zIndex: 100 }}>
                     <div style={{ position: 'relative' }}>

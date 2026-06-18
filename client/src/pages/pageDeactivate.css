@@ -1,11 +1,100 @@
-.organizer-dashboard-pill {
-  color: #9b7cff;
-  font-size: 13px;
-  font-weight: 900;
-  font-family: var(--font-display), system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(139, 109, 255, 0.12);
-  border: 1px solid rgba(139, 109, 255, 0.32);
+.user-management-page {
+  height: 100vh;
+  max-height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-management-page > .app-header {
+  flex-shrink: 0;
+}
+
+.user-management-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+  box-sizing: border-box;
+  animation: organizerPageIn 0.3s ease;
+}
+
+.user-management-header {
+  flex-shrink: 0;
+}
+
+.user-management-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 120px;
+}
+
+.user-management-table-panel {
+  overflow: hidden;
+}
+
+.user-management-table-wrap {
+  overflow-x: auto;
+}
+
+@keyframes roleTileIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.role-filter-tiles {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.role-filter-tile {
+  flex: 1 1 80px;
+  min-width: 80px;
+  border-radius: 14px;
+  padding: 18px 20px;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  white-space: nowrap;
+}
+
+.role-filter-tile:hover {
+  transform: translateY(-3px) !important;
+}
+
+.user-management-list tbody tr {
+  transition: background 0.15s ease;
+}
+
+.user-management-list tbody tr:hover {
+  background: rgba(139, 109, 255, 0.06) !important;
+}
+
+@media (max-width: 700px) {
+  .user-management-shell {
+    padding: 24px 16px 16px;
+  }
 }
