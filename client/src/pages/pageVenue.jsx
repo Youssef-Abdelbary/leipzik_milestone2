@@ -7,11 +7,7 @@ import {
   deactivateVenue,
   fetchNotifications,
   markNotificationsRead,
-<<<<<<< HEAD
 } from "../services/serviceVenue.js";
-=======
-} from "../services/serviceVenue";
->>>>>>> e26bbb6 (mid changes)
 import {
   VscHome, VscMail, VscCalendar, VscBell, VscPerson,
 } from 'react-icons/vsc';
@@ -43,16 +39,6 @@ function fmtDate(d) {
 }
 function fmtRelativeTime(d) {
   const diff = Date.now() - new Date(d).getTime();
-<<<<<<< HEAD
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-=======
   const mins  = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days  = Math.floor(diff / 86400000);
@@ -61,7 +47,6 @@ function fmtRelativeTime(d) {
   if (hours < 24) return `${hours}h ago`;
   if (days  < 7)  return `${days}d ago`;
   return new Date(d).toLocaleDateString("en-GB", { day:"numeric", month:"short" });
->>>>>>> e26bbb6 (mid changes)
 }
 function formatPrice(pricing = {}) {
   const amount = Number(pricing.basePrice ?? pricing.amount ?? 0);
@@ -838,21 +823,12 @@ function MyVenuesSection() {
 // ─── Notification type → icon + accent mapping ────────────────────────────────
 
 const NOTIF_META = {
-<<<<<<< HEAD
-  booking_request: { icon: "📋", accent: "var(--opal-violet,#7c5cfc)", bg: "rgba(124,92,252,0.10)" },
-  booking_approved: { icon: "✅", accent: "var(--opal-teal,#4fd1c5)", bg: "rgba(79,209,197,0.10)" },
-  booking_declined: { icon: "❌", accent: "var(--opal-red,#ff5c66)", bg: "rgba(255,92,102,0.10)" },
-  booking_cancelled: { icon: "🚫", accent: "var(--opal-red,#ff5c66)", bg: "rgba(255,92,102,0.10)" },
-  counter_proposal: { icon: "↩️", accent: "var(--opal-amber,#f5b34a)", bg: "rgba(245,179,74,0.10)" },
-  message: { icon: "💬", accent: "var(--opal-teal,#4fd1c5)", bg: "rgba(79,209,197,0.10)" },
-=======
   booking_request:   { icon: "📋", accent: "var(--opal-violet,#7c5cfc)", bg: "rgba(124,92,252,0.10)" },
   booking_approved:  { icon: "✅", accent: "var(--opal-teal,#4fd1c5)",   bg: "rgba(79,209,197,0.10)"  },
   booking_declined:  { icon: "❌", accent: "var(--opal-red,#ff5c66)",    bg: "rgba(255,92,102,0.10)"  },
   booking_cancelled: { icon: "🚫", accent: "var(--opal-red,#ff5c66)",    bg: "rgba(255,92,102,0.10)"  },
   counter_proposal:  { icon: "↩️", accent: "var(--opal-amber,#f5b34a)",  bg: "rgba(245,179,74,0.10)"  },
   message:           { icon: "💬", accent: "var(--opal-teal,#4fd1c5)",   bg: "rgba(79,209,197,0.10)"  },
->>>>>>> e26bbb6 (mid changes)
 };
 
 function notifMeta(type) {
@@ -862,92 +838,7 @@ function notifMeta(type) {
 // ─── Notifications panel ──────────────────────────────────────────────────────
 
 function NotificationsPanel() {
-  const [notifications, setNotifications] = useState([]);
-<<<<<<< HEAD
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  // Track which ids are currently being dismissed (for optimistic animation)
-  const [dismissing, setDismissing] = useState(new Set());
-=======
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState(null);
-  // Track which ids are currently being dismissed (for optimistic animation)
-  const [dismissing,    setDismissing]    = useState(new Set());
->>>>>>> e26bbb6 (mid changes)
-
-  async function load() {
-    setLoading(true); setError(null);
-    try {
-      const data = await fetchNotifications();
-      setNotifications(data || []);
-<<<<<<< HEAD
-    } catch (e) {
-=======
-    } catch(e) {
->>>>>>> e26bbb6 (mid changes)
-      setError(e.message || "Failed to load notifications");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { load(); }, []);
-
-  const unreadCount = notifications.filter(n => n.status === "unread").length;
-
-  async function handleMarkOne(id) {
-    // Optimistically mark as read in local state
-    setDismissing(prev => new Set(prev).add(id));
-    setNotifications(prev =>
-      prev.map(n => n._id === id ? { ...n, status: "read" } : n)
-    );
-    try {
-      await markNotificationsRead([id]);
-<<<<<<< HEAD
-    } catch (e) {
-=======
-    } catch(e) {
->>>>>>> e26bbb6 (mid changes)
-      // Roll back on failure
-      setNotifications(prev =>
-        prev.map(n => n._id === id ? { ...n, status: "unread" } : n)
-      );
-    } finally {
-      setDismissing(prev => { const s = new Set(prev); s.delete(id); return s; });
-    }
-  }
-
-  async function handleMarkAll() {
-    const unreadIds = notifications.filter(n => n.status === "unread").map(n => n._id);
-    if (!unreadIds.length) return;
-    // Optimistic
-    setNotifications(prev => prev.map(n => ({ ...n, status: "read" })));
-    try {
-      await markNotificationsRead(unreadIds);
-<<<<<<< HEAD
-    } catch (e) {
-=======
-    } catch(e) {
->>>>>>> e26bbb6 (mid changes)
-      // Re-fetch on failure
-      load();
-    }
-  }
-
   return (
-<<<<<<< HEAD
-    <GlassPanel style={{ padding: "18px 20px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <SectionLabel style={{ margin: 0 }}>Notifications</SectionLabel>
-          {unreadCount > 0 && (
-            <span style={{
-              fontSize: 9, fontWeight: 800, lineHeight: 1,
-              padding: "2px 6px", borderRadius: 20,
-              background: "var(--opal-violet,#7c5cfc)", color: "#0a0a0f",
-              letterSpacing: 0.3,
-=======
     <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", height:"100%", minHeight:0 }}>
       {/* Header row */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12, flexShrink:0 }}>
@@ -959,7 +850,6 @@ function NotificationsPanel() {
               padding:"2px 6px", borderRadius:20,
               background:"var(--opal-violet,#7c5cfc)", color:"#0a0a0f",
               letterSpacing:0.3,
->>>>>>> e26bbb6 (mid changes)
             }}>
               {unreadCount}
             </span>
@@ -969,19 +859,11 @@ function NotificationsPanel() {
           <button
             onClick={handleMarkAll}
             style={{
-<<<<<<< HEAD
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 10, fontWeight: 600, letterSpacing: 0.3,
-              color: "var(--opal-teal,#4fd1c5)",
-              fontFamily: "var(--font-body,system-ui)", padding: 0,
-              textDecoration: "underline", textUnderlineOffset: 2,
-=======
               background:"none", border:"none", cursor:"pointer",
               fontSize:10, fontWeight:600, letterSpacing:0.3,
               color:"var(--opal-teal,#4fd1c5)",
               fontFamily:"var(--font-body,system-ui)", padding:0,
               textDecoration:"underline", textUnderlineOffset:2,
->>>>>>> e26bbb6 (mid changes)
             }}
           >
             Mark all read
@@ -991,29 +873,6 @@ function NotificationsPanel() {
 
       {/* Scrollable list */}
       <div style={{
-<<<<<<< HEAD
-        flex: 1, overflowY: "auto", minHeight: 0,
-        display: "flex", flexDirection: "column", gap: 6,
-        // subtle scrollbar styling
-        scrollbarWidth: "thin",
-        scrollbarColor: "rgba(124,92,252,0.3) transparent",
-      }}>
-        {loading && (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-muted,rgba(232,230,240,0.35))" }}>Loading…</p>
-          </div>
-        )}
-        {error && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-red,#ff5c66)", textAlign: "center" }}>{error}</p>
-            <button onClick={load} style={{ ...css.filterBtn, fontSize: 11 }}>Retry</button>
-          </div>
-        )}
-        {!loading && !error && notifications.length === 0 && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: 26, opacity: 0.2 }}>🔔</span>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-muted,rgba(232,230,240,0.35))", textAlign: "center" }}>
-=======
         flex:1, overflowY:"auto", minHeight:0,
         display:"flex", flexDirection:"column", gap:6,
         // subtle scrollbar styling
@@ -1035,47 +894,17 @@ function NotificationsPanel() {
           <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8 }}>
             <span style={{ fontSize:26, opacity:0.2 }}>🔔</span>
             <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", textAlign:"center" }}>
->>>>>>> e26bbb6 (mid changes)
               No notifications yet
             </p>
           </div>
         )}
         {!loading && !error && notifications.map(n => {
           const isRead = n.status === "read";
-<<<<<<< HEAD
-          const meta = notifMeta(n.type);
-=======
           const meta   = notifMeta(n.type);
->>>>>>> e26bbb6 (mid changes)
           return (
             <div
               key={n._id}
               style={{
-<<<<<<< HEAD
-                display: "flex", alignItems: "flex-start", gap: 10,
-                padding: "10px 11px 0px 11px",
-                borderRadius: 10,
-                background: isRead ? "rgba(21,21,29,0.45)" : meta.bg,
-                border: `1px solid ${isRead ? "var(--opal-border,rgba(255,255,255,0.06))" : meta.accent + "44"}`,
-                opacity: isRead ? 0.6 : 1,
-                transition: "opacity 0.2s, background 0.2s",
-                flexShrink: 0,
-              }}
-            >
-              {/* Icon */}
-              <span style={{ fontSize: 15, lineHeight: 1, marginTop: 1, flexShrink: 0 }}>{meta.icon}</span>
-
-              {/* Text body */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  margin: 0, fontSize: 12, fontWeight: isRead ? 400 : 600,
-                  color: isRead ? "var(--opal-sub,rgba(232,230,240,0.55))" : "var(--opal-text,#e8e6f0)",
-                  lineHeight: 1.4, wordBreak: "break-word",
-                }}>
-                  {n.message}
-                </p>
-                <p style={{ margin: "3px 0 0", fontSize: 10, color: "var(--opal-muted,rgba(232,230,240,0.35))" }}>
-=======
                 display:"flex", alignItems:"flex-start", gap:10,
                 padding: "10px 11px 0px 11px",
                 borderRadius:10,
@@ -1099,7 +928,6 @@ function NotificationsPanel() {
                   {n.message}
                 </p>
                 <p style={{ margin:"3px 0 0", fontSize:10, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>
->>>>>>> e26bbb6 (mid changes)
                   {fmtRelativeTime(n.createdAt)}
                 </p>
               </div>
@@ -1111,17 +939,6 @@ function NotificationsPanel() {
                   disabled={dismissing.has(n._id)}
                   title="Mark as read"
                   style={{
-<<<<<<< HEAD
-                    flexShrink: 0, width: 20, height: 20,
-                    borderRadius: 6,
-                    border: `1.5px solid ${meta.accent}66`,
-                    background: "transparent",
-                    cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: meta.accent,
-                    fontSize: 11, fontWeight: 800,
-                    transition: "background 0.15s, border-color 0.15s",
-=======
                     flexShrink:0, width:20, height:20,
                     borderRadius:6,
                     border:`1.5px solid ${meta.accent}66`,
@@ -1131,7 +948,6 @@ function NotificationsPanel() {
                     color: meta.accent,
                     fontSize:11, fontWeight:800,
                     transition:"background 0.15s, border-color 0.15s",
->>>>>>> e26bbb6 (mid changes)
                     opacity: dismissing.has(n._id) ? 0.4 : 1,
                   }}
                   onMouseEnter={e => {
