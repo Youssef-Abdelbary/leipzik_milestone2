@@ -11,6 +11,8 @@ import {
     cancelBooking,
     getNotifications,
     markNotificationsRead,
+    deactivateVenue,
+    activateVenue,
 } from '../controllers/controllerVenue.js';
 
 const router = express.Router();
@@ -30,7 +32,9 @@ router.patch('/notifications/read',              authenticate, markNotifications
 router.get('/',                             authenticate, requireVenueOwner, getMyVenues);
 router.get('/:id',                          authenticate, requireVenueOwner, getVenueById);
 router.post('/',                            authenticate, requireVenueOwner, upload.array('photos', 10), createVenue);
-router.put('/:id',                          authenticate, requireVenueOwner, upload.array('photos', 10), updateVenue);
+router.put("/:id", authenticate, requireVenueOwner, upload.array("photos"), updateVenue);
+router.patch("/:id/deactivate", authenticate, requireVenueOwner, deactivateVenue);
+router.patch("/:id/activate", authenticate, requireVenueOwner, activateVenue);
 router.delete('/:id',                       authenticate, requireVenueOwner, deleteVenue);
 router.post('/:id/book',                    authenticate, bookDate);
 router.patch('/bookings/:bookingId/cancel', authenticate, cancelBooking);

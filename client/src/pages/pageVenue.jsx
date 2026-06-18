@@ -5,11 +5,12 @@ import {
   updateVenue,
   deleteVenue,
   deactivateVenue,
+  activateVenue,
   fetchNotifications,
   markNotificationsRead,
 } from "../services/serviceVenue.js";
 import {
-  VscHome, VscMail, VscCalendar, VscBell, VscPerson,
+  VscHome, VscMail, VscCalendar, VscPerson,
 } from 'react-icons/vsc';
 import { getConfirmedBookings } from "../services/serviceBookingCalendar.js";
 import MiniCalendar from "../components/componentMiniCalendar.jsx";
@@ -39,14 +40,14 @@ function fmtDate(d) {
 }
 function fmtRelativeTime(d) {
   const diff = Date.now() - new Date(d).getTime();
-  const mins  = Math.floor(diff / 60000);
+  const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins  < 1)  return "Just now";
-  if (mins  < 60) return `${mins}m ago`;
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
   if (hours < 24) return `${hours}h ago`;
-  if (days  < 7)  return `${days}d ago`;
-  return new Date(d).toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+  if (days < 7) return `${days}d ago`;
+  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 function formatPrice(pricing = {}) {
   const amount = Number(pricing.basePrice ?? pricing.amount ?? 0);
@@ -654,7 +655,7 @@ function VenueFormModal({ initial, onSave, onCancel }) {
 
 // ─── Venue card ───────────────────────────────────────────────────────────────
 
-function VenueCard({ venue, onEdit, onDelete, onDeactivate }) {
+function VenueCard({ venue, onEdit, onDelete, onDeactivate, onActivate }) {
   const [confirming, setConfirming] = useState(null);
   const [hovered, setHovered] = useState(false);
   const photoUrl = venue.photos?.[0]?.url;
@@ -668,47 +669,175 @@ function VenueCard({ venue, onEdit, onDelete, onDeactivate }) {
       {photoUrl ? (
         <img src={photoUrl} alt={venue.name} style={css.vCardImg} />
       ) : (
-        <div style={{ ...css.vCardImg, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(21,21,29,0.8)", fontSize: 32 }}>🏛️</div>
+        <div
+          style={{
+            ...css.vCardImg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(21,21,29,0.8)",
+            fontSize: 32,
+          }}
+        >
+          🏛️
+        </div>
       )}
+
       <div style={{ padding: "12px 14px 14px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 6,
+          }}
+        >
           <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--opal-text,#e8e6f0)", margin: 0, fontFamily: "var(--font-display,system-ui)", letterSpacing: -0.2 }}>
+            <h3
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "var(--opal-text,#e8e6f0)",
+                margin: 0,
+                fontFamily: "var(--font-display,system-ui)",
+                letterSpacing: -0.2,
+              }}
+            >
               {venue.name}
             </h3>
-            <p style={{ fontSize: 10, color: "var(--opal-muted,rgba(232,230,240,0.35))", margin: "2px 0 0" }}>
-              {[venue.location?.area, venue.location?.city].filter(Boolean).join(", ")}
+
+            <p
+              style={{
+                fontSize: 10,
+                color: "var(--opal-muted,rgba(232,230,240,0.35))",
+                margin: "2px 0 0",
+              }}
+            >
+              {[venue.location?.area, venue.location?.city]
+                .filter(Boolean)
+                .join(", ")}
             </p>
           </div>
-          <span style={{ ...css.statusBadge, ...(venue.isActive ? css.statusGreen : css.statusGray) }}>
+
+          <span
+            style={{
+              ...css.statusBadge,
+              ...(venue.isActive ? css.statusGreen : css.statusGray),
+            }}
+          >
             {venue.isActive ? "Active" : "Inactive"}
           </span>
         </div>
-        <p style={{ fontSize: 12, color: "var(--opal-sub,rgba(232,230,240,0.55))", lineHeight: 1.4, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--opal-sub,rgba(232,230,240,0.55))",
+            lineHeight: 1.4,
+            marginBottom: 10,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {venue.description}
         </p>
-        <div style={{ display: "flex", gap: 10, fontSize: 11, color: "var(--opal-muted,rgba(232,230,240,0.35))", marginBottom: 12, flexWrap: "wrap" }}>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            fontSize: 11,
+            color: "var(--opal-muted,rgba(232,230,240,0.35))",
+            marginBottom: 12,
+            flexWrap: "wrap",
+          }}
+        >
           <span>👥 {venue.capacity}</span>
           <span>📐 {venue.dimensionsSqm}sqm</span>
           <span>💰 {formatPrice(venue.pricing)}</span>
         </div>
+
         {confirming === "delete" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11, color: "var(--opal-red,#ff5c66)" }}>Delete?</span>
-            <button style={css.confirmYes} onClick={() => { onDelete(venue._id); setConfirming(null); }}>Yes</button>
-            <button style={css.confirmNo} onClick={() => setConfirming(null)}>Cancel</button>
+            <span style={{ fontSize: 11, color: "var(--opal-red,#ff5c66)" }}>
+              Delete?
+            </span>
+            <button
+              style={css.confirmYes}
+              onClick={() => {
+                onDelete(venue._id);
+                setConfirming(null);
+              }}
+            >
+              Yes
+            </button>
+            <button style={css.confirmNo} onClick={() => setConfirming(null)}>
+              Cancel
+            </button>
           </div>
         ) : confirming === "deactivate" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11, color: "var(--opal-amber,#f5b34a)" }}>Deactivate?</span>
-            <button style={css.confirmYes} onClick={() => { onDeactivate(venue._id); setConfirming(null); }}>Yes</button>
-            <button style={css.confirmNo} onClick={() => setConfirming(null)}>Cancel</button>
+            <span style={{ fontSize: 11, color: "var(--opal-amber,#f5b34a)" }}>
+              Deactivate?
+            </span>
+            <button
+              style={css.confirmYes}
+              onClick={() => {
+                onDeactivate(venue._id);
+                setConfirming(null);
+              }}
+            >
+              Yes
+            </button>
+            <button style={css.confirmNo} onClick={() => setConfirming(null)}>
+              Cancel
+            </button>
+          </div>
+        ) : confirming === "activate" ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, color: "var(--opal-teal,#4fd1c5)" }}>
+              Activate?
+            </span>
+            <button
+              style={css.confirmYes}
+              onClick={() => {
+                onActivate(venue._id);
+                setConfirming(null);
+              }}
+            >
+              Yes
+            </button>
+            <button style={css.confirmNo} onClick={() => setConfirming(null)}>
+              Cancel
+            </button>
           </div>
         ) : (
           <div style={{ display: "flex", gap: 6 }}>
-            <button style={css.vBtnEdit} onClick={() => onEdit(venue)}>Edit</button>
-            <button style={css.vBtnDeactivate} onClick={() => setConfirming("deactivate")}>Deactivate</button>
-            <button style={css.vBtnDelete} onClick={() => setConfirming("delete")}>Delete</button>
+            <button style={css.vBtnEdit} onClick={() => onEdit(venue)}>
+              Edit
+            </button>
+
+            {venue.isActive ? (
+              <button
+                style={css.vBtnDeactivate}
+                onClick={() => setConfirming("deactivate")}
+              >
+                Deactivate
+              </button>
+            ) : (
+              <button
+                style={css.vBtnDeactivate}
+                onClick={() => setConfirming("activate")}
+              >
+                Activate
+              </button>
+            )}
+
+            <button style={css.vBtnDelete} onClick={() => setConfirming("delete")}>
+              Delete
+            </button>
           </div>
         )}
       </div>
@@ -750,9 +879,32 @@ function MyVenuesSection() {
     setFiltered(list);
   }, [venues, search, filter]);
 
-  async function handleDelete(id) { try { await deleteVenue(id); load(); } catch (e) { console.error(e); } }
-  async function handleDeactivate(id) { try { await deactivateVenue(id); load(); } catch (e) { console.error(e); } }
+  async function handleDelete(id) {
+    try {
+      await deleteVenue(id);
+      load();
+    } catch (e) {
+      console.error(e);
+    }
+  }
 
+  async function handleDeactivate(id) {
+    try {
+      await deactivateVenue(id);
+      load();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function handleActivate(id) {
+    try {
+      await activateVenue(id);
+      load();
+    } catch (e) {
+      console.error(e);
+    }
+  }
   return (
     <div style={{ flex: "1 1 0", minWidth: 0 }}>
       {/* Toolbar */}
@@ -804,6 +956,7 @@ function MyVenuesSection() {
               onEdit={venue => { setEditing(venue); setShowForm(true); }}
               onDelete={handleDelete}
               onDeactivate={handleDeactivate}
+              onActivate={handleActivate}
             />
           ))}
         </div>
@@ -823,12 +976,12 @@ function MyVenuesSection() {
 // ─── Notification type → icon + accent mapping ────────────────────────────────
 
 const NOTIF_META = {
-  booking_request:   { icon: "📋", accent: "var(--opal-violet,#7c5cfc)", bg: "rgba(124,92,252,0.10)" },
-  booking_approved:  { icon: "✅", accent: "var(--opal-teal,#4fd1c5)",   bg: "rgba(79,209,197,0.10)"  },
-  booking_declined:  { icon: "❌", accent: "var(--opal-red,#ff5c66)",    bg: "rgba(255,92,102,0.10)"  },
-  booking_cancelled: { icon: "🚫", accent: "var(--opal-red,#ff5c66)",    bg: "rgba(255,92,102,0.10)"  },
-  counter_proposal:  { icon: "↩️", accent: "var(--opal-amber,#f5b34a)",  bg: "rgba(245,179,74,0.10)"  },
-  message:           { icon: "💬", accent: "var(--opal-teal,#4fd1c5)",   bg: "rgba(79,209,197,0.10)"  },
+  booking_request: { icon: "📋", accent: "var(--opal-violet,#7c5cfc)", bg: "rgba(124,92,252,0.10)" },
+  booking_approved: { icon: "✅", accent: "var(--opal-teal,#4fd1c5)", bg: "rgba(79,209,197,0.10)" },
+  booking_declined: { icon: "❌", accent: "var(--opal-red,#ff5c66)", bg: "rgba(255,92,102,0.10)" },
+  booking_cancelled: { icon: "🚫", accent: "var(--opal-red,#ff5c66)", bg: "rgba(255,92,102,0.10)" },
+  counter_proposal: { icon: "↩️", accent: "var(--opal-amber,#f5b34a)", bg: "rgba(245,179,74,0.10)" },
+  message: { icon: "💬", accent: "var(--opal-teal,#4fd1c5)", bg: "rgba(79,209,197,0.10)" },
 };
 
 function notifMeta(type) {
@@ -840,9 +993,9 @@ function notifMeta(type) {
 // AFTER
 function NotificationsPanel() {
   const [notifications, setNotifications] = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState(null);
-  const [dismissing,    setDismissing]    = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dismissing, setDismissing] = useState(new Set());
   const [todayBookings, setTodayBookings] = useState([]);
 
   const todayStr = (() => {
@@ -861,7 +1014,7 @@ function NotificationsPanel() {
       ]);
       setNotifications(notifData || []);
       setTodayBookings(todayData);
-    } catch(e) {
+    } catch (e) {
       setError(e.message || "Failed to load notifications");
     } finally {
       setLoading(false);
@@ -890,7 +1043,7 @@ function NotificationsPanel() {
     );
     try {
       await markNotificationsRead([id]);
-    } catch(e) {
+    } catch (e) {
       // Roll back on failure
       setNotifications(prev =>
         prev.map(n => n._id === id ? { ...n, status: "unread" } : n)
@@ -907,24 +1060,24 @@ function NotificationsPanel() {
     setNotifications(prev => prev.map(n => ({ ...n, status: "read" })));
     try {
       await markNotificationsRead(unreadIds);
-    } catch(e) {
+    } catch (e) {
       // Re-fetch on failure
       load();
     }
   }
 
   return (
-    <GlassPanel style={{ padding:"18px 20px", display:"flex", flexDirection:"column", height:"100%", minHeight:0 }}>
+    <GlassPanel style={{ padding: "18px 20px", display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       {/* Header row */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12, flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <SectionLabel style={{ margin:0 }}>Notifications</SectionLabel>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <SectionLabel style={{ margin: 0 }}>Notifications</SectionLabel>
           {unreadCount > 0 && (
             <span style={{
-              fontSize:9, fontWeight:800, lineHeight:1,
-              padding:"2px 6px", borderRadius:20,
-              background:"var(--opal-violet,#7c5cfc)", color:"#0a0a0f",
-              letterSpacing:0.3,
+              fontSize: 9, fontWeight: 800, lineHeight: 1,
+              padding: "2px 6px", borderRadius: 20,
+              background: "var(--opal-violet,#7c5cfc)", color: "#0a0a0f",
+              letterSpacing: 0.3,
             }}>
               {unreadCount}
             </span>
@@ -934,11 +1087,11 @@ function NotificationsPanel() {
           <button
             onClick={handleMarkAll}
             style={{
-              background:"none", border:"none", cursor:"pointer",
-              fontSize:10, fontWeight:600, letterSpacing:0.3,
-              color:"var(--opal-teal,#4fd1c5)",
-              fontFamily:"var(--font-body,system-ui)", padding:0,
-              textDecoration:"underline", textUnderlineOffset:2,
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 10, fontWeight: 600, letterSpacing: 0.3,
+              color: "var(--opal-teal,#4fd1c5)",
+              fontFamily: "var(--font-body,system-ui)", padding: 0,
+              textDecoration: "underline", textUnderlineOffset: 2,
             }}
           >
             Mark all read
@@ -1004,61 +1157,61 @@ function NotificationsPanel() {
       )}
       {/* Scrollable list */}
       <div style={{
-        flex:1, overflowY:"auto", minHeight:0,
-        display:"flex", flexDirection:"column", gap:6,
+        flex: 1, overflowY: "auto", minHeight: 0,
+        display: "flex", flexDirection: "column", gap: 6,
         // subtle scrollbar styling
-        scrollbarWidth:"thin",
-        scrollbarColor:"rgba(124,92,252,0.3) transparent",
+        scrollbarWidth: "thin",
+        scrollbarColor: "rgba(124,92,252,0.3) transparent",
       }}>
         {loading && (
-          <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>Loading…</p>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-muted,rgba(232,230,240,0.35))" }}>Loading…</p>
           </div>
         )}
         {error && (
-          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <p style={{ margin:0, fontSize:13, color:"var(--opal-red,#ff5c66)", textAlign:"center" }}>{error}</p>
-            <button onClick={load} style={{ ...css.filterBtn, fontSize:11 }}>Retry</button>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-red,#ff5c66)", textAlign: "center" }}>{error}</p>
+            <button onClick={load} style={{ ...css.filterBtn, fontSize: 11 }}>Retry</button>
           </div>
         )}
         {!loading && !error && notifications.length === 0 && (
-          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <span style={{ fontSize:26, opacity:0.2 }}>🔔</span>
-            <p style={{ margin:0, fontSize:13, color:"var(--opal-muted,rgba(232,230,240,0.35))", textAlign:"center" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span style={{ fontSize: 26, opacity: 0.2 }}>🔔</span>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--opal-muted,rgba(232,230,240,0.35))", textAlign: "center" }}>
               No notifications yet
             </p>
           </div>
         )}
         {!loading && !error && notifications.map(n => {
           const isRead = n.status === "read";
-          const meta   = notifMeta(n.type);
+          const meta = notifMeta(n.type);
           return (
             <div
               key={n._id}
               style={{
-                display:"flex", alignItems:"flex-start", gap:10,
+                display: "flex", alignItems: "flex-start", gap: 10,
                 padding: "10px 11px 0px 11px",
-                borderRadius:10,
+                borderRadius: 10,
                 background: isRead ? "rgba(21,21,29,0.45)" : meta.bg,
                 border: `1px solid ${isRead ? "var(--opal-border,rgba(255,255,255,0.06))" : meta.accent + "44"}`,
                 opacity: isRead ? 0.6 : 1,
-                transition:"opacity 0.2s, background 0.2s",
-                flexShrink:0,
+                transition: "opacity 0.2s, background 0.2s",
+                flexShrink: 0,
               }}
             >
               {/* Icon */}
-              <span style={{ fontSize:15, lineHeight:1, marginTop:1, flexShrink:0 }}>{meta.icon}</span>
+              <span style={{ fontSize: 15, lineHeight: 1, marginTop: 1, flexShrink: 0 }}>{meta.icon}</span>
 
               {/* Text body */}
-              <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
-                  margin:0, fontSize:12, fontWeight: isRead ? 400 : 600,
+                  margin: 0, fontSize: 12, fontWeight: isRead ? 400 : 600,
                   color: isRead ? "var(--opal-sub,rgba(232,230,240,0.55))" : "var(--opal-text,#e8e6f0)",
-                  lineHeight:1.4, wordBreak:"break-word",
+                  lineHeight: 1.4, wordBreak: "break-word",
                 }}>
                   {n.message}
                 </p>
-                <p style={{ margin:"3px 0 0", fontSize:10, color:"var(--opal-muted,rgba(232,230,240,0.35))" }}>
+                <p style={{ margin: "3px 0 0", fontSize: 10, color: "var(--opal-muted,rgba(232,230,240,0.35))" }}>
                   {fmtRelativeTime(n.createdAt)}
                 </p>
               </div>
@@ -1070,15 +1223,15 @@ function NotificationsPanel() {
                   disabled={dismissing.has(n._id)}
                   title="Mark as read"
                   style={{
-                    flexShrink:0, width:20, height:20,
-                    borderRadius:6,
-                    border:`1.5px solid ${meta.accent}66`,
-                    background:"transparent",
-                    cursor:"pointer",
-                    display:"flex", alignItems:"center", justifyContent:"center",
+                    flexShrink: 0, width: 20, height: 20,
+                    borderRadius: 6,
+                    border: `1.5px solid ${meta.accent}66`,
+                    background: "transparent",
+                    cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                     color: meta.accent,
-                    fontSize:11, fontWeight:800,
-                    transition:"background 0.15s, border-color 0.15s",
+                    fontSize: 11, fontWeight: 800,
+                    transition: "background 0.15s, border-color 0.15s",
                     opacity: dismissing.has(n._id) ? 0.4 : 1,
                   }}
                   onMouseEnter={e => {

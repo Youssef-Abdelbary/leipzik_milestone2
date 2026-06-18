@@ -92,53 +92,140 @@ export async function createVenue(req, res) {
 }
 
 export async function updateVenue(req, res) {
-    try {
-        const venue = await Venue.findOne({
-            _id:       req.params.id,
-            ownerId:   req.user.user_id,
-            isDeleted: false,
-        });
+  try {
+    const venue = await Venue.findOne({
+      _id: req.params.id,
+      ownerId: req.user.user_id,
+      isDeleted: false,
+    });
 
-        if (!venue) return res.status(404).json({ message: 'Venue not found' });
-
-        const {
-            name, description,
-            city, area, address,
-            capacity, dimensionsSqm,
-            amenities, bookedDates,
-            basePrice, currency, pricingUnit,
-        } = req.body;
-
-        if (name)          venue.name                 = name;
-        if (description)   venue.description          = description;
-        if (city)          venue.location.city        = city;
-        if (area)          venue.location.area        = area;
-        if (address)       venue.location.address     = address;
-        if (capacity)      venue.capacity             = capacity;
-        if (dimensionsSqm) venue.dimensionsSqm        = dimensionsSqm;
-        if (amenities)     venue.amenities            = JSON.parse(amenities);
-        if (basePrice)     venue.pricing.basePrice    = basePrice;
-        if (currency)      venue.pricing.currency     = currency;
-        if (pricingUnit)   venue.pricing.pricingUnit  = pricingUnit;
-
-        if (bookedDates) {
-            const newDates = JSON.parse(bookedDates).map(d => ({ date: new Date(d) }));
-            venue.bookedDates.push(...newDates);
-        }
-
-        if (req.files && req.files.length > 0) {
-            const newPhotos = await Promise.all(req.files.map(async file => ({
-                url:     await uploadToCloudinary(file.buffer),
-                caption: '',
-            })));
-            venue.photos.push(...newPhotos);
-        }
-
-        await venue.save();
-        return res.status(200).json({ message: 'Venue updated', venue });
-    } catch (err) {
-        return res.status(500).json({ message: 'Failed to update venue', error: err.message });
+    if (!venue) {
+      return res.status(404).json({ message: "Venue not found" });
     }
+
+    const {
+      name,
+      description,
+      city,
+      area,
+      address,
+      capacity,
+      dimensionsSqm,
+      amenities,
+      bookedDates,
+      basePrice,
+      currency,
+      pricingUnit,
+    } = req.body;
+
+    if (name !== undefined) venue.name = name;
+    if (description !== undefined) venue.description = description;
+    if (city !== undefined) venue.location.city = city;
+    if (area !== undefined) venue.location.area = area;
+    if (address !== undefined) venue.location.address = address;
+
+    if (capacity !== undefined) venue.capacity = Number(capacity);
+    if (dimensionsSqm !== undefined) venue.dimensionsSqm = Number(dimensionsSqm);
+
+    if (amenities !== undefined) {
+      venue.amenities =
+        typeof amenities === "string" ? JSON.parse(amenities) : amenities;
+    }
+
+    if (basePrice !== undefined) venue.pricing.basePrice = Number(basePrice);
+    if (currency !== undefined) venue.pricing.currency = currency;
+    if (pricingUnit !== undefined) venue.pricing.pricingUnit = pricingUnit;
+
+    if (bookedDates !== undefined) {
+      const parsedDates =
+        typeof bookedDates === "string" ? JSON.parse(bookedDates) : bookedDates;
+
+      const newDates = parsedDates.map((d) => ({
+        date: new Date(d),
+      }));
+
+      venue.bookedDates.push(...newDates);
+    }
+
+    if (req.files && req.files.length > 0) {
+      const newPhotos = await Promise.all(
+        req.files.map(async (file) => ({
+          url: await uploadToCloudinary(file.buffer),
+          caption: "",
+        }))
+      );
+
+      venue.photos.push(...newPhotos);
+    }
+
+    await venue.save();
+
+    return res.status(200).json({
+      message: "Venue updated",
+      venue,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Failed to update venue",
+      error: err.message,
+    });
+  }
+}
+
+export async function deactivateVenue(req, res) {
+  try {
+    const venue = await Venue.findOne({
+      _id: req.params.id,
+      ownerId: req.user.user_id,
+      isDeleted: false,
+    });
+
+    if (!venue) {
+      return res.status(404).json({ message: "Venue not found" });
+    }
+
+    venue.isActive = false;
+
+    await venue.save();
+
+    return res.status(200).json({
+      message: "Venue deactivated",
+      venue,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Failed to deactivate venue",
+      error: err.message,
+    });
+  }
+}
+
+export async function activateVenue(req, res) {
+  try {
+    const venue = await Venue.findOne({
+      _id: req.params.id,
+      ownerId: req.user.user_id,
+      isDeleted: false,
+    });
+
+    if (!venue) {
+      return res.status(404).json({ message: "Venue not found" });
+    }
+
+    venue.isActive = true;
+
+    await venue.save();
+
+    return res.status(200).json({
+      message: "Venue activated",
+      venue,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Failed to activate venue",
+      error: err.message,
+    });
+  }
 }
 
 // ─── 5. Soft Delete Venue ────────────────────────────────────────────────────
