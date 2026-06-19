@@ -42,10 +42,11 @@ export const getInvoices = async (req, res) => {
 // Link via vendorRequestId (recommended) — eventId + organizerId are resolved automatically.
 export const createInvoice = async (req, res) => {
   try {
-    const { organizerEmail, vendorId, eventId, vendorRequestId, invoiceNumber, items, tax, currency } = req.body;
+    const { organizerEmail, eventId, vendorRequestId, invoiceNumber, items, tax, currency } = req.body;
+    const vendorId = req.user?.user_id;
 
     if (!vendorId || !invoiceNumber || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: "vendorId, invoiceNumber, and items are required." });
+      return res.status(400).json({ message: "invoiceNumber and items are required." });
     }
 
     let resolvedEventId = eventId || null;
@@ -130,11 +131,16 @@ export const reviewInvoice = async (req, res) => {
       return res.status(400).json({ message: "Invalid status." });
     }
 
-    const invoice = await Invoice.findByIdAndUpdate(id, { status }, { new: true });
-
-    if (!invoice) {
+    const existing = await Invoice.findById(id);
+    if (!existing) {
       return res.status(404).json({ message: "Invoice not found." });
     }
+
+    if (String(existing.organizerId) !== String(req.user.user_id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const invoice = await Invoice.findByIdAndUpdate(id, { status }, { new: true });
 
     await createNotification({
       userId: invoice.vendorId,
@@ -173,17 +179,23 @@ export const addSupportingDocument = async (req, res) => {
       public_id: uniqueName,
     });
 
-    const invoice = await Invoice.findByIdAndUpdate(
-      id,
-      { $push: { supportingDocuments: { fileName, url, uploadedAt: new Date() } } },
-      { new: true }
-    );
+    const invoice = await Invoice.findById(id);
 
     if (!invoice) {
       return res.status(404).json({ message: "Invoice not found." });
     }
 
-    res.json({ data: invoice });
+    if (String(invoice.vendorId) !== String(req.user.user_id)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const updated = await Invoice.findByIdAndUpdate(
+      id,
+      { $push: { supportingDocuments: { fileName, url, uploadedAt: new Date() } } },
+      { new: true }
+    );
+
+    res.json({ data: updated });
   } catch (err) {
     console.log("addSupportingDocument error:", err);
     res.status(500).json({ message: "Failed to attach document." });

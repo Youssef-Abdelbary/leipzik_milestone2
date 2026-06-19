@@ -12,11 +12,10 @@ import { requireRoles, requireSelfParam } from "../middleware/roleMiddleware.js"
 const router = express.Router();
 
 router.use(authenticate);
-router.use(requireRoles("organizer"));
 
 router.get("/:id", requireSelfParam("id"), getInvoices);
-router.post("/", createInvoice);
-router.patch("/:id/review", reviewInvoice);
-router.patch("/:id/documents", upload.single("file"), addSupportingDocument);
+router.post("/", requireRoles("vendor"), createInvoice);
+router.patch("/:id/review", requireRoles("organizer"), reviewInvoice);
+router.patch("/:id/documents", requireRoles("vendor"), upload.single("file"), addSupportingDocument);
 
 export default router;
