@@ -17,6 +17,7 @@ import { useState, useRef, useEffect } from 'react';
 export function OpalSelect({
   value,
   onChange,
+  onOpenChange,
   options = [],
   placeholder = 'Select…',
   label,
@@ -49,6 +50,10 @@ export function OpalSelect({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const choose = (v) => { onChange?.(v); setOpen(false); };
 

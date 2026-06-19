@@ -14,16 +14,18 @@ export const getEventVendorRequests = async (req, res) => {
             return res.status(400).json({ message: 'eventId parameter is required in the request body.' });
         }
 
-        const [eventCheck, requests] = await Promise.all([
-            Event.findById(eventId),
-            VendorRequest.find({ eventId })
-                .populate('vendorId', 'companyName mainLocation suppliesOffered')
-                .sort({ 'deliveryDate': 1 })
-        ]);
+        const eventCheck = await Event.findOne({
+            _id: eventId,
+            organizerId: req.user.user_id,
+        }).lean();
 
         if (!eventCheck) {
-            return res.status(404).json({ message: 'Event target record not found.' });
+            return res.status(404).json({ message: 'Event not found or access denied.' });
         }
+
+        const requests = await VendorRequest.find({ eventId })
+            .populate('vendorId', 'companyName mainLocation suppliesOffered')
+            .sort({ 'deliveryDate': 1 });
 
         res.json({ data: requests });
     } catch (err) {
@@ -161,20 +163,49 @@ export const getMyVendorRequests = async (req, res) => {
     }
 };
 
-// 4.4 & 11.5: Update delivery status safely via req.body parameters
-// 4.4 & 11.5: Update delivery status safely via req.body parameters
 export const updateVendorDeliveryStatus = async (req, res) => {
     try {
+        const userId = req.user?.user_id;
+        const role = req.user?.role;
+        if (!userId) {
+            return res.status(401).json({ message: 'Authentication required.' });
+        }
+
         const { requestId, status, estimatedArrivalTime } = req.body;
 
         if (!requestId || !status) {
             return res.status(400).json({ message: 'requestId and status parameters are required inside body payload.' });
         }
 
-        // 1. Added .populate('eventId') to get the event data (and organizer details)
+        const validStatuses = ['preparing', 'out_for_delivery', 'delivered'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid delivery status.' });
+        }
+
         const requestRecord = await VendorRequest.findById(requestId).populate('eventId');
         if (!requestRecord) {
             return res.status(404).json({ message: 'Vendor request instance not found.' });
+        }
+
+        if (requestRecord.status !== 'accepted') {
+            return res.status(400).json({ message: 'Delivery updates apply only to accepted orders.' });
+        }
+
+        if (role === 'vendor') {
+            const vendorProfile = await ensureVendorProfile(userId, { role: req.user?.role });
+            if (!vendorProfile || String(requestRecord.vendorId) !== String(vendorProfile._id)) {
+                return res.status(403).json({ message: 'Access denied.' });
+            }
+        } else if (role === 'organizer') {
+            if (String(requestRecord.organizerId) !== String(userId)) {
+                return res.status(403).json({ message: 'Access denied.' });
+            }
+        } else {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        if (!requestRecord.delivery) {
+            requestRecord.delivery = { status: null, estimatedArrivalTime: null };
         }
 
         requestRecord.delivery.status = status;
@@ -184,7 +215,6 @@ export const updateVendorDeliveryStatus = async (req, res) => {
 
         await requestRecord.save();
 
-        // 2. Simple Alert: Automatically notify the organizer when the vendor updates logistics
         const organizerId = requestRecord.eventId?.organizerId || requestRecord.eventId?.createdBy || requestRecord.eventId?.userId;
         if (organizerId) {
             createNotification({

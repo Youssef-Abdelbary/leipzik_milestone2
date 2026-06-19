@@ -4,29 +4,25 @@ import RegisterForOthers from "./pages/pageRegisterOthers";
 import UserDeactivation from "./pages/pageDeactivate";
 import Login from "./pages/Login";
 import VenuesPage from "./pages/pageVenue.jsx";
-//import BrowseVenuesPage from "./pages/tabs/pageBrowseVenue.jsx";
-//import VenueLayoutDesigner from "./pages/tabs/TabLayoutDesigner.jsx";
 import GuestList from "./pages/pageGuestList";
 import PageResponseVenue from "./pages/pageResponseVenue.jsx";
 import BookingCalendar from "./pages/pageBookingCalendar";
 import VenueReports from "./pages/pageVenueReports";
-import StaffSharedLayout from "./pages/StaffSharedLayout";
+import StaffSharedLayoutRedirect from "./pages/pageStaffSharedLayoutRedirect";
 import Events from "./pages/pageEvents";
 import EventWorkspace from "./pages/pageEventWorkspace";
 import RsvpPage from "./pages/pageRsvp";
 import NotificationsPage from "./pages/pageNotificationsView";
-import BrowseVendorsPage from "./pages/pageBrowseVendor";
 import OrganizerWorkflow from "./pages/pageOrganizerWorkflow";
 import BudgetManagement from "./pages/pageBudgetManagement";
-//import PageReplyVenue from './pages/tabs/pageReplyVenue.jsx';
-import FeedbackPage from './pages/pageFeedback';
+import FeedbackPage from "./pages/pageFeedback";
 import InvoiceOrganizerPage from "./pages/pageInvoicesOrganizer";
-import VendorTrackingPage from "./pages/pageVendorTracking";
 import StaffQRScanner from "./pages/pageStaffQRScanner";
 import StaffTasks from "./pages/pageStaffTasks";
 import VendorDashboard from "./pages/pageVendorDashboard";
 import Layout from "./pages/layout";
 import ProfilePage from "./pages/pageProfile";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function getCurrentUserId() {
   try {
@@ -38,6 +34,7 @@ function getCurrentUserId() {
     return null;
   }
 }
+
 function App() {
   const currentUserId = getCurrentUserId();
 
@@ -46,40 +43,166 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/organizer/events" element={<Events />} />
-        <Route path="/organizer/events/:eventId/workspace" element={<EventWorkspace />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/guest/rsvp/:token" element={<RsvpPage />} />
         <Route path="/guest/feedback/:token" element={<FeedbackPage />} />
-        <Route path="/vendor/invoices" element={<Navigate to="/vendor/dashboard?tab=invoices" replace />} />
-        <Route path="/organizer/vendortracking" element={<VendorTrackingPage />} />
-        <Route path="/staff/qr-scanner" element={<StaffQRScanner />} />
-        <Route path="/vendor/dashboard" element={<VendorDashboard />} />
-        <Route path="/register" element={<Register />} />
-        <Route element={<Layout />}>
-          <Route path="/staff/guestlist" element={<GuestList />} />
-          <Route path="/organizer/registerothers" element={<RegisterForOthers />} />
-          <Route path="/organizer/deactivate" element={<UserDeactivation />} />
 
-          <Route path="/venueowner/venues" element={<VenuesPage />} />
+        <Route
+          path="/organizer/events"
+          element={
+            <ProtectedRoute roles={["organizer"]}>
+              <Events />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/events/:eventId/workspace"
+          element={
+            <ProtectedRoute roles={["organizer"]}>
+              <EventWorkspace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organizer/vendortracking"
+          element={<Navigate to="/organizer/events" replace />}
+        />
+        <Route
+          path="/vendor/invoices"
+          element={<Navigate to="/vendor/dashboard?tab=invoices" replace />}
+        />
+        <Route
+          path="/staff/qr-scanner"
+          element={
+            <ProtectedRoute roles={["staff", "organizer"]}>
+              <StaffQRScanner />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendor/dashboard"
+          element={
+            <ProtectedRoute roles={["vendor"]}>
+              <VendorDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            path="/staff/guestlist"
+            element={
+              <ProtectedRoute roles={["staff"]}>
+                <GuestList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/registerothers"
+            element={
+              <ProtectedRoute roles={["organizer"]}>
+                <RegisterForOthers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/deactivate"
+            element={
+              <ProtectedRoute roles={["organizer"]}>
+                <UserDeactivation />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/venueowner/venues"
+            element={
+              <ProtectedRoute roles={["venue_owner"]}>
+                <VenuesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/venueowner/venueresponse"
-            element={<PageResponseVenue currentUserId={currentUserId} />}
+            element={
+              <ProtectedRoute roles={["venue_owner"]}>
+                <PageResponseVenue currentUserId={currentUserId} />
+              </ProtectedRoute>
+            }
           />
-          <Route path="/venueowner/venuereports" element={<VenueReports />} />
-          <Route path="/venueowner/bookingcalendar" element={<BookingCalendar />} />
+          <Route
+            path="/venueowner/venuereports"
+            element={
+              <ProtectedRoute roles={["venue_owner"]}>
+                <VenueReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/venueowner/bookingcalendar"
+            element={
+              <ProtectedRoute roles={["venue_owner"]}>
+                <BookingCalendar />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/staff/sharedlayout" element={<StaffSharedLayout />} />
+          <Route
+            path="/staff/sharedlayout"
+            element={
+              <ProtectedRoute roles={["staff"]}>
+                <StaffSharedLayoutRedirect />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/notificationsview" element={<NotificationsPage />} />
 
-          <Route path="/organizer/browsevendors" element={<BrowseVendorsPage />} />
-          <Route path="/organizer/workflow" element={<OrganizerWorkflow />} />
-          <Route path="/organizer/budget" element={<BudgetManagement />} />
-          <Route path="/organizer/invoices" element={<InvoiceOrganizerPage />} />
+          <Route
+            path="/organizer/browsevendors"
+            element={<Navigate to="/organizer/events" replace />}
+          />
+          <Route
+            path="/organizer/workflow"
+            element={
+              <ProtectedRoute roles={["organizer"]}>
+                <OrganizerWorkflow />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/budget"
+            element={
+              <ProtectedRoute roles={["organizer"]}>
+                <BudgetManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/invoices"
+            element={
+              <ProtectedRoute roles={["organizer"]}>
+                <InvoiceOrganizerPage />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/staff/dashboard" element={<StaffTasks />} />
+          <Route
+            path="/staff/dashboard"
+            element={
+              <ProtectedRoute roles={["staff"]}>
+                <StaffTasks />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/pageProfile" element={<ProfilePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<Navigate to="/pageProfile" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -87,7 +210,3 @@ function App() {
 }
 
 export default App;
-
-//<Route path="/organizer/browsevenues" element={<BrowseVenuesPage />} />
-//<Route path="/organizer/venuelayout" element={<VenueLayoutDesigner />} />
-//<Route path="/organizer/reply" element={<PageReplyVenue />} />

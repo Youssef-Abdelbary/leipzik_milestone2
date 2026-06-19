@@ -13,6 +13,7 @@ import TabVendorInvoicesSelf from './tabs/TabVendorInvoicesSelf';
 import AppHeader from '../components/componentAppHeader';
 import Dock from '../components/componentDock';
 import { P, icons, GlassPanel } from '../components/componentTheme';
+import { OpalSelect } from '../components/componentMenus';
 import '../components/componentTheme.css';
 import { fetchNotifications, markNotificationAsRead } from '../services/serviceNotifications';
 
@@ -553,9 +554,13 @@ function ProfileEditor({ onSaved, onLogout }) {
                                         <tr key={idx}>
                                             <td style={{ padding: '6px 8px' }}><input value={row.itemName} onChange={e => updatePricingRow(idx, 'itemName', e.target.value)} placeholder="Item name" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${P.border}`, borderRadius: 6, padding: '6px 10px', color: P.text, fontSize: 12, fontFamily: 'inherit', width: 130, outline: 'none' }} /></td>
                                             <td style={{ padding: '6px 8px' }}>
-                                                <select value={row.category} onChange={e => updatePricingRow(idx, 'category', e.target.value)} style={{ background: '#13131e', border: `1px solid ${P.border}`, borderRadius: 6, padding: '6px 8px', color: P.text, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}>
-                                                    {PRICE_CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                                                </select>
+                                                <OpalSelect
+                                                    value={row.category}
+                                                    onChange={(v) => updatePricingRow(idx, 'category', v)}
+                                                    options={PRICE_CATEGORIES}
+                                                    accent="violet"
+                                                    style={{ minWidth: 130 }}
+                                                />
                                             </td>
                                             <td style={{ padding: '6px 8px' }}><input value={row.unit} onChange={e => updatePricingRow(idx, 'unit', e.target.value)} placeholder="per piece" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${P.border}`, borderRadius: 6, padding: '6px 10px', color: P.text, fontSize: 12, fontFamily: 'inherit', width: 90, outline: 'none' }} /></td>
                                             <td style={{ padding: '6px 8px' }}><input type="number" value={row.price} onChange={e => updatePricingRow(idx, 'price', e.target.value)} placeholder="0" style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${P.border}`, borderRadius: 6, padding: '6px 10px', color: P.text, fontSize: 12, fontFamily: 'inherit', width: 80, outline: 'none' }} /></td>

@@ -25,7 +25,7 @@ router.get('/inbox',                authenticate, getMyVendorInbox);
 // Static-path param routes — must come before /:requestId wildcards
 router.get('/mine',                 authenticate, getMyVendorRequests);
 router.post('/search',              authenticate, requireRoles('organizer'), getEventVendorRequests);
-router.put('/delivery',             authenticate, requireRoles('organizer'), updateVendorDeliveryStatus);
+router.put('/delivery',             authenticate, requireRoles('vendor', 'organizer'), updateVendorDeliveryStatus);
 
 // Parameterised routes
 router.patch('/:requestId/respond', authenticate, respondToVendorRequest);

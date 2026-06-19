@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { fetchVendors, submitVendorRequest } from '../../services/serviceBrowseVendors';
 import { P, icons, GlassPanel } from '../../components/componentTheme';
+import MiniCalendar from '../../components/componentMiniCalendar';
 
 // ── Request modal ─────────────────────────────────────────────────────────────
 
@@ -18,6 +19,33 @@ function SourcingRequestModal({ vendor, eventId, organizerId, onClose }) {
   const [error,          setError]          = useState('');
   const [submitting,     setSubmitting]     = useState(false);
   const [submitted,      setSubmitted]      = useState(false);
+  const [showDeliveryCalendar, setShowDeliveryCalendar] = useState(false);
+
+  const deliveryCalDates = deliveryDate ? [deliveryDate] : [];
+  const displayDeliveryDate = deliveryDate
+    ? new Date(`${deliveryDate}T00:00:00`).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : 'Choose a date…';
+
+  const handleDeliveryCalChange = (dates) => {
+    const newest = dates.filter((d) => d !== deliveryDate);
+    setDeliveryDate(newest[0] ?? dates[0] ?? '');
+    setShowDeliveryCalendar(false);
+  };
+
+  useEffect(() => {
+    if (!showDeliveryCalendar) return;
+    const handler = (event) => {
+      if (!event.target.closest('[data-delivery-calendar]')) {
+        setShowDeliveryCalendar(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showDeliveryCalendar]);
 
   const updateItem = (i, field, val) =>
     setItems(prev => prev.map((it, idx) => idx === i ? { ...it, [field]: val } : it));
@@ -155,12 +183,30 @@ function SourcingRequestModal({ vendor, eventId, organizerId, onClose }) {
               </div>
             ))}
             <button
+              type="button"
               onClick={() => setItems(prev => [...prev, { itemName: '', quantity: '', unit: '', notes: '' }])}
-              style={{ width: '100%', padding: 8, borderRadius: 8, border: `1px dashed ${P.border}`, background: 'none', color: P.blue, fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'border-color 0.15s' }}
+              style={{
+                width: '100%',
+                padding: 8,
+                borderRadius: 8,
+                border: `1px dashed ${P.border}`,
+                background: 'none',
+                color: P.blue,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'border-color 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                fontFamily: 'inherit',
+              }}
               onMouseEnter={e => e.currentTarget.style.borderColor = P.blue + '99'}
               onMouseLeave={e => e.currentTarget.style.borderColor = P.border}
             >
-              {icons.plus} Add item
+              <span style={{ display: 'flex', flexShrink: 0, lineHeight: 0 }}>{icons.plus}</span>
+              Add item
             </button>
 
             {/* Delivery */}
@@ -171,10 +217,41 @@ function SourcingRequestModal({ vendor, eventId, organizerId, onClose }) {
                 <input style={inp} placeholder="e.g. Nile Garden Hall" value={venueName} onChange={e => setVenueName(e.target.value)}
                   onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, position: 'relative' }} data-delivery-calendar>
                 <Label text="Delivery date" required />
-                <input style={{ ...inp, colorScheme: 'dark' }} type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = P.blue} onBlur={e => e.target.style.borderColor = P.border} />
+                <button
+                  type="button"
+                  data-delivery-calendar
+                  onClick={() => setShowDeliveryCalendar((open) => !open)}
+                  style={{
+                    ...inp,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                  onFocus={e => e.currentTarget.style.borderColor = P.blue}
+                  onBlur={e => e.currentTarget.style.borderColor = P.border}
+                >
+                  <span style={{ color: P.blue, display: 'flex', flexShrink: 0, lineHeight: 0 }}>
+                    {icons.calendar}
+                  </span>
+                  <span style={{ color: deliveryDate ? P.text : P.muted, fontSize: 13 }}>
+                    {displayDeliveryDate}
+                  </span>
+                </button>
+                {showDeliveryCalendar && (
+                  <div
+                    data-delivery-calendar
+                    style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 2100 }}
+                  >
+                    <MiniCalendar
+                      selectedDates={deliveryCalDates}
+                      onChange={handleDeliveryCalChange}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <Label text="Delivery address" required />

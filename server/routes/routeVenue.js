@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/authMiddleware.js';
+import { requireRoles } from '../middleware/roleMiddleware.js';
 import {
     upload,
     getMyVenues,
@@ -36,7 +37,7 @@ router.put("/:id", authenticate, requireVenueOwner, upload.array("photos"), upda
 router.patch("/:id/deactivate", authenticate, requireVenueOwner, deactivateVenue);
 router.patch("/:id/activate", authenticate, requireVenueOwner, activateVenue);
 router.delete('/:id',                       authenticate, requireVenueOwner, deleteVenue);
-router.post('/:id/book',                    authenticate, bookDate);
-router.patch('/bookings/:bookingId/cancel', authenticate, cancelBooking);
+router.post('/:id/book',                    authenticate, requireRoles('organizer'), bookDate);
+router.patch('/bookings/:bookingId/cancel', authenticate, requireRoles('organizer'), cancelBooking);
 
 export default router;

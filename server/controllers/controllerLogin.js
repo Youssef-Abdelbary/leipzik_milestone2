@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/modelUser.js";
+import { ensureVenueListing } from "../utils/ensureVenueListing.js";
 import { generateToken, generateRefreshToken } from "../utils/generateJWT.js";
 
 
@@ -34,6 +35,10 @@ export const login = async (req, res) => {
       return res.status(403).json({
         message: "Your account is inactive. Please contact the organizer.",
       });
+    }
+
+    if (user.role === "venue_owner") {
+      await ensureVenueListing(user._id, { role: user.role });
     }
 
     const token = generateToken(user._id, user.role);

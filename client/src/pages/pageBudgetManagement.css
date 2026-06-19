@@ -1,7 +1,13 @@
+.budget-event-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 360px;
+}
+
 .budget-page {
   background: transparent;
   color: var(--opal-text);
-  padding: 0;
   box-sizing: border-box;
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
 }

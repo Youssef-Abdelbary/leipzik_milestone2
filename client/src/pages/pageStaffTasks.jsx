@@ -3,13 +3,13 @@ import "./pageStaffTasks.css";
 import "../components/componentTheme.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import TabStaffDayOf from "./tabs/TabStaffDayOf";
+import TabStaffGuests from "./tabs/TabStaffGuests";
 import StaffSharedLayout from "./StaffSharedLayout";
-
+import { OpalSelect } from "../components/componentMenus";
 import Dock from "../components/componentDock";
 import AppHeader from "../components/componentAppHeader";
 import { icons } from "../components/componentTheme";
-import { VscHome, VscCalendar, VscPerson, VscLayout } from "react-icons/vsc";
-import { FaQrcode } from "react-icons/fa";
+import { buildStaffDockItems, getStaffTabLabel } from "../utils/staffNav";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 import {
   fetchStaffEvents,
@@ -17,21 +17,12 @@ import {
   updateStaffTaskProgress,
 } from "../services/serviceStaffTasks";
 
-const STAFF_TABS = [
-  { id: "tasks", label: "Tasks", icon: <VscHome size={26} /> },
-  { id: "layout", label: "Layout", icon: <VscLayout size={26} /> },
-  { id: "dayof", label: "Day-Of", icon: <VscCalendar size={26} /> },
-  { id: "qr", label: "QR Scan", icon: <FaQrcode size={26} /> },
-  { id: "profile", label: "Profile", icon: <VscPerson size={26} /> },
+const STATUS_OPTIONS = [
+  { value: "", label: "All statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In progress" },
+  { value: "done", label: "Done" },
 ];
-
-function DockTabIcon({ icon }) {
-  return (
-    <div style={{ transform: "scale(1.25)", display: "flex" }}>
-      {icon}
-    </div>
-  );
-}
 
 export default function StaffTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
@@ -158,35 +149,14 @@ export default function StaffTasks() {
     (task) => task.status === "done"
   ).length;
 
-  const dockItems = STAFF_TABS.map((tab) => ({
-    icon: tab.icon,
-    label: tab.label,
-    active: activeTab === tab.id,
-    onClick: () => {
-      if (tab.id === "profile") {
-        navigate("/profile");
-        return;
-      }
+  const dockItems = buildStaffDockItems(navigate, activeTab);
 
-      if (tab.id === "qr") {
-        navigate("/staff/qr-scanner");
-        return;
-      }
-
-      setActiveTab(tab.id);
-    },
-  }));
+  const tabCrumb = getStaffTabLabel(activeTab);
 
   return (
     <div className="staff-workspace-page">
       <AppHeader
-        crumb={
-          activeTab === "tasks"
-            ? "My Tasks"
-            : activeTab === "layout"
-              ? "My Layouts"
-              : "Day-Of"
-        }
+        crumb={tabCrumb}
         right={
           <div className="staff-dashboard-pill">
             Staff Dashboard
@@ -234,6 +204,7 @@ export default function StaffTasks() {
 
                 <input
                   type="date"
+                  className="staff-date-filter"
                   value={selectedDate}
                   onChange={(event) => setSelectedDate(event.target.value)}
                 />
@@ -268,8 +239,8 @@ export default function StaffTasks() {
                       <div className="staff-event-main-row">
                         <div>
                           <h3>{event.title}</h3>
-                          <p>
-                            📅{" "}
+                          <p className="staff-event-date">
+                            {icons.calendar}{" "}
                             {event.date
                               ? new Date(event.date).toDateString()
                               : "No date"}
@@ -278,7 +249,9 @@ export default function StaffTasks() {
 
                         <div className="staff-event-right">
                           <span className="staff-status-badge">{event.status}</span>
-                          <span className="event-expand-arrow">{isSelected ? "▲" : "▼"}</span>
+                          <span className={`event-expand-arrow ${isSelected ? "expanded" : ""}`}>
+                            {isSelected ? icons.chevronUp : icons.chevronDown}
+                          </span>
                         </div>
                       </div>
 
@@ -293,15 +266,13 @@ export default function StaffTasks() {
                               <p>Tasks assigned to you for this event.</p>
                             </div>
 
-                            <select
+                            <OpalSelect
                               value={selectedStatus}
-                              onChange={(event) => setSelectedStatus(event.target.value)}
-                            >
-                              <option value="">All statuses</option>
-                              <option value="pending">Pending</option>
-                              <option value="in_progress">In progress</option>
-                              <option value="done">Done</option>
-                            </select>
+                              onChange={setSelectedStatus}
+                              options={STATUS_OPTIONS}
+                              placeholder="Filter status"
+                              accent="teal"
+                            />
                           </div>
 
                           <div className="staff-list">
@@ -421,7 +392,7 @@ export default function StaffTasks() {
             <section className="staff-section">
               <div className="staff-section-header">
                 <div>
-                  <h2>🔔 Notifications</h2>
+                  <h2>{icons.bell} Notifications</h2>
                   <p>
                     {notifications.filter((n) => n.status === "unread").length > 0
                       ? `${notifications.filter((n) => n.status === "unread").length} unread`
@@ -480,19 +451,7 @@ export default function StaffTasks() {
           <StaffSharedLayout />
         )}
         {activeTab === "dayof" && <TabStaffDayOf />}
-
-        {!["tasks", "layout", "dayof"].includes(activeTab) && (
-          <div className="staff-coming-soon">
-            <p>🚧</p>
-            <h2>
-              {STAFF_TABS.find((tab) => tab.id === activeTab)?.label.replace(
-                /^\S+\s/,
-                ""
-              )}{" "}
-              — coming soon
-            </h2>
-          </div>
-        )}
+        {activeTab === "guests" && <TabStaffGuests />}
       </div>
       <Dock items={dockItems} />
     </div>

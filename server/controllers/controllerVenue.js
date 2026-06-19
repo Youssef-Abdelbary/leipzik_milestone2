@@ -5,6 +5,7 @@ import multer from 'multer';
 //import { uploadToCloudinary } from '../utils/cloudinaryUpload.js';
 import { Readable } from 'stream';
 import Notification from '../models/modelNotification.js';
+import { ensureVenueListing } from '../utils/ensureVenueListing.js';
 
 // ─── Multer + Cloudinary Setup ───────────────────────────────────────────────
 
@@ -26,6 +27,8 @@ async function uploadToCloudinary(buffer) {
 
 export async function getMyVenues(req, res) {
     try {
+        await ensureVenueListing(req.user.user_id, { role: req.user.role });
+
         const venues = await Venue.find({
             ownerId:   req.user.user_id,
             isDeleted: false,

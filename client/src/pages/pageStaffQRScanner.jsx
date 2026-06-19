@@ -1,16 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { checkInByQR } from "../services/serviceGuest";
 import { P, icons, GlassPanel } from "../components/componentTheme";
 import AppHeader from "../components/componentAppHeader";
 import Dock from "../components/componentDock";
+import { buildStaffDockItems } from "../utils/staffNav";
 import "../components/componentTheme.css";
 import "./pageStaffTasks.css";
-
-import { VscHome, VscCalendar, VscPerson, VscLayout } from "react-icons/vsc";
-import { FaQrcode } from "react-icons/fa";
-
-const STAFF_DASHBOARD_PATH = "/staff/dashboard";
 
 export default function StaffQRScanner() {
   const [scanResult, setScanResult] = useState(null);
@@ -26,42 +22,22 @@ export default function StaffQRScanner() {
   const manualRef = useRef(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const dockItems = [
-    {
-      icon: <VscHome size={26} />,
-      label: "Tasks",
-      active: false,
-      onClick: () =>
-        navigate(STAFF_DASHBOARD_PATH, { state: { activeTab: "tasks" } }),
-    },
-    {
-      icon: <VscLayout size={26} />,
-      label: "Layout",
-      active: false,
-      onClick: () =>
-        navigate(STAFF_DASHBOARD_PATH, { state: { activeTab: "layout" } }),
-    },
-    {
-      icon: <VscCalendar size={26} />,
-      label: "Day-Of",
-      active: false,
-      onClick: () =>
-        navigate(STAFF_DASHBOARD_PATH, { state: { activeTab: "dayof" } }),
-    },
-    {
-      icon: <FaQrcode size={26} />,
-      label: "QR Scan",
-      active: true,
-      onClick: () => navigate("/staff/qr-scanner"),
-    },
-    {
-      icon: <VscPerson size={26} />,
-      label: "Profile",
-      active: false,
-      onClick: () => navigate("/profile"),
-    },
-  ];
+  const loggedInUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const isOrganizer = loggedInUser?.role === "organizer";
+  const returnTo = location.state?.returnTo || (isOrganizer ? "/organizer/events" : null);
+  const returnLabel = location.state?.returnLabel || (isOrganizer ? "Events" : null);
+
+  const dockItems = isOrganizer
+    ? []
+    : buildStaffDockItems(navigate, "qr");
 
   useEffect(() => {
     manualRef.current?.focus();
@@ -333,7 +309,16 @@ export default function StaffQRScanner() {
 
       <AppHeader
         crumb="QR Check-in"
-        right={<div className="staff-dashboard-pill">Staff Dashboard</div>}
+        back={
+          returnTo
+            ? { label: returnLabel || "Back", onClick: () => navigate(returnTo) }
+            : undefined
+        }
+        right={
+          <div className="staff-dashboard-pill">
+            {isOrganizer ? "Organizer" : "Staff Dashboard"}
+          </div>
+        }
       />
 
       <div className="staff-tab-content">
@@ -793,7 +778,7 @@ export default function StaffQRScanner() {
         </div>
       </div>
 
-      <Dock items={dockItems} />
+      {dockItems.length > 0 && <Dock items={dockItems} />}
     </div>
   );
 }

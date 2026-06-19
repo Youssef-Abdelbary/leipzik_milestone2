@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import EventLayout from "../models/EventLayout.js";
 import { normalizeUserRecord } from "../utils/normalizeUser.js";
+import { findOrganizerEvent } from "../utils/eventAccess.js";
 
 export async function getActiveStaff(req, res) {
   try {
@@ -26,6 +27,11 @@ export async function saveLayout(req, res) {
       return res.status(400).json({
         message: "Event ID is required to save a layout",
       });
+    }
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, eventId);
+    if (!ownedEvent) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     const layout = await EventLayout.findOneAndUpdate(
@@ -66,7 +72,18 @@ export async function shareLayout(req, res) {
       });
     }
 
-    const layout = await EventLayout.findByIdAndUpdate(
+    const layout = await EventLayout.findById(layoutId);
+
+    if (!layout) {
+      return res.status(404).json({ message: "Layout not found" });
+    }
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, layout.eventId);
+    if (!ownedEvent) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const updatedLayout = await EventLayout.findByIdAndUpdate(
       layoutId,
       {
         $set: {
@@ -76,14 +93,10 @@ export async function shareLayout(req, res) {
       { new: true }
     );
 
-    if (!layout) {
-      return res.status(404).json({ message: "Layout not found" });
-    }
-
     res.json({
       message: "Layout shared successfully with current event staff members",
       sharedCount: staffIds.length,
-      layout,
+      layout: updatedLayout,
     });
   } catch (error) {
     console.error("Share layout error:", error);
@@ -114,6 +127,11 @@ export async function getSharedLayoutsForStaff(req, res) {
 export async function getLayoutByEvent(req, res) {
   try {
     const { eventId } = req.params;
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, eventId);
+    if (!ownedEvent) {
+      return res.status(404).json({ message: "Event not found or access denied" });
+    }
 
     const layout = await EventLayout.findOne({ eventId });
 

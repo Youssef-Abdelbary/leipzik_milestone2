@@ -37,14 +37,16 @@ function ClarificationThread({ messages = [], currentUserId }) {
           background: 'none', border: 'none', padding: 0,
           cursor: 'pointer', fontFamily: 'inherit',
           fontSize: 12, fontWeight: 600,
-          color: open ? P.violet : P.sub,
+          color: open ? P.blue : P.sub,
           transition: 'color 0.15s',
         }}
       >
-        <span style={{ fontSize: 13 }}>💬</span>
+        <span style={{ display: 'flex', flexShrink: 0, lineHeight: 0, color: open ? P.blue : P.muted }}>
+          {icons.messages}
+        </span>
         {messages.length} Clarification Message{messages.length !== 1 ? 's' : ''}
-        <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.7 }}>
-          {open ? '▲' : '▼'}
+        <span style={{ display: 'flex', flexShrink: 0, lineHeight: 0, marginLeft: 2, opacity: 0.8 }}>
+          {open ? icons.chevronUp : icons.chevronDown}
         </span>
       </button>
 

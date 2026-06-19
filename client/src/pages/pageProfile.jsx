@@ -6,6 +6,7 @@ import {
     VscCalendar,
     VscPerson,
     VscLayout,
+    VscOrganization,
     VscAccount,
     VscPersonAdd,
     VscTrash
@@ -152,6 +153,14 @@ const Profile = () => {
             onClick: () =>
                 navigate("/staff/dashboard", {
                     state: { activeTab: "dayof" },
+                }),
+        },
+        {
+            icon: <VscOrganization size={26} />,
+            label: "Guests",
+            onClick: () =>
+                navigate("/staff/dashboard", {
+                    state: { activeTab: "guests" },
                 }),
         },
         {

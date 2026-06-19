@@ -6,7 +6,7 @@ import { requireRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getVendors);
+router.get("/", authenticate, requireRoles("organizer"), getVendors);
 router.post("/", authenticate, requireRoles("organizer"), createVendorRequest);
 router.get("/requests", authenticate, requireRoles("organizer"), getVendorRequests);
 

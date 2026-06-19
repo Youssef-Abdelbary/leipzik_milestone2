@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { findOrganizerEvent, toObjectId } from "../utils/eventAccess.js";
 
 export function testBudgetRoute(req, res) {
   res.json({
@@ -10,22 +11,17 @@ export async function getBudgetByEvent(req, res) {
   try {
     const { eventId } = req.params;
 
-    
-
-    const eventsCollection = mongoose.connection.db.collection("events");
     const expensesCollection = mongoose.connection.db.collection("expense_records");
 
-    const eventObjectId = new mongoose.Types.ObjectId(eventId);
+    const eventObjectId = toObjectId(eventId);
+    if (!eventObjectId) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
 
-    const event = await eventsCollection.findOne({
-      _id: eventObjectId,
-    });
-
-    
-
+    const event = await findOrganizerEvent(req.user.user_id, eventId);
     if (!event) {
       return res.status(404).json({
-        message: "Event not found",
+        message: "Event not found or access denied",
       });
     }
 
@@ -98,11 +94,20 @@ export async function updatePlannedBudget(req, res) {
 
     const eventsCollection = mongoose.connection.db.collection("events");
 
-    const eventObjectId = new mongoose.Types.ObjectId(eventId);
+    const eventObjectId = toObjectId(eventId);
+    if (!eventObjectId) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, eventId);
+    if (!ownedEvent) {
+      return res.status(404).json({ message: "Event not found or access denied" });
+    }
 
     const updatedEvent = await eventsCollection.findOneAndUpdate(
       {
         _id: eventObjectId,
+        organizerId: toObjectId(req.user.user_id),
       },
       {
         $set: {
@@ -147,24 +152,23 @@ export async function createActualExpense(req, res) {
       });
     }
 
-    const eventsCollection = mongoose.connection.db.collection("events");
     const expensesCollection = mongoose.connection.db.collection("expense_records");
 
-    const eventObjectId = new mongoose.Types.ObjectId(eventId);
+    const eventObjectId = toObjectId(eventId);
+    if (!eventObjectId) {
+      return res.status(400).json({ message: "Invalid event ID" });
+    }
 
-    const event = await eventsCollection.findOne({
-      _id: eventObjectId,
-    });
-
+    const event = await findOrganizerEvent(req.user.user_id, eventId);
     if (!event) {
       return res.status(404).json({
-        message: "Event not found",
+        message: "Event not found or access denied",
       });
     }
 
     const expense = {
       eventId: eventObjectId,
-      organizerId: event.organizerId,
+      organizerId: toObjectId(req.user.user_id),
       category,
       description,
       amount: Number(amount),
@@ -208,7 +212,23 @@ export async function updateActualExpense(req, res) {
 
     const expensesCollection = mongoose.connection.db.collection("expense_records");
 
-    const expenseObjectId = new mongoose.Types.ObjectId(expenseId);
+    const expenseObjectId = toObjectId(expenseId);
+    if (!expenseObjectId) {
+      return res.status(400).json({ message: "Invalid expense ID" });
+    }
+
+    const existingExpense = await expensesCollection.findOne({
+      _id: expenseObjectId,
+    });
+
+    if (!existingExpense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, existingExpense.eventId);
+    if (!ownedEvent) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     const updatedExpense = await expensesCollection.findOneAndUpdate(
       {

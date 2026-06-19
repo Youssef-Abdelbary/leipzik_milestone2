@@ -128,22 +128,24 @@ export async function getWorkflowTasks(req, res) {
 export async function createTaskReminderNotifications(req, res) {
   try {
     const tasksCollection = mongoose.connection.db.collection("event_tasks");
+    const organizerObjectId = new mongoose.Types.ObjectId(req.user.user_id);
 
     const now = new Date();
     const isTestMode = req.query.test === "true";
 
+    const baseQuery = {
+      status: { $ne: "done" },
+      organizerId: organizerObjectId,
+    };
+
     let tasks;
 
     if (isTestMode) {
-      tasks = await tasksCollection
-        .find({
-          status: { $ne: "done" },
-        })
-        .toArray();
+      tasks = await tasksCollection.find(baseQuery).toArray();
     } else {
       tasks = await tasksCollection
         .find({
-          status: { $ne: "done" },
+          ...baseQuery,
           reminderAt: { $lte: now },
         })
         .toArray();
@@ -222,8 +224,8 @@ export async function markNotificationAsRead(req, res) {
   try {
     const { notificationId } = req.params;
 
-    const notification = await Notification.findByIdAndUpdate(
-      notificationId,
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, userId: req.user.user_id },
       { status: "read" },
       { new: true }
     );

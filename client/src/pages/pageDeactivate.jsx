@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { fetchUsers, toggleUserStatus } from "../services/serviceDeactivate";
 import "../components/componentTheme.css";
-import { P, GlassPanel } from "../components/componentTheme";
-import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash} from "react-icons/vsc";
+import { P, GlassPanel, icons } from "../components/componentTheme";
+import { VscHome, VscCalendar, VscPerson, VscAccount, VscPersonAdd, VscTrash, VscSearch } from "react-icons/vsc";
 import Dock from "../components/componentDock";
 import { useNavigate } from "react-router-dom";
 import "./pageDeactivate.css";
@@ -442,25 +442,14 @@ export default function UserManagement({ onTabChange }) {
   ];
 
   return (
-    <div className="organizer-dashboard-page user-management-page">      <AppHeader
-              crumb="Other users in app"
-              right={
-                <div className="organizer-dashboard-pill">
-                  Organizer Dashboard
-                </div>
-              }
-            />
+    <div className="organizer-dashboard-page user-management-page">
+      <AppHeader
+        crumb="Other users in app"
+        right={<div className="organizer-dashboard-pill">Organizer Dashboard</div>}
+      />
       <div className="user-management-shell">
-        <div className="user-management-header">                <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            marginBottom: 28,
-            flexWrap: "wrap",
-            gap: 18,
-          }}
-        >
+        <div className="user-management-header">
+          <div className="user-management-intro">
           <div>
             <p
               style={{
@@ -548,44 +537,35 @@ export default function UserManagement({ onTabChange }) {
               </GlassPanel>
             ))}
           </div>
-        </div>
+          </div>
 
-        <GlassPanel style={{ padding: 18, marginBottom: 20 }}>
-      <div style={{ position: "relative" }}>
-            <span
-              style={{
-                position: "absolute",
-                left: 15,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: P.sub,
-                fontSize: 16,
-                pointerEvents: "none",
-              }}
-            >
-              🔍
+        <div className="user-management-toolbar">
+          <div className="user-management-search">
+            <span className="user-management-search-icon" aria-hidden="true">
+              <VscSearch size={18} />
             </span>
-
-               <input
+            <input
+              type="search"
+              className="user-management-search-input"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name or email..."
-              style={{
-                width: "100%",
-                padding: "13px 15px 13px 43px",
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.05)",
-                fontSize: 14,
-                color: P.text,
-                outline: "none",
-                boxSizing: "border-box",
-                fontFamily: "inherit",
-              }}
+              placeholder="Search by name or email…"
+              aria-label="Search users by name or email"
             />
+            {query.trim() ? (
+              <button
+                type="button"
+                className="user-management-search-clear"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+              >
+                {icons.x}
+              </button>
+            ) : null}
           </div>
-        </GlassPanel>
-            {!loading && users.length > 0 && (
+        </div>
+
+        {!loading && users.length > 0 && (
           <div className="role-filter-tiles">
             {ROLE_FILTER_ITEMS.map((item, index) => (
               <RoleFilterTile

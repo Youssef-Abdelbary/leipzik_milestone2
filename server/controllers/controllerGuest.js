@@ -3,6 +3,7 @@ import Guest from '../models/modelGuest.js';
 import Event from '../models/modelEvent.js';
 import { sendInvitationEmail, sendRsvpConfirmationWithQR, isEmailConfigured } from '../utils/emailUtil.js';
 import { generateQRCodeBuffer, generateQRCodeDataURL } from '../utils/qrCodeUtil.js';
+import { canManageEventGuests } from '../utils/eventAccess.js';
 
 async function verifyAccess(userId, eventId) {
   const event = await Event.findById(eventId).lean();
@@ -239,7 +240,7 @@ export const submitRsvp = async (req, res) => {
   }
 };
 
-// ─── QR Check-in: staff scans a guest's QR code ──────────────────────────────
+// ─── QR Check-in: staff or event organizer ───────────────────────────────────
 export const checkInByQR = async (req, res) => {
   try {
     const { code } = req.body;
@@ -249,6 +250,15 @@ export const checkInByQR = async (req, res) => {
     const guest = await Guest.findOne({ 'qrCode.code': code.trim() }).lean();
     if (!guest)
       return res.status(404).json({ message: 'Invalid QR code — guest not found' });
+
+    const hasAccess = await canManageEventGuests(
+      req.user.user_id,
+      req.user.role,
+      guest.eventId
+    );
+    if (!hasAccess) {
+      return res.status(403).json({ message: 'You do not have access to check in guests for this event.' });
+    }
 
     // Already checked in — return info but don't double-stamp
     if (guest.checkIn?.status === 'Arrived') {

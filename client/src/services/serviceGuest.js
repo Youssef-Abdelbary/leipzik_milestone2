@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/apiFetch';
+import { apiFetch, BASE_URL } from '../utils/apiFetch';
 
 const base = (eventId) => `/events/${eventId}/guests`;
 
@@ -31,7 +31,7 @@ export const checkInByQR = (code) =>
 
 // Public endpoint — bypass apiFetch (no auth token needed)
 export const submitRsvp = async (token, rsvpStatus, dietaryPreferences = '', specialRequirements = '') => {
-  const res = await fetch(`http://localhost:5001/api/guest/rsvp/${token}`, {
+  const res = await fetch(`${BASE_URL}/guest/rsvp/${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ rsvpStatus, dietaryPreferences, specialRequirements }),

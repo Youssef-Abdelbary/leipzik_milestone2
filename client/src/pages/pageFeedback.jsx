@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { P, icons, icStar, GlassPanel } from '../components/componentTheme';
+import { BASE_URL } from '../utils/apiFetch';
 import '../components/componentTheme.css';
 
 const CATEGORIES = [
@@ -86,7 +87,7 @@ export default function FeedbackPage() {
   const [comments,   setComments]   = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5001/api/feedback/form/${token}`)
+    fetch(`${BASE_URL}/feedback/form/${token}`)
       .then(r => r.json())
       .then(data => {
         if (data.alreadySubmitted) setSubmitted(true);
@@ -105,7 +106,7 @@ export default function FeedbackPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:5001/api/feedback/submit/${token}`, {
+      const res = await fetch(`${BASE_URL}/feedback/submit/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...ratings, comments }),

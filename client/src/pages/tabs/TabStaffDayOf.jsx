@@ -5,11 +5,27 @@ import {
   markVendorArrived,
 } from "../../services/serviceStaffDayOf";
 import { fetchStaffEvents } from "../../services/serviceStaffTasks";
+import { OpalSelect } from "../../components/componentMenus";
 import { icons, GlassPanel } from "../../components/componentTheme";
 import "../../components/componentTheme.css";
 import "./TabStaffDayOf.css";
 
-const CHECKIN_OPTIONS = ["Hasn't Arrived", "Arrived"];
+const CHECKIN_OPTIONS = [
+  { value: "Hasn't Arrived", label: "Hasn't Arrived" },
+  { value: "Arrived", label: "Arrived" },
+];
+
+const GUEST_FILTER_OPTIONS = [
+  { value: "all", label: "All guests" },
+  { value: "Hasn't Arrived", label: "Hasn't Arrived" },
+  { value: "Arrived", label: "Arrived" },
+];
+
+const VENDOR_FILTER_OPTIONS = [
+  { value: "all", label: "All vendors" },
+  { value: "not_arrived", label: "Not arrived" },
+  { value: "arrived", label: "Arrived" },
+];
 
 function normalizeCheckInStatus(status) {
   if (!status) return "Hasn't Arrived";
@@ -232,7 +248,7 @@ export default function TabStaffDayOf() {
                       {event.status || "planning"}
                     </span>
                     <span className="dayof-expand-arrow">
-                      {isSelected ? "▲" : "▼"}
+                      {isSelected ? icons.chevronUp : icons.chevronDown}
                     </span>
                   </div>
                 </div>
@@ -249,16 +265,13 @@ export default function TabStaffDayOf() {
                           <p>Update guest arrival status for this event.</p>
                         </div>
 
-                        <select
+                        <OpalSelect
                           value={guestStatusFilter}
-                          onChange={(event) =>
-                            setGuestStatusFilter(event.target.value)
-                          }
-                        >
-                          <option value="all">All guests</option>
-                          <option value="Hasn't Arrived">Hasn't Arrived</option>
-                          <option value="Arrived">Arrived</option>
-                        </select>
+                          onChange={setGuestStatusFilter}
+                          options={GUEST_FILTER_OPTIONS}
+                          placeholder="Guest filter"
+                          accent="teal"
+                        />
                       </div>
 
                       <div className="dayof-table-wrapper">
@@ -302,27 +315,18 @@ export default function TabStaffDayOf() {
                                           event.stopPropagation()
                                         }
                                       >
-                                        <select
+                                        <OpalSelect
                                           value={normalizeCheckInStatus(
                                             guest.checkIn?.status
                                           )}
-                                          onChange={(event) =>
-                                            handleCheckInChange(
-                                              guest._id,
-                                              event.target.value
-                                            )
+                                          onChange={(value) =>
+                                            handleCheckInChange(guest._id, value)
                                           }
+                                          options={CHECKIN_OPTIONS}
+                                          accent="teal"
                                           disabled={loading}
-                                        >
-                                          {CHECKIN_OPTIONS.map((option) => (
-                                            <option
-                                              key={option}
-                                              value={option}
-                                            >
-                                              {option}
-                                            </option>
-                                          ))}
-                                        </select>
+                                          style={{ minWidth: 150 }}
+                                        />
                                       </td>
                                     </tr>
 
@@ -414,16 +418,13 @@ export default function TabStaffDayOf() {
                           <p>Mark vendors as arrived upon delivery.</p>
                         </div>
 
-                        <select
+                        <OpalSelect
                           value={vendorStatusFilter}
-                          onChange={(event) =>
-                            setVendorStatusFilter(event.target.value)
-                          }
-                        >
-                          <option value="all">All vendors</option>
-                          <option value="not_arrived">Not arrived</option>
-                          <option value="arrived">Arrived</option>
-                        </select>
+                          onChange={setVendorStatusFilter}
+                          options={VENDOR_FILTER_OPTIONS}
+                          placeholder="Vendor filter"
+                          accent="teal"
+                        />
                       </div>
 
                       <div className="vendor-card-list">

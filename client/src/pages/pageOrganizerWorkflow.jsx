@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./pageOrganizerDashboard.css";
 import "./pageOrganizerWorkflow.css";
@@ -6,6 +6,8 @@ import "../components/componentTheme.css";
 import AppHeader from "../components/componentAppHeader";
 import { icons, GlassPanel } from "../components/componentTheme";
 import Dock from "../components/componentDock";
+import MiniCalendarFree from "../components/componentMiniCalendarFree";
+import { OpalSelect } from "../components/componentMenus";
 import { VscHome, VscCalendar, VscPerson, VscPersonAdd, VscTrash } from "react-icons/vsc";
 import { fetchNotifications, markNotificationAsRead } from "../services/serviceNotifications";
 import {
@@ -67,6 +69,14 @@ function MetaChip({ children, className = "" }) {
   return <span className={`meta-chip ${className}`.trim()}>{children}</span>;
 }
 
+const TASK_STATUS_OPTIONS = [
+  { value: "", label: "All Statuses" },
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "done", label: "Done" },
+  { value: "not_assigned", label: "Not Assigned" },
+];
+
 function OrganizerWorkflow() {
   const [summary, setSummary] = useState(null);
   const [summaryState, setSummaryState] = useState("loading");
@@ -76,9 +86,25 @@ function OrganizerWorkflow() {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [showEvents, setShowEvents] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
+  const [showEventCalendar, setShowEventCalendar] = useState(false);
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const calendarRef = useRef(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!showEventCalendar) return;
+
+    const handler = (event) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setShowEventCalendar(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showEventCalendar]);
 
   useEffect(() => {
     async function loadWorkflowData() {
@@ -207,6 +233,23 @@ function OrganizerWorkflow() {
     markNotificationAsRead(id).catch(() => {});
   };
 
+  const eventCalendarDates = selectedDate ? [selectedDate] : [];
+
+  const handleEventDateFilterChange = (dates) => {
+    const newest = dates.filter((date) => date !== selectedDate);
+    setSelectedDate(newest[0] ?? dates[0] ?? "");
+    setShowEventCalendar(false);
+  };
+
+  const displayEventDate = selectedDate
+    ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : "All dates";
+
   const dockItems = [
     {
       icon: <VscHome size={26} />,
@@ -295,7 +338,7 @@ function OrganizerWorkflow() {
           />
         </div>
 
-        <GlassPanel className="workflow-section">
+        <GlassPanel className={`workflow-section ${showEventCalendar ? "workflow-section--overlay" : ""}`.trim()}>
           <div className="section-header">
             <div>
               <SectionTitle
@@ -308,11 +351,31 @@ function OrganizerWorkflow() {
               <p>View and filter upcoming events by date.</p>
             </div>
 
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(event) => setSelectedDate(event.target.value)}
-            />
+            <div className="workflow-section-filter" ref={calendarRef}>
+              <button
+                type="button"
+                className={`workflow-date-trigger ${showEventCalendar ? "workflow-date-trigger--active" : ""}`}
+                onClick={() => setShowEventCalendar((open) => !open)}
+                aria-expanded={showEventCalendar}
+                aria-haspopup="dialog"
+              >
+                <span className="workflow-date-trigger-icon">{icons.calendar}</span>
+                <span
+                  className={`workflow-date-trigger-label ${selectedDate ? "" : "workflow-date-trigger-label--muted"}`.trim()}
+                >
+                  {displayEventDate}
+                </span>
+              </button>
+
+              {showEventCalendar && (
+                <div className="workflow-calendar-popover" onClick={(event) => event.stopPropagation()}>
+                  <MiniCalendarFree
+                    selectedDates={eventCalendarDates}
+                    onChange={handleEventDateFilterChange}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {showEvents && (
@@ -348,7 +411,7 @@ function OrganizerWorkflow() {
           )}
         </GlassPanel>
 
-        <GlassPanel className="workflow-section">
+        <GlassPanel className={`workflow-section ${statusFilterOpen ? "workflow-section--overlay" : ""}`.trim()}>
           <div className="section-header">
             <div>
               <SectionTitle
@@ -361,16 +424,16 @@ function OrganizerWorkflow() {
               <p>Track tasks leading up to each event and filter them by status.</p>
             </div>
 
-            <select
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value)}
-            >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="in_progress">In Progress</option>
-              <option value="done">Done</option>
-              <option value="not_assigned">Not Assigned</option>
-            </select>
+            <div className="workflow-section-filter">
+              <OpalSelect
+                value={selectedStatus}
+                onChange={setSelectedStatus}
+                onOpenChange={setStatusFilterOpen}
+                options={TASK_STATUS_OPTIONS}
+                accent="cyan"
+                style={{ minWidth: 170 }}
+              />
+            </div>
           </div>
 
           {showTasks && (

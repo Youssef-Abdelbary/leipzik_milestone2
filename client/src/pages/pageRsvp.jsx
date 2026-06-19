@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { P, icons, GlassPanel } from '../components/componentTheme';
 import AppHeader from '../components/componentAppHeader';
+import { BASE_URL } from '../utils/apiFetch';
 import '../components/componentTheme.css';
 
 const DIETARY_PRESETS = [
@@ -26,7 +27,7 @@ export default function RsvpPage() {
   const [specialReqs, setSpecialReqs] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5001/api/feedback/rsvp-info/${token}`)
+    fetch(`${BASE_URL}/feedback/rsvp-info/${token}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) throw new Error(data.error);
@@ -40,7 +41,7 @@ export default function RsvpPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`http://localhost:5001/api/guest/rsvp/${token}`, {
+      const res = await fetch(`${BASE_URL}/guest/rsvp/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

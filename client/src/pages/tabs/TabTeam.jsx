@@ -3,7 +3,36 @@ import "./TabTeam.css";
 import "./workspaceTabShell.css";
 import "../../components/componentTheme.css";
 import { GlassPanel, icons, P } from "../../components/componentTheme";
+import { OpalSelect } from "../../components/componentMenus";
 import { apiFetch } from "../../utils/apiFetch";
+
+const EMPLOYMENT_TYPE_OPTIONS = [
+  { value: "", label: "All types" },
+  { value: "full_time", label: "Full-time" },
+  { value: "part_time", label: "Part-time" },
+];
+
+const SPECIALITY_OPTIONS = [
+  { value: "", label: "All specialities" },
+  { value: "Catering", label: "Catering" },
+  { value: "Logistics", label: "Logistics" },
+  { value: "Seating", label: "Seating" },
+  { value: "Guest Service", label: "Guest Service" },
+];
+
+const TASK_STATUS_OPTIONS = [
+  { value: "", label: "All statuses" },
+  { value: "not_assigned", label: "Not assigned" },
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In progress" },
+  { value: "done", label: "Done" },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
 
 function TeamStatCard({ label, value, icon, accent }) {
   const colors = {
@@ -38,6 +67,11 @@ export default function TabTeam({ eventId }) {
   const [specialityFilter, setSpecialityFilter] = useState("");
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [employmentFilterOpen, setEmploymentFilterOpen] = useState(false);
+  const [specialityFilterOpen, setSpecialityFilterOpen] = useState(false);
+  const [taskStatusFilterOpen, setTaskStatusFilterOpen] = useState(false);
+  const [taskPriorityOpen, setTaskPriorityOpen] = useState(false);
+  const [openAssignTaskId, setOpenAssignTaskId] = useState(null);
 
   const [taskForm, setTaskForm] = useState({
     title: "",
@@ -169,6 +203,18 @@ export default function TabTeam({ eventId }) {
   ).length;
   const doneTasks = allTasks.filter((task) => task.status === "done").length;
 
+  const staffSectionOverlay = employmentFilterOpen || specialityFilterOpen;
+  const tasksSectionOverlay =
+    taskStatusFilterOpen || taskPriorityOpen || openAssignTaskId !== null;
+
+  const staffAssignOptions = [
+    { value: "", label: "Assign staff member" },
+    ...staffMembers.map((staff) => ({
+      value: staff._id,
+      label: staff.fullName || staff.email,
+    })),
+  ];
+
   return (
     <div className="workspace-tab-shell team-tab">
       <div className="team-header">
@@ -184,7 +230,9 @@ export default function TabTeam({ eventId }) {
       </div>
 
       <div className="team-layout">
-        <GlassPanel className="team-section">
+        <GlassPanel
+          className={`team-section${staffSectionOverlay ? " team-section--overlay" : ""}`}
+        >
           <div className="team-section-header">
             <div>
               <h2>Staff Members</h2>
@@ -192,25 +240,25 @@ export default function TabTeam({ eventId }) {
             </div>
 
             <div className="team-header-actions">
-              <select
+              <OpalSelect
                 value={employmentTypeFilter}
-                onChange={(e) => setEmploymentTypeFilter(e.target.value)}
-              >
-                <option value="">All types</option>
-                <option value="full_time">Full-time</option>
-                <option value="part_time">Part-time</option>
-              </select>
+                onChange={setEmploymentTypeFilter}
+                onOpenChange={setEmploymentFilterOpen}
+                options={EMPLOYMENT_TYPE_OPTIONS}
+                placeholder="All types"
+                accent="teal"
+                style={{ minWidth: 150 }}
+              />
 
-              <select
+              <OpalSelect
                 value={specialityFilter}
-                onChange={(e) => setSpecialityFilter(e.target.value)}
-              >
-                <option value="">All specialities</option>
-                <option value="Catering">Catering</option>
-                <option value="Logistics">Logistics</option>
-                <option value="Seating">Seating</option>
-                <option value="Guest Service">Guest Service</option>
-              </select>
+                onChange={setSpecialityFilter}
+                onOpenChange={setSpecialityFilterOpen}
+                options={SPECIALITY_OPTIONS}
+                placeholder="All specialities"
+                accent="violet"
+                style={{ minWidth: 160 }}
+              />
             </div>
           </div>
 
@@ -259,7 +307,9 @@ export default function TabTeam({ eventId }) {
           </div>
         </GlassPanel>
 
-        <GlassPanel className="team-section">
+        <GlassPanel
+          className={`team-section${tasksSectionOverlay ? " team-section--overlay" : ""}`}
+        >
           <div className="team-section-header">
             <div>
               <h2>Event Tasks</h2>
@@ -274,16 +324,15 @@ export default function TabTeam({ eventId }) {
                 {showTaskForm ? "Cancel" : "Add Task"}
               </button>
 
-              <select
+              <OpalSelect
                 value={taskStatusFilter}
-                onChange={(e) => setTaskStatusFilter(e.target.value)}
-              >
-                <option value="">All statuses</option>
-                <option value="not_assigned">Not assigned</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In progress</option>
-                <option value="done">Done</option>
-              </select>
+                onChange={setTaskStatusFilter}
+                onOpenChange={setTaskStatusFilterOpen}
+                options={TASK_STATUS_OPTIONS}
+                placeholder="All statuses"
+                accent="amber"
+                style={{ minWidth: 160 }}
+              />
             </div>
           </div>
 
@@ -310,14 +359,14 @@ export default function TabTeam({ eventId }) {
                 onChange={(e) => updateTaskForm("category", e.target.value)}
               />
 
-              <select
+              <OpalSelect
                 value={taskForm.priority}
-                onChange={(e) => updateTaskForm("priority", e.target.value)}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+                onChange={(value) => updateTaskForm("priority", value)}
+                onOpenChange={setTaskPriorityOpen}
+                options={PRIORITY_OPTIONS}
+                placeholder="Priority"
+                accent="violet"
+              />
 
               <input
                 type="datetime-local"
@@ -331,7 +380,11 @@ export default function TabTeam({ eventId }) {
             </div>
           )}
 
-          <div className="team-list">
+          <div
+            className={`team-list${
+              openAssignTaskId ? " team-list--dropdown-open" : ""
+            }`}
+          >
             {tasks.map((task) => (
               <div key={task._id} className="team-card">
                 <div className="task-card-top">
@@ -366,20 +419,20 @@ export default function TabTeam({ eventId }) {
                   ></div>
                 </div>
 
-                <select
+                <OpalSelect
                   value={task.assignedTo || ""}
-                  onChange={(e) => assignTask(task._id, e.target.value)}
-                  className="assign-select"
+                  onChange={(value) => assignTask(task._id, value)}
+                  onOpenChange={(open) =>
+                    setOpenAssignTaskId((current) =>
+                      open ? task._id : current === task._id ? null : current
+                    )
+                  }
+                  options={staffAssignOptions}
+                  placeholder="Assign staff member"
+                  accent="teal"
                   disabled={task.status === "done"}
-                >
-                  <option value="">Assign staff member</option>
-
-                  {staffMembers.map((staff) => (
-                    <option key={staff._id} value={staff._id}>
-                      {staff.fullName || staff.email}
-                    </option>
-                  ))}
-                </select>
+                  style={{ marginTop: 12 }}
+                />
 
                 {task.status === "done" && (
                   <p className="done-task-note">

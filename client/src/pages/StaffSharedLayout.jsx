@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./StaffSharedLayout.css";
 import "../components/componentTheme.css";
+import { OpalSelect } from "../components/componentMenus";
 import { P, icons, GlassPanel } from "../components/componentTheme";
 import { apiFetch, getUserIdFromToken } from "../utils/apiFetch";
 
@@ -10,12 +11,9 @@ function StaffSharedLayout() {
   const [message, setMessage] = useState("Loading shared layouts...");
 
   function getItemIcon(type) {
-    if (type === "Table") return "🍽️";
-    if (type === "Chair") return "🪑";
-    if (type === "Stage") return "🎤";
-    if (type === "Booth") return "🏪";
-    if (type === "Entrance") return "🚪";
-    return "📍";
+    if (type === "Table") return icons.utensils;
+    if (type === "Stage") return icons.building2;
+    return icons.mapPin;
   }
 
   useEffect(() => {
@@ -75,28 +73,26 @@ function StaffSharedLayout() {
         </div>
 
         {layouts.length > 0 && (
-          <select
-            className="shared-layout-select"
+          <OpalSelect
             value={selectedLayout?._id || ""}
-            onChange={(event) => {
-              const layout = layouts.find(
-                (layout) => layout._id === event.target.value
-              );
+            onChange={(layoutId) => {
+              const layout = layouts.find((item) => item._id === layoutId);
               setSelectedLayout(layout);
             }}
-          >
-            {layouts.map((layout) => (
-              <option key={layout._id} value={layout._id}>
-                {getLayoutEventName(layout)}
-              </option>
-            ))}
-          </select>
+            options={layouts.map((layout) => ({
+              value: layout._id,
+              label: getLayoutEventName(layout),
+            }))}
+            placeholder="Select layout"
+            accent="teal"
+            style={{ minWidth: 220 }}
+          />
         )}
       </div>
 
       {message && (
         <GlassPanel className="shared-layout-empty">
-          <div className="shared-layout-empty-icon">🏛️</div>
+          <div className="shared-layout-empty-icon">{icons.building2}</div>
           <h2>Layout unavailable</h2>
           <p>{message}</p>
         </GlassPanel>

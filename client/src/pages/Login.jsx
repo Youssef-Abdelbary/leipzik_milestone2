@@ -4,6 +4,7 @@ import "./Login.css";
 import "../components/componentTheme.css";
 import { icons, GlassPanel } from "../components/componentTheme";
 import CurvedLoop from "../components/curvedloop";
+import { BASE_URL } from "../utils/apiFetch";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -28,7 +29,7 @@ function Login() {
       setError("");
       setSuccess("");
 
-      const response = await fetch("http://localhost:5001/api/auth/login", {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

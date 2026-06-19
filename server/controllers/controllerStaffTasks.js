@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { toObjectId } from "../utils/eventAccess.js";
 
 export function testStaffTasksRoute(req, res) {
   res.json({ message: "Staff tasks route is working" });
@@ -128,6 +129,20 @@ export async function updateTaskProgress(req, res) {
 
     const tasksCollection = mongoose.connection.db.collection("event_tasks");
 
+    const taskObjectId = toObjectId(taskId);
+    if (!taskObjectId) {
+      return res.status(400).json({ message: "Invalid task ID" });
+    }
+
+    const existingTask = await tasksCollection.findOne({
+      _id: taskObjectId,
+      assignedTo: toObjectId(req.user.user_id),
+    });
+
+    if (!existingTask) {
+      return res.status(404).json({ message: "Task not found or access denied" });
+    }
+
     const updateData = {
       status,
       progressPercent: Number(progressPercent),
@@ -144,7 +159,7 @@ export async function updateTaskProgress(req, res) {
     }
 
     const updatedTask = await tasksCollection.findOneAndUpdate(
-      { _id: new mongoose.Types.ObjectId(taskId) },
+      { _id: taskObjectId, assignedTo: toObjectId(req.user.user_id) },
       {
         $set: updateData,
       },

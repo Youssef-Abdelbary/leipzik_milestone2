@@ -13,7 +13,7 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get("/", requireRoles("organizer"), getGuests);
-router.patch("/:id/checkin", updateGuestCheckIn);
+router.patch("/:id/checkin", requireRoles("staff", "organizer"), updateGuestCheckIn);
 router.get("/staff/:staffId", requireSelfParam("staffId"), getGuestsForStaff);
 router.get("/staff/:staffId/event/:eventId", requireSelfParam("staffId"), getGuestsForStaffEvent);
 

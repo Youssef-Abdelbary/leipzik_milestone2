@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { VscHome, VscMail, VscCalendar, VscBell, VscPerson } from 'react-icons/vsc';
 import Dock from '../components/componentDock.jsx';
 import AppHeader from '../components/componentAppHeader.jsx';
+import { OpalSelect } from '../components/componentMenus.jsx';
+import '../components/componentTheme.css';
 import './pageOrganizerDashboard.css';
 import { getConfirmedBookings } from '../services/serviceBookingCalendar';
 
@@ -105,6 +107,13 @@ export default function PageBookingsCalendar() {
         setCurrentMonth(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
     };
 
+    const STATUS_OPTIONS = [
+        { value: 'approved', label: 'Approved' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'declined', label: 'Declined' },
+        { value: 'countered', label: 'Countered' },
+    ];
+
     const dockItems = [
         { icon: <VscMail size={26} />, label: 'Requests', onClick: () => navigate('/venueowner/venueresponse') },
         { icon: <VscHome size={26} />, label: 'Home', onClick: () => navigate('/venueowner/venues') },
@@ -114,7 +123,6 @@ export default function PageBookingsCalendar() {
 
     const panel = { background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '18px 20px' };
     const label = { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase' };
-    const select = { background: '#1A1C22', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, padding: '8px 10px', fontSize: 13, fontFamily: 'inherit' };
     const navBtn = { background: '#1A1C22', border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, width: 32, height: 32, fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' };
 
     return (
@@ -132,29 +140,33 @@ export default function PageBookingsCalendar() {
             <p style={{ margin: '0 0 24px', fontSize: 14, color: C.sub }}>Calendar overview of confirmed bookings across your listings.</p>
 
             <div style={{ ...panel, display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 20 }}>
-                <div>
+                <div style={{ minWidth: 180 }}>
                     <p style={label}>Venue</p>
-                    <select style={select} value={filters.venueId} onChange={e => setFilters(f => ({ ...f, venueId: e.target.value }))}>
-                        <option value="">All venues</option>
-                        {venueOptions.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
+                    <OpalSelect
+                        value={filters.venueId}
+                        onChange={(value) => setFilters((f) => ({ ...f, venueId: value }))}
+                        options={[{ value: '', label: 'All venues' }, ...venueOptions.map((v) => ({ value: v.id, label: v.name }))]}
+                        placeholder="All venues"
+                        accent="teal"
+                    />
                 </div>
-                <div>
+                <div style={{ minWidth: 160 }}>
                     <p style={label}>Status</p>
-                    <select style={select} value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}>
-                        <option value="approved">Approved</option>
-                        <option value="pending">Pending</option>
-                        <option value="declined">Declined</option>
-                        <option value="countered">Countered</option>
-                    </select>
+                    <OpalSelect
+                        value={filters.status}
+                        onChange={(value) => setFilters((f) => ({ ...f, status: value }))}
+                        options={STATUS_OPTIONS}
+                        placeholder="Status"
+                        accent="teal"
+                    />
                 </div>
                 <div>
                     <p style={label}>From</p>
-                    <input type="date" style={select} value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
+                    <input type="date" className="opal-date-field" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
                 </div>
                 <div>
                     <p style={label}>To</p>
-                    <input type="date" style={select} value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
+                    <input type="date" className="opal-date-field" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
                 </div>
                 {(filters.venueId || filters.startDate || filters.endDate || filters.status !== 'approved') && (
                     <button onClick={() => setFilters({ venueId: '', status: 'approved', startDate: '', endDate: '' })} style={{

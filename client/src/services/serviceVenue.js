@@ -1,4 +1,4 @@
-import { apiFetch } from "../utils/apiFetch";
+import { apiFetch, BASE_URL } from "../utils/apiFetch";
 
 const BASE = "/venues";
 
@@ -17,7 +17,7 @@ export async function createVenue(formData) {
   const token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
 
-  const response = await fetch(`http://localhost:5001/api${BASE}`, {
+  const response = await fetch(`${BASE_URL}${BASE}`, {
     method: "POST",
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),
@@ -45,7 +45,7 @@ export async function updateVenue(id, formData) {
   const token = localStorage.getItem("token");
   const refreshToken = localStorage.getItem("refreshToken");
 
-  const response = await fetch(`http://localhost:5001/api${BASE}/${id}`, {
+  const response = await fetch(`${BASE_URL}${BASE}/${id}`, {
     method: "PUT",
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),

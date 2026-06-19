@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import modelUser from "../models/modelUser.js";
 import Vendor from "../models/modelVendor.js";
+import { ensureVenueListing } from "../utils/ensureVenueListing.js";
 import { generateToken, generateRefreshToken } from "../utils/generateJWT.js";
 
 const ALLOWED_ROLES = ["vendor", "venue_owner", "organizer"];
@@ -40,6 +41,10 @@ export const register = async (req, res) => {
                 contactInfo: { contactPerson: fullname, email, phone: phone || '' },
                 isActive: true,
             });
+        }
+
+        if (role === 'venue_owner') {
+            await ensureVenueListing(user._id, { role });
         }
 
         const token = generateToken(user._id, user.role);

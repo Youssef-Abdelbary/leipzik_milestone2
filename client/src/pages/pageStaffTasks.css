@@ -269,6 +269,16 @@
   font-size: 14px;
 }
 
+.staff-date-filter {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--opal-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
 .staff-section-header input,
 .staff-section-header select {
   min-height: 42px;
@@ -509,9 +519,23 @@
 }
 
 .event-expand-arrow {
-  color: var(--opal-muted);
+  display: inline-flex;
+  align-items: center;
+  color: var(--opal-sub);
   font-size: 13px;
   font-weight: 900;
+}
+
+.staff-event-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.staff-event-date svg {
+  width: 14px;
+  height: 14px;
 }
 
 .event-expanded-tasks {

@@ -573,16 +573,24 @@ function VenueFormModal({ initial, onSave, onCancel }) {
           <div style={css.formGrid3}>
             <label style={css.formLabel}>Base price *<input style={css.formInput} type="number" value={form.basePrice} onChange={e => set("basePrice", e.target.value)} placeholder="35000" /></label>
             <label style={css.formLabel}>Currency
-              <select style={css.formInput} value={form.currency} onChange={e => set("currency", e.target.value)}>
-                <option>EGP</option><option>USD</option><option>EUR</option>
-              </select>
+              <OpalSelect
+                value={form.currency}
+                onChange={(v) => set("currency", v)}
+                options={["EGP", "USD", "EUR"]}
+                accent="teal"
+              />
             </label>
             <label style={css.formLabel}>Unit
-              <select style={css.formInput} value={form.pricingUnit} onChange={e => set("pricingUnit", e.target.value)}>
-                <option value="per_event">Per event</option>
-                <option value="per_day">Per day</option>
-                <option value="per_hour">Per hour</option>
-              </select>
+              <OpalSelect
+                value={form.pricingUnit}
+                onChange={(v) => set("pricingUnit", v)}
+                options={[
+                  { value: "per_event", label: "Per event" },
+                  { value: "per_day", label: "Per day" },
+                  { value: "per_hour", label: "Per hour" },
+                ]}
+                accent="teal"
+              />
             </label>
           </div>
 

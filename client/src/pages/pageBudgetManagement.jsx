@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiFetch } from "../utils/apiFetch";
+import { listEvents } from "../services/serviceEvent";
+import { OpalSelect } from "../components/componentMenus";
 import "./pageBudgetManagement.css";
 import "./tabs/workspaceTabShell.css";
 import "../components/componentTheme.css";
@@ -31,7 +33,9 @@ function BudgetStatCard({ label, value, icon, accent, className = "" }) {
 function BudgetManagement({ eventId: propEventId }) {
   const { eventId: routeEventId } = useParams();
   const eventId = propEventId || routeEventId;
-  const [selectedEventId, setSelectedEventId] = useState(eventId);
+  const isStandalone = !propEventId;
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState(eventId || "");
   const [budgetData, setBudgetData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isEditingPlannedBudget, setIsEditingPlannedBudget] = useState(false);
@@ -58,8 +62,22 @@ function BudgetManagement({ eventId: propEventId }) {
 
 
   useEffect(() => {
+    if (!isStandalone) return;
+    listEvents()
+      .then((data) => setEvents(Array.isArray(data) ? data : []))
+      .catch((error) => console.error("Load events error:", error));
+  }, [isStandalone]);
+
+  useEffect(() => {
+    if (eventId) {
+      setSelectedEventId(eventId);
+    }
+  }, [eventId]);
+
+  useEffect(() => {
     async function loadBudgetForEvent() {
-        if (!eventId) {
+        const targetEventId = propEventId || routeEventId || selectedEventId;
+        if (!targetEventId) {
         setBudgetData(null);
         return;
         }
@@ -67,10 +85,10 @@ function BudgetManagement({ eventId: propEventId }) {
         try {
         setLoading(true);
 
-        const data = await apiFetch(`/budget/event/${eventId}`);
+        const data = await apiFetch(`/budget/event/${targetEventId}`);
 
         setBudgetData(data);
-        setSelectedEventId(eventId);
+        setSelectedEventId(targetEventId);
         setPlannedTotalInput(data.plannedTotal || 0);
         setBreakdownInputs(data.plannedBreakdown || []);
         } catch (error) {
@@ -82,7 +100,7 @@ function BudgetManagement({ eventId: propEventId }) {
     }
 
     loadBudgetForEvent();
-    }, [eventId]);
+    }, [propEventId, routeEventId, selectedEventId]);
 
   function formatMoney(amount) {
     if (!budgetData) {
@@ -316,7 +334,22 @@ async function saveEditedExpense() {
 
       {!loading && !budgetData && (
         <GlassPanel className="budget-state-card">
-          <p className="budget-empty">Select an event to view its budget.</p>
+          {isStandalone ? (
+            <div className="budget-event-picker">
+              <p className="budget-empty">Select an event to view its budget.</p>
+              <OpalSelect
+                value={selectedEventId}
+                onChange={setSelectedEventId}
+                placeholder="Choose an event"
+                options={events.map((event) => ({
+                  value: event._id,
+                  label: event.title || "Untitled event",
+                }))}
+              />
+            </div>
+          ) : (
+            <p className="budget-empty">Select an event to view its budget.</p>
+          )}
         </GlassPanel>
       )}
 
@@ -493,6 +526,7 @@ async function saveEditedExpense() {
 
                   <input
                     type="date"
+                    className="opal-date-field"
                     value={expenseForm.paymentDate}
                     onChange={(event) =>
                       updateExpenseForm("paymentDate", event.target.value)
@@ -543,6 +577,7 @@ async function saveEditedExpense() {
 
                         <input
                           type="date"
+                          className="opal-date-field"
                           value={editExpenseForm.paymentDate}
                           onChange={(event) =>
                             updateEditExpenseForm("paymentDate", event.target.value)

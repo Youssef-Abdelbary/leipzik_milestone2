@@ -182,7 +182,14 @@ export default function TabDayOf({ eventId }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={() => navigate('/staff/qr-scanner')}
+            onClick={() =>
+              navigate("/staff/qr-scanner", {
+                state: {
+                  returnTo: `/organizer/events/${eventId}/workspace`,
+                  returnLabel: "Workspace",
+                },
+              })
+            }
             style={{ padding: '8px 16px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)`, fontSize: 13, fontWeight: 700, cursor: 'pointer', color: '#0a0a0f', transition: 'opacity 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}

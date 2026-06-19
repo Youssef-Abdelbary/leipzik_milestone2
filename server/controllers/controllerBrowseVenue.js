@@ -17,7 +17,12 @@ export async function searchVenues(req, res) {
         };
 
         if (search) {
-            filter.name = { $regex: search, $options: 'i' };
+            const pattern = { $regex: search, $options: 'i' };
+            filter.$or = [
+                { name: pattern },
+                { 'location.city': pattern },
+                { 'location.area': pattern },
+            ];
         }
 
         const venues = await Venue.find(filter)

@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import EventLayout from "../models/EventLayout.js";
-
-
-
+import { findOrganizerEvent, toObjectId } from "../utils/eventAccess.js";
 export function testTeamRoute(req, res) {
   res.json({ message: "Team route is working" });
 }
@@ -66,6 +64,11 @@ export async function getEventTasks(req, res) {
   try {
     const { eventId } = req.params;
     const { status } = req.query;
+
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, eventId);
+    if (!ownedEvent) {
+      return res.status(404).json({ message: "Event not found or access denied" });
+    }
 
     const tasksCollection = mongoose.connection.db.collection("event_tasks");
 
@@ -140,6 +143,11 @@ export async function assignTaskToStaff(req, res) {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    const ownedEvent = await findOrganizerEvent(req.user.user_id, existingTask.eventId);
+    if (!ownedEvent) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     if (existingTask.status === "done") {
       return res.status(400).json({
         message: "Completed tasks cannot be reassigned",
@@ -182,20 +190,16 @@ export async function createEventTask(req, res) {
       });
     }
 
-    const eventsCollection = mongoose.connection.db.collection("events");
     const tasksCollection = mongoose.connection.db.collection("event_tasks");
 
-    const event = await eventsCollection.findOne({
-      _id: new mongoose.Types.ObjectId(eventId),
-    });
-
+    const event = await findOrganizerEvent(req.user.user_id, eventId);
     if (!event) {
-      return res.status(404).json({ message: "Event not found" });
+      return res.status(404).json({ message: "Event not found or access denied" });
     }
 
     const newTask = {
-      eventId: new mongoose.Types.ObjectId(eventId),
-      organizerId: event.organizerId,
+      eventId: toObjectId(eventId),
+      organizerId: toObjectId(req.user.user_id),
       assignedTo: null,
       title,
       description,

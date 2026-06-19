@@ -1,0 +1,129 @@
+.organizer-invoices-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.organizer-invoices-header h1 {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--opal-text);
+}
+
+.organizer-invoices-header p {
+  margin: 0;
+  color: var(--opal-sub);
+  font-size: 14px;
+}
+
+.organizer-invoices-state {
+  padding: 32px;
+  text-align: center;
+  color: var(--opal-sub);
+}
+
+.organizer-invoices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.organizer-invoice-card {
+  padding: 20px;
+}
+
+.organizer-invoice-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.organizer-invoice-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--opal-text);
+}
+
+.organizer-invoice-meta {
+  font-size: 12px;
+  color: var(--opal-sub);
+  margin-top: 4px;
+}
+
+.organizer-invoice-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.organizer-invoice-items {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 0;
+  margin-bottom: 12px;
+}
+
+.organizer-invoice-item-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--opal-text);
+  margin-bottom: 4px;
+}
+
+.organizer-invoice-item-row em {
+  color: var(--opal-sub);
+  font-style: normal;
+}
+
+.organizer-invoice-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--opal-text);
+  margin-bottom: 14px;
+}
+
+.organizer-invoice-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.organizer-invoice-actions button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.organizer-invoice-actions .approve {
+  background: rgba(79, 209, 197, 0.12);
+  color: var(--opal-teal);
+  border-color: rgba(79, 209, 197, 0.28);
+}
+
+.organizer-invoice-actions .reject {
+  background: rgba(255, 92, 102, 0.12);
+  color: var(--opal-red);
+  border-color: rgba(255, 92, 102, 0.28);
+}

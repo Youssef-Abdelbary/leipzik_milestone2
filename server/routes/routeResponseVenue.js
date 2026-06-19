@@ -10,10 +10,12 @@ import {
     getVenueAvailability,
 } from '../controllers/controllerResponseVenue.js';
 import { authenticate } from "../middleware/authMiddleware.js";
+import { requireRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
 router.use(authenticate);
+router.use(requireRoles("venue_owner"));
 
 router.get('/my-venues', getMyVenues);
 router.get('/bookings',                          getVenueBookingRequests);

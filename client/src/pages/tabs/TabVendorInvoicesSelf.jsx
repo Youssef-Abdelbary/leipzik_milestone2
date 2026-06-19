@@ -3,6 +3,7 @@ import { fetchInvoices, createInvoice, uploadSupportingDocument } from '../../se
 import { fetchMyVendorOrders } from '../../services/serviceBrowseVendors';
 import { getUserIdFromToken } from '../../utils/apiFetch';
 import { P, icons, GlassPanel } from '../../components/componentTheme';
+import { OpalSelect } from '../../components/componentMenus';
 
 const STATUS_META = {
   pending_review: { bg: 'rgba(245,166,35,0.14)',  color: '#f5a623', label: 'Pending Review' },
@@ -97,6 +98,11 @@ function CreateInvoiceForm({ orders, vendorId, onCreate }) {
 
   const selectedOrder = orders.find(o => o._id === selectedOrderId);
 
+  const orderOptions = orders.map((order) => ({
+    value: order._id,
+    label: orderLabel(order),
+  }));
+
   const inp = {
     width: '100%', padding: '9px 12px', borderRadius: 8,
     border: `1px solid ${P.border}`, background: 'rgba(30,30,41,0.8)',
@@ -143,9 +149,11 @@ function CreateInvoiceForm({ orders, vendorId, onCreate }) {
           background: orders.length ? `linear-gradient(135deg, ${P.blue} 0%, ${P.teal} 100%)` : P.hover,
           color: orders.length ? '#0a0a12' : P.muted,
           fontWeight: 700, fontSize: 13, cursor: orders.length ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}
       >
-        {icons.plus} New Invoice
+        <span style={{ display: 'flex', flexShrink: 0, lineHeight: 0 }}>{icons.plus}</span>
+        New Invoice
       </button>
     );
   }
@@ -160,16 +168,14 @@ function CreateInvoiceForm({ orders, vendorId, onCreate }) {
       <p style={{ margin: '0 0 8px', fontSize: 12, color: P.sub, lineHeight: 1.5 }}>
         Pick the order this invoice belongs to — the event is resolved automatically, no Event ID needed.
       </p>
-      <select
+      <OpalSelect
         value={selectedOrderId}
-        onChange={e => setSelectedOrderId(e.target.value)}
-        style={{ ...inp, marginBottom: 16, cursor: 'pointer' }}
-      >
-        <option value="">Select an accepted order…</option>
-        {orders.map(order => (
-          <option key={order._id} value={order._id}>{orderLabel(order)}</option>
-        ))}
-      </select>
+        onChange={setSelectedOrderId}
+        options={orderOptions}
+        placeholder="Select an accepted order…"
+        accent="violet"
+        style={{ marginBottom: 16 }}
+      />
 
       {selectedOrder && (
         <div style={{ padding: '10px 14px', background: P.blueGlow, border: `1px solid ${P.blue}33`, borderRadius: 8, marginBottom: 16, fontSize: 12, color: P.sub }}>

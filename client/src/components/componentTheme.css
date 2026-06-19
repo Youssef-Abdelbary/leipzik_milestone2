@@ -65,3 +65,18 @@ body {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
+
+.opal-date-field {
+  background: var(--opal-surface);
+  border: 1px solid var(--opal-border);
+  border-radius: 8px;
+  color: var(--opal-text);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.opal-date-field:focus {
+  border-color: rgba(139, 109, 255, 0.45);
+}
